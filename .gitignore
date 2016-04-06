@@ -1,4 +1,8 @@
+# Ignore spectra
+spectra/
+
 # Byte-compiled / optimized / DLL files
+
 __pycache__/
 *.py[cod]
 *$py.class
@@ -60,3 +64,6 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+.DS_STORE
+
