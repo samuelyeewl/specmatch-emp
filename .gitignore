@@ -1,5 +1,6 @@
 # Ignore spectra
 spectra/
+*.bat
 
 # Byte-compiled / optimized / DLL files
 
