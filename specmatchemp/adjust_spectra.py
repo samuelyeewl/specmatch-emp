@@ -36,43 +36,48 @@ def adjust_spectra(path, shift_reference=None):
     w = hdu[2].data
 
     # normalize each order to the 95th percentile
-    percen_order = np.percentile(s, 50, axis=1)
+    percen_order = np.percentile(s, 95, axis=1)
     s /= percen_order.reshape(-1,1)
 
     # place spectrum on constant log-lambda wavelength scale
-    slog, serrlog, wlog = rescale_w(s, serr, w)
+    slog, serrlog, wlog = rescale_log_w(s, serr, w)
 
     # solve for velocity shifts between spectra
     if shift_reference is not None:
+        w_shifted = np.empty_like(wlog)
         # read reference spectrum
         hdu_ref = fits.open(shift_reference)
         s_ref = hdu_ref[0].data
         serr_ref = hdu_ref[1].data
         w_ref = hdu_ref[2].data
+
         # normalize reference spectrum
-        percen_order_ref = np.percentile(s_ref, 50, axis=1)
+        percen_order_ref = np.percentile(s_ref, 95, axis=1)
         s_ref /= percen_order_ref.reshape(-1,1)
 
-        for i in range(len(wlog)):
-        # for i in [2]:
+        # place reference spectrum on same wavelength scale as target spectrum
+        s_ref, serr_ref = rescale_w(s_ref, serr_ref, w_ref, wlog)
+
+        # for i in range(len(wlog)):
+        for i in [2]:
             ww = wlog[i]
             ss = slog[i]
             ww_ref = w_ref[i]
             ss_ref = s_ref[i]
 
-            # super sample spectrum to solve for sub-pixel shifts
-            logw_min = np.log10(ww[0])
-            logw_max = np.log10(ww[-1])
-            w_inter = np.logspace(logw_min, logw_max, 10*len(ww), base=10.0)
-            # w_inter = np.logspace(logw_min, logw_max, len(ww), base=10.0)
-            s_inter = np.interp(w_inter, ww, ss)
-            dw = np.median(w_inter[1:] - w_inter[:-1])
+            # # super sample spectrum to solve for sub-pixel shifts
+            # logw_min = np.log10(ww[0])
+            # logw_max = np.log10(ww[-1])
+            # w_inter = np.logspace(logw_min, logw_max, 10*len(ww), base=10.0)
+            # # w_inter = np.logspace(logw_min, logw_max, len(ww), base=10.0)
+            # s_inter = np.interp(w_inter, ww, ss)
+            # dw = np.median(w_inter[1:] - w_inter[:-1])
 
-            # place reference spectrum on same wavelength scale as library spectrum
-            slog_ref = np.interp(w_inter, ww_ref, ss_ref)
+            # # place reference spectrum on same wavelength scale as library spectrum
+            # slog_ref = np.interp(w_inter, ww_ref, ss_ref)
 
             # correlate
-            xcorr = np.correlate(slog_ref-1, s_inter-1, mode='same')
+            xcorr = np.correlate(ss_ref-1, ss-1, mode='same')
             # number of pixels 
             npix = xcorr.shape[0]
             lag_arr = np.arange(-npix/2+1, npix/2+1, 1)
@@ -83,15 +88,20 @@ def adjust_spectra(path, shift_reference=None):
                 plt.show()
 
             # shift spectrum
-            w_inter += lag*dw
-            # resample back down to original wavelength spacing
-            logw_min = np.log10(w_inter[0])
-            logw_max = np.log10(w_inter[-1])
-            w_shifted = np.logspace(logw_min, logw_max, len(ww), base=10.0)
+            dw = np.median(ww[1:] - ww[:-1])
+            # ww -= lag*dw
 
-            wlog[i] = w_shifted
+            w_shifted[i] = ww
+            print(w_shifted[i,0])
 
-        plt.plot(wlog[2], slog[2])
+            # # resample back down to original wavelength spacing
+            # logw_min = np.log10(w_inter[0])
+            # logw_max = np.log10(w_inter[-1])
+            # w_shifted = np.logspace(logw_min, logw_max, len(ww), base=10.0)
+
+            # wlog[i] = w_shifted
+
+        plt.plot(w_shifted[2], slog[2])
         plt.plot(w_ref[2], s_ref[2])
         plt.show()
 
@@ -102,7 +112,29 @@ def adjust_spectra(path, shift_reference=None):
     hdu[2].data = wlog
     hdu.writeto(outfile)
 
-def rescale_w(s, serr, w):
+def rescale_w(s, serr, w, w_ref):
+    """
+    Place the given spectrum on the wavelength scale specified by w_ref
+
+    Args:
+        s, serr, w: The spectrum and original wavelength scale.
+        w_ref: The desired wavelength scale
+
+    Returns:
+        The spectrum and associated error on the desired scale.
+    """
+
+    snew = np.empty_like(s)
+    serrnew = np.empty_like(serr)
+
+    for i in range(len(w)):
+        snew[i] = np.interp(w_ref[i], w[i], s[i])
+        serrnew[i] = np.interp(w_ref[i], w[i], serr[i])
+
+    return snew, serrnew
+
+
+def rescale_log_w(s, serr, w):
     """
     Place the given spectrum on a constant log-lambda wavelength scale
     """
@@ -126,5 +158,5 @@ def rescale_w(s, serr, w):
     return slog, serrlog, wlog
 
 if __name__ == '__main__':
-    adjust_spectra('/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/rj187.477.fits',
+    adjust_spectra('/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/rj122.761.fits',
         '/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/rj76.283.fits')
