@@ -89,10 +89,10 @@ def adjust_spectra(path, shift_reference=None):
 
             # shift spectrum
             dw = np.median(ww[1:] - ww[:-1])
-            # ww -= lag*dw
+            print(lag*dw)
 
-            w_shifted[i] = ww
-            print(w_shifted[i,0])
+            w_shifted[i] = ww + lag*dw
+            print(ww[0], w_shifted[i,0])
 
             # # resample back down to original wavelength spacing
             # logw_min = np.log10(w_inter[0])
@@ -101,6 +101,7 @@ def adjust_spectra(path, shift_reference=None):
 
             # wlog[i] = w_shifted
 
+        print(wlog[2,0], w_shifted[2,0])
         plt.plot(w_shifted[2], slog[2])
         plt.plot(w_ref[2], s_ref[2])
         plt.show()
@@ -110,7 +111,7 @@ def adjust_spectra(path, shift_reference=None):
     hdu[0].data = slog
     hdu[1].data = serrlog
     hdu[2].data = wlog
-    hdu.writeto(outfile)
+    # hdu.writeto(outfile)
 
 def rescale_w(s, serr, w, w_ref):
     """
