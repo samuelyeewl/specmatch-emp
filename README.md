@@ -1,2 +1,0 @@
-# SpecMatch-Emp
-Empirical SpecMatch
