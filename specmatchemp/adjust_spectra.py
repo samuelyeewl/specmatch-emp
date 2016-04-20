@@ -36,7 +36,7 @@ def adjust_spectra(path, shift_reference=None):
     w = hdu[2].data
 
     # normalize each order to the 95th percentile
-    percen_order = np.percentile(s, 95, axis=1)
+    percen_order = np.percentile(s, 50, axis=1)
     s /= percen_order.reshape(-1,1)
 
     # place spectrum on constant log-lambda wavelength scale
@@ -50,7 +50,7 @@ def adjust_spectra(path, shift_reference=None):
         serr_ref = hdu_ref[1].data
         w_ref = hdu_ref[2].data
         # normalize reference spectrum
-        percen_order_ref = np.percentile(s_ref, 95, axis=1)
+        percen_order_ref = np.percentile(s_ref, 50, axis=1)
         s_ref /= percen_order_ref.reshape(-1,1)
 
         for i in range(len(wlog)):
@@ -77,6 +77,10 @@ def adjust_spectra(path, shift_reference=None):
             npix = xcorr.shape[0]
             lag_arr = np.arange(-npix/2+1, npix/2+1, 1)
             lag = lag_arr[np.argmax(xcorr)]
+
+            if i == 2:
+                plt.plot(lag_arr, xcorr)
+                plt.show()
 
             # shift spectrum
             w_inter += lag*dw
