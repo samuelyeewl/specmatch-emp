@@ -36,7 +36,7 @@ def adjust_spectra(path, shift_reference=None):
     w = hdu[2].data
 
     # normalize each order to the 95th percentile
-    percen_order = np.percentile(s, 95, axis=1)
+    percen_order = np.percentile(s, 50, axis=1)
     s /= percen_order.reshape(-1,1)
 
     # place spectrum on constant log-lambda wavelength scale
@@ -52,7 +52,7 @@ def adjust_spectra(path, shift_reference=None):
         w_ref = hdu_ref[2].data
 
         # normalize reference spectrum
-        percen_order_ref = np.percentile(s_ref, 95, axis=1)
+        percen_order_ref = np.percentile(s_ref, 50, axis=1)
         s_ref /= percen_order_ref.reshape(-1,1)
 
         # place reference spectrum on same wavelength scale as target spectrum
@@ -65,52 +65,51 @@ def adjust_spectra(path, shift_reference=None):
             ww_ref = w_ref[i]
             ss_ref = s_ref[i]
 
-            # # super sample spectrum to solve for sub-pixel shifts
-            # logw_min = np.log10(ww[0])
-            # logw_max = np.log10(ww[-1])
-            # w_inter = np.logspace(logw_min, logw_max, 10*len(ww), base=10.0)
-            # # w_inter = np.logspace(logw_min, logw_max, len(ww), base=10.0)
-            # s_inter = np.interp(w_inter, ww, ss)
-            # dw = np.median(w_inter[1:] - w_inter[:-1])
-
-            # # place reference spectrum on same wavelength scale as library spectrum
-            # slog_ref = np.interp(w_inter, ww_ref, ss_ref)
-
             # correlate
             xcorr = np.correlate(ss_ref-1, ss-1, mode='same')
+            max_corr = np.argmax(xcorr)
+
             # number of pixels 
             npix = xcorr.shape[0]
             lag_arr = np.arange(-npix/2+1, npix/2+1, 1)
-            lag = lag_arr[np.argmax(xcorr)]
 
-            if i == 2:
-                plt.plot(lag_arr, xcorr)
-                plt.show()
+            # select 11 points around the peak
+            # then fit a quadratic curve to solve for sub-pixel shifts
+            lag_peaks = lag_arr[max_corr-2:max_corr+3]
+            xcorr_peaks = xcorr[max_corr-2:max_corr+3]
+            p = np.polyfit(lag_peaks, xcorr_peaks, 2)
+            # peak is simply -p[1]/2p[0]
+            lag = -p[1]/(2*p[0])
+
+
+            pts = np.linspace(lag_peaks[0], lag_peaks[-1], 50)
+            plt.plot(pts, p[0]*pts**2 + p[1]*pts + p[2])
+            plt.plot(lag_peaks, xcorr_peaks)
+            plt.show()
+
+            # if i == 2:
+            #     plt.plot(lag_arr, xcorr)
+            #     plt.show()
 
             # shift spectrum
             dw = np.median(ww[1:] - ww[:-1])
             print(lag*dw)
 
             w_shifted[i] = ww + lag*dw
-            print(ww[0], w_shifted[i,0])
 
-            # # resample back down to original wavelength spacing
-            # logw_min = np.log10(w_inter[0])
-            # logw_max = np.log10(w_inter[-1])
-            # w_shifted = np.logspace(logw_min, logw_max, len(ww), base=10.0)
 
-            # wlog[i] = w_shifted
-
-        print(wlog[2,0], w_shifted[2,0])
         plt.plot(w_shifted[2], slog[2])
-        plt.plot(w_ref[2], s_ref[2])
+        plt.plot(wlog[2], s_ref[2])
         plt.show()
+
+    else:
+        w_shifted = wlog
 
     # save file
     outfile = os.path.splitext(path)[0] + '_adj.fits'
     hdu[0].data = slog
     hdu[1].data = serrlog
-    hdu[2].data = wlog
+    hdu[2].data = w_shifted
     # hdu.writeto(outfile)
 
 def rescale_w(s, serr, w, w_ref):
