@@ -58,46 +58,25 @@ def adjust_spectra(path, shift_reference=None):
         # place reference spectrum on same wavelength scale as target spectrum
         s_ref, serr_ref = rescale_w(s_ref, serr_ref, w_ref, wlog)
 
-        # for i in range(len(wlog)):
-        for i in [2]:
+        for i in range(len(wlog)):
+        # for i in [2]:
             ww = wlog[i]
             ss = slog[i]
             ww_ref = w_ref[i]
             ss_ref = s_ref[i]
 
-            # correlate
-            xcorr = np.correlate(ss_ref-1, ss-1, mode='same')
-            max_corr = np.argmax(xcorr)
+            lag, lag_arr, xcorr = solve_for_shifts(ss, ss_ref)
 
-            # number of pixels 
-            npix = xcorr.shape[0]
-            lag_arr = np.arange(-npix/2+1, npix/2+1, 1)
-
-            # select 11 points around the peak
-            # then fit a quadratic curve to solve for sub-pixel shifts
-            lag_peaks = lag_arr[max_corr-2:max_corr+3]
-            xcorr_peaks = xcorr[max_corr-2:max_corr+3]
-            p = np.polyfit(lag_peaks, xcorr_peaks, 2)
-            # peak is simply -p[1]/2p[0]
-            lag = -p[1]/(2*p[0])
-
-
-            pts = np.linspace(lag_peaks[0], lag_peaks[-1], 50)
-            plt.plot(pts, p[0]*pts**2 + p[1]*pts + p[2])
-            plt.plot(lag_peaks, xcorr_peaks)
-            plt.show()
-
-            # if i == 2:
-            #     plt.plot(lag_arr, xcorr)
-            #     plt.show()
+            # For testing: plot lag array
+            if i == 2:
+                plt.plot(lag_arr, xcorr)
+                plt.show()
 
             # shift spectrum
             dw = np.median(ww[1:] - ww[:-1])
-            print(lag*dw)
+            w_shifted[i] = ww - lag*dw
 
-            w_shifted[i] = ww + lag*dw
-
-
+        # For testing: plot 2nd order line
         plt.plot(w_shifted[2], slog[2])
         plt.plot(wlog[2], s_ref[2])
         plt.show()
@@ -111,6 +90,39 @@ def adjust_spectra(path, shift_reference=None):
     hdu[1].data = serrlog
     hdu[2].data = w_shifted
     # hdu.writeto(outfile)
+
+def solve_for_shifts(s, s_ref):
+    """
+    Solve for the pixel shifts required to align two spectra that are on the same
+    wavelength scale.
+
+    Correlates the two spectra, then fits a quadratic to the peak in order to
+    solve for sub-pixel shifts.
+
+    Args:
+        s: The target spectrum
+        s_ref: The reference spectrum
+        w: The common wavelength scale.
+    
+    Returns:
+        The pixel shift, the lag and correlation data
+    """
+    # correlate the two spectra
+    xcorr = np.correlate(s-1, s_ref-1, mode='same')
+    max_corr = np.argmax(xcorr)
+
+    # number of pixels
+    npix = xcorr.shape[0]
+    lag_arr = np.arange(-npix/2+1, npix/2+1, 1)
+
+    # select points around the peak and fit a quadratic
+    lag_peaks = lag_arr[max_corr-5:max_corr+5]
+    xcorr_peaks = xcorr[max_corr-5:max_corr+5]
+    p = np.polyfit(lag_peaks, xcorr_peaks, 2)
+    # peak is simply -p[1]/2p[0]
+    lag = -p[1]/(2*p[0])
+
+    return lag, lag_arr, xcorr
 
 def rescale_w(s, serr, w, w_ref):
     """
