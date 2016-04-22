@@ -11,7 +11,7 @@ Place a library spectrum onto a new wavelength scale with the following properti
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
-import os
+import os, sys
 
 def adjust_spectra(path, shift_reference=None):
     """
@@ -36,7 +36,7 @@ def adjust_spectra(path, shift_reference=None):
     w = hdu[2].data
 
     # normalize each order to the 95th percentile
-    percen_order = np.percentile(s, 50, axis=1)
+    percen_order = np.percentile(s, 95, axis=1)
     s /= percen_order.reshape(-1,1)
 
     # place spectrum on constant log-lambda wavelength scale
@@ -52,33 +52,55 @@ def adjust_spectra(path, shift_reference=None):
         w_ref = hdu_ref[2].data
 
         # normalize reference spectrum
-        percen_order_ref = np.percentile(s_ref, 50, axis=1)
+        percen_order_ref = np.percentile(s_ref, 95, axis=1)
         s_ref /= percen_order_ref.reshape(-1,1)
 
         # place reference spectrum on same wavelength scale as target spectrum
         s_ref, serr_ref = rescale_w(s_ref, serr_ref, w_ref, wlog)
 
-        for i in range(len(wlog)):
-        # for i in [2]:
+        # for i in range(len(wlog)):
+        for i in [2]:
             ww = wlog[i]
             ss = slog[i]
             ww_ref = w_ref[i]
             ss_ref = s_ref[i]
 
-            lag, lag_arr, xcorr = solve_for_shifts(ss, ss_ref)
+            # solve for shifts in different sections
+            num_sections = 2
+            lags = np.empty(num_sections)
+            l_sect = len(ss)/num_sections
+            ww_shifted = np.empty_like(ww)
 
-            # For testing: plot lag array
-            if i == 2:
+            for j in range(num_sections):
+                # split array
+                ss_sect = ss[j*l_sect:(j+1)*l_sect]
+                ss_ref_sect = ss_ref[j*l_sect:(j+1)*l_sect]
+                
+                # solve for shifts
+                lag, lag_arr, xcorr = solve_for_shifts(ss_sect, ss_ref_sect)
+
+                # shift spectrum
+                dw = np.median(ww[j*l_sect+1:(j+1)*l_sect] - ww[j*l_sect:(j+1)*l_sect-1])
+                ww_shifted[j*l_sect:(j+1)*l_sect] = ww[j*l_sect:(j+1)*l_sect] - dw*lag
+
+                lags[j] = lag
+
                 plt.plot(lag_arr, xcorr)
-                plt.show()
+            
+            plt.show()
 
-            # shift spectrum
-            dw = np.median(ww[1:] - ww[:-1])
-            w_shifted[i] = ww - lag*dw
+            # plot variation of lags
+            plt.plot(np.linspace(ww[0], ww[-1], num_sections), lags)
+            plt.show()
+
+            w_shifted[i] = ww_shifted
 
         # For testing: plot 2nd order line
         plt.plot(w_shifted[2], slog[2])
         plt.plot(wlog[2], s_ref[2])
+        # plt.xlim(5179, 5187)
+        # plt.ylim(0,1)
+        # plt.savefig('{0:d}_segments.png'.format(num_sections))
         plt.show()
 
     else:
@@ -172,3 +194,4 @@ def rescale_log_w(s, serr, w):
 if __name__ == '__main__':
     adjust_spectra('/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/rj122.761.fits',
         '/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/rj76.283.fits')
+    sys.exit()
