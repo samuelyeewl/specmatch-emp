@@ -1,13 +1,7 @@
 #!/usr/bin/env python
-
+"""Place a target spectrum onto a new wavelength scale onto a new
+wavelength scale
 """
-Place a library spectrum onto a new wavelength scale with the following properties
-- with constant difference in log lambda
-- shifted to align with solar (Ganymede) spectrum
-
-@date 05-Apr-2016
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
@@ -190,8 +184,3 @@ def rescale_log_w(s, serr, w):
         serrlog[i] = np.interp(wlog[i], ww, sserr)
 
     return slog, serrlog, wlog
-
-if __name__ == '__main__':
-    adjust_spectra('/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/rj122.761.fits',
-        '/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/rj76.283.fits')
-    sys.exit()
