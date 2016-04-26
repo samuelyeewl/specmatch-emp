@@ -7,29 +7,39 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 import os, sys
 
-def adjust_spectra(path, shift_reference=None):
+def open_spectrum(path):
     """
-    Adjusts the given spectrum
+    Opens the spectrum at the specified path.
 
-    Args:
-        path: 
-            path to FITS file containing spectrum
-        shift_reference:
-            path to FITS file containing reference spectrum to shift to
-            if None specified, spectrum will not be shifted, only placed onto
-            constant log lambda scale.
-
-    Saves the adjusted spectrum to a FITS file with the same name with _adj appended
-    e.g. rj76.283_adj.fits
+    Returns:
+        s, serr, w
     """
-
     # open file and read data
     hdu = fits.open(path)
     s = hdu[0].data
     serr = hdu[1].data
     w = hdu[2].data
 
-    # normalize each order to the 95th percentile
+    return s, serr, w, hdu
+
+
+def adjust_spectra(s, serr, w, s_ref=None, serr_ref=None, w_ref=None):
+    """
+    Adjusts the given spectrum by placing it on a constant log-lambda scale.
+    If a reference spectrum is specified, solves for shifts between target
+    and reference spectra and shifts the target spectrum accordingly.
+
+    Args:
+        s, serr, w: 
+            Target spectrum, error and wavelength scale
+        s_ref, serr_ref, w_ref:
+            Reference spectrum, error, and wavelength scale (optional)
+
+    Returns: 
+        s_adj, serr_adj, w_adj:
+            The adjusted spectrum and wavelength scale.
+    """
+    # normalize each order of the target spectrum to the 95th percentile
     percen_order = np.percentile(s, 95, axis=1)
     s /= percen_order.reshape(-1,1)
 
@@ -37,13 +47,8 @@ def adjust_spectra(path, shift_reference=None):
     slog, serrlog, wlog = rescale_log_w(s, serr, w)
 
     # solve for velocity shifts between spectra
-    if shift_reference is not None:
+    if s_ref is not None:
         w_shifted = np.empty_like(wlog)
-        # read reference spectrum
-        hdu_ref = fits.open(shift_reference)
-        s_ref = hdu_ref[0].data
-        serr_ref = hdu_ref[1].data
-        w_ref = hdu_ref[2].data
 
         # normalize reference spectrum
         percen_order_ref = np.percentile(s_ref, 95, axis=1)
@@ -89,23 +94,10 @@ def adjust_spectra(path, shift_reference=None):
 
             w_shifted[i] = ww_shifted
 
-        # For testing: plot 2nd order line
-        plt.plot(w_shifted[2], slog[2])
-        plt.plot(wlog[2], s_ref[2])
-        # plt.xlim(5179, 5187)
-        # plt.ylim(0,1)
-        # plt.savefig('{0:d}_segments.png'.format(num_sections))
-        plt.show()
-
     else:
         w_shifted = wlog
 
-    # save file
-    outfile = os.path.splitext(path)[0] + '_adj.fits'
-    hdu[0].data = slog
-    hdu[1].data = serrlog
-    hdu[2].data = w_shifted
-    # hdu.writeto(outfile)
+    return slog, serrlog, w_shifted
 
 def solve_for_shifts(s, s_ref):
     """
@@ -139,6 +131,7 @@ def solve_for_shifts(s, s_ref):
     lag = -p[1]/(2*p[0])
 
     return lag, lag_arr, xcorr
+
 
 def rescale_w(s, serr, w, w_ref):
     """
