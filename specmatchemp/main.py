@@ -52,6 +52,13 @@ if __name__ == '__main__':
     serr_ref = np.zeros_like(s_ref)
 
     s_adj, serr_adj, w_adj = adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref)
+    # adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref)
+
+    plt.plot(w_adj, s_adj)
+    plt.plot(w_ref, s_ref)
+    plt.xlim(5385,5400)
+    plt.ylim(0,1.1)
+    plt.show()
 
     # plt.plot(w_adj[2], s_adj[2])
     # plt.plot(w_ref[2], s_ref[2])

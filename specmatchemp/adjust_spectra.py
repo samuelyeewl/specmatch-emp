@@ -40,23 +40,33 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
         s_adj, serr_adj, w_adj:
             The adjusted spectrum and wavelength scale.
     """
-    # normalize each order of the target spectrum to the 75th percentile
-    percen_order = np.percentile(s, 75, axis=1)
+    # normalize each order of the target spectrum to the 95th percentile
+    percen_order = np.percentile(s, 95, axis=1)
     s /= percen_order.reshape(-1,1)
+
+    s_shifted = np.asarray([])
+    serr_shifted = np.asarray([])
+    ws = np.asarray([])
 
     # for every order in the spectrum
     for i in range(len(s)):
-    # for i in [2]:
+    # for i in [5]:
         ww = w[i]
         ss = s[i]
         sserr = serr[i]
         # get the target spectrum wavelength range
         w_min = ww[0]
         w_max = ww[-1]
+        # remove obvious noise
+        mask = np.asarray([True if sp < 1.2 else False for sp in ss])
+        ss = ss[mask]
+        sserr = sserr[mask]
+        ww = ww[mask]
 
         # get the reference spectrum in the same range
         in_range = np.asarray([True if wr > w_min and wr < w_max else False
             for wr in w_ref])
+        start_idx = np.argmax(in_range)
         w_ref_c = w_ref[in_range]
         s_ref_c = s_ref[in_range]
 
@@ -64,7 +74,7 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
         ss, sserr = rescale_w(ss, sserr, ww, w_ref_c)
 
         # solve for shifts in different sections
-        num_sections = 4
+        num_sections = 8
         l_sect = int(len(w_ref_c)/num_sections)      # length of each section
         lags = np.empty(num_sections)
         center_pix = np.empty(num_sections)
@@ -88,8 +98,8 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
 
         # fit a straight line to the shifts
         fit = np.polyfit(center_pix, lags, 1)
-        pixs = np.arange(0, len(w_ref_c))
-        pix_shifted = pixs - fit[1] - pixs*fit[0]
+        pix_arr = np.arange(0, len(w_ref_c))
+        pix_shifted = pix_arr - fit[1] - pix_arr*fit[0]
 
         # plt.plot(center_pix, lags)
         # plt.plot(pixs, fit[0]*pixs+fit[1])
@@ -103,15 +113,32 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
         # plt.plot(ww_shifted, w_ref_c)
         # plt.show()
 
+        pix_min = int(pix_shifted[0]) + 1
+        pix_max = int(pix_shifted[-1])
+        # new pixel array
+        new_pix = np.arange(pix_min, pix_max)
+        # new wavelength array
+        w_ref_c = w_ref[start_idx+pix_min:start_idx+pix_max]
+
         # interpolate the spectrum back onto the reference spectrum
-        ss_shifted = np.interp(pixs, pix_shifted, ss)
+        ss_shifted = np.interp(new_pix, pix_shifted, ss)
+        sserr_shifted = np.interp(new_pix, pix_shifted, sserr)
 
-        plt.plot(w_ref_c, ss_shifted)
-    
-    plt.plot(w_ref, s_ref)
-    plt.show()
+        # append to array, discarding leading and trailing 50 pixels
+        s_shifted = np.append(s_shifted, ss_shifted[50:-50])
+        serr_shifted = np.append(serr_shifted, sserr_shifted[50:-50])
+        ws = np.append(ws, w_ref_c[50:-50])
 
-    return s, serr, w
+    # average any values that appear twice
+    w_flattened = np.unique(ws)
+    s_flattened = np.empty_like(w_flattened)
+    serr_flattened = np.empty_like(w_flattened)
+
+    for i, wl in enumerate(w_flattened):
+        s_flattened[i] = np.mean(s_shifted[ws == wl])
+        serr_flattened[i] = np.mean(serr_shifted[ws == wl])
+
+    return s_flattened, serr_flattened, w_flattened
     
 def solve_for_shifts(s, s_ref):
     """
