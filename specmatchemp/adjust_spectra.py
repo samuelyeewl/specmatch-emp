@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""Place a target spectrum onto a new wavelength scale onto a new
+"""
+Place a target spectrum onto a new wavelength scale onto a new
 wavelength scale
 """
 import numpy as np
@@ -7,7 +8,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 import os, sys
 
-def open_spectrum(path):
+def read_spectrum(path):
     """
     Opens the spectrum at the specified path.
 
@@ -23,82 +24,95 @@ def open_spectrum(path):
     return s, serr, w, hdu
 
 
-def adjust_spectra(s, serr, w, s_ref=None, serr_ref=None, w_ref=None):
+def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
     """
-    Adjusts the given spectrum by placing it on a constant log-lambda scale.
-    If a reference spectrum is specified, solves for shifts between target
-    and reference spectra and shifts the target spectrum accordingly.
+    Adjusts the given spectrum by first placing it on the same wavelength scale as
+    the specified reference spectrum, then solves for shifts between the two
+    spectra.
 
     Args:
         s, serr, w: 
             Target spectrum, error and wavelength scale
         s_ref, serr_ref, w_ref:
-            Reference spectrum, error, and wavelength scale (optional)
+            Reference spectrum, error, and wavelength scale
 
     Returns: 
         s_adj, serr_adj, w_adj:
             The adjusted spectrum and wavelength scale.
     """
-    # normalize each order of the target spectrum to the 95th percentile
-    percen_order = np.percentile(s, 95, axis=1)
+    # normalize each order of the target spectrum to the 75th percentile
+    percen_order = np.percentile(s, 75, axis=1)
     s /= percen_order.reshape(-1,1)
 
-    # place spectrum on constant log-lambda wavelength scale
-    slog, serrlog, wlog = rescale_log_w(s, serr, w)
+    # for every order in the spectrum
+    for i in range(len(s)):
+    # for i in [2]:
+        ww = w[i]
+        ss = s[i]
+        sserr = serr[i]
+        # get the target spectrum wavelength range
+        w_min = ww[0]
+        w_max = ww[-1]
 
-    # solve for velocity shifts between spectra
-    if s_ref is not None:
-        w_shifted = np.empty_like(wlog)
+        # get the reference spectrum in the same range
+        in_range = np.asarray([True if wr > w_min and wr < w_max else False
+            for wr in w_ref])
+        w_ref_c = w_ref[in_range]
+        s_ref_c = s_ref[in_range]
 
-        # normalize reference spectrum
-        percen_order_ref = np.percentile(s_ref, 95, axis=1)
-        s_ref /= percen_order_ref.reshape(-1,1)
+        # place the target spectrum on the same wavelength scale
+        ss, sserr = rescale_w(ss, sserr, ww, w_ref_c)
 
-        # place reference spectrum on same wavelength scale as target spectrum
-        s_ref, serr_ref = rescale_w(s_ref, serr_ref, w_ref, wlog)
+        # solve for shifts in different sections
+        num_sections = 4
+        l_sect = int(len(w_ref_c)/num_sections)      # length of each section
+        lags = np.empty(num_sections)
+        center_pix = np.empty(num_sections)
 
-        # for i in range(len(wlog)):
-        for i in [2]:
-            ww = wlog[i]
-            ss = slog[i]
-            ww_ref = w_ref[i]
-            ss_ref = s_ref[i]
+        for j in range(num_sections):
+            # get the shifts in pixel number
+            lag, lag_arr, xcorr = solve_for_shifts(ss[j*l_sect:(j+1)*l_sect],
+                s_ref_c[j*l_sect:(j+1)*l_sect])
+            lags[j] = lag
+            center_pix[j] = (j+1/2)*l_sect
+            # plt.plot(lag_arr, xcorr)
 
-            # solve for shifts in different sections
-            num_sections = 2
-            lags = np.empty(num_sections)
-            l_sect = len(ss)/num_sections
-            ww_shifted = np.empty_like(ww)
+        # we expect that the shifts across every order are close together
+        # so we should remove outliers
+        med = np.median(lags)
+        tol = 1     # permitted deviation from median
+        not_outlier = np.asarray([True if l > med-tol and l < med+tol else False 
+            for l in lags])
+        lags = lags[not_outlier]
+        center_pix = center_pix[not_outlier]
 
-            for j in range(num_sections):
-                # split array
-                ss_sect = ss[j*l_sect:(j+1)*l_sect]
-                ss_ref_sect = ss_ref[j*l_sect:(j+1)*l_sect]
-                
-                # solve for shifts
-                lag, lag_arr, xcorr = solve_for_shifts(ss_sect, ss_ref_sect)
+        # fit a straight line to the shifts
+        fit = np.polyfit(center_pix, lags, 1)
+        pixs = np.arange(0, len(w_ref_c))
+        pix_shifted = pixs - fit[1] - pixs*fit[0]
 
-                # shift spectrum
-                dw = np.median(ww[j*l_sect+1:(j+1)*l_sect] - ww[j*l_sect:(j+1)*l_sect-1])
-                ww_shifted[j*l_sect:(j+1)*l_sect] = ww[j*l_sect:(j+1)*l_sect] - dw*lag
+        # plt.plot(center_pix, lags)
+        # plt.plot(pixs, fit[0]*pixs+fit[1])
+        # plt.show()
 
-                lags[j] = lag
+        # plt.plot(pixs, pix_shifted)
+        # plt.show()
 
-                plt.plot(lag_arr, xcorr)
-            
-            plt.show()
+        # now shift the spectrum
+        # ww_shifted = w_ref_c - fit[1] - w_ref_c*fit[0]
+        # plt.plot(ww_shifted, w_ref_c)
+        # plt.show()
 
-            # plot variation of lags
-            plt.plot(np.linspace(ww[0], ww[-1], num_sections), lags)
-            plt.show()
+        # interpolate the spectrum back onto the reference spectrum
+        ss_shifted = np.interp(pixs, pix_shifted, ss)
 
-            w_shifted[i] = ww_shifted
+        plt.plot(w_ref_c, ss_shifted)
+    
+    plt.plot(w_ref, s_ref)
+    plt.show()
 
-    else:
-        w_shifted = wlog
-
-    return slog, serrlog, w_shifted
-
+    return s, serr, w
+    
 def solve_for_shifts(s, s_ref):
     """
     Solve for the pixel shifts required to align two spectra that are on the same
@@ -144,13 +158,15 @@ def rescale_w(s, serr, w, w_ref):
     Returns:
         The spectrum and associated error on the desired scale.
     """
+    snew = np.interp(w_ref, w, s)
+    serrnew = np.interp(w_ref, w, s)
 
-    snew = np.empty_like(s)
-    serrnew = np.empty_like(serr)
+    # snew = np.empty_like(s)
+    # serrnew = np.empty_like(serr)
 
-    for i in range(len(w)):
-        snew[i] = np.interp(w_ref[i], w[i], s[i])
-        serrnew[i] = np.interp(w_ref[i], w[i], serr[i])
+    # for i in range(len(w)):
+    #     snew[i] = np.interp(w_ref[i], w[i], s[i])
+    #     serrnew[i] = np.interp(w_ref[i], w[i], serr[i])
 
     return snew, serrnew
 
