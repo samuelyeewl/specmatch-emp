@@ -39,7 +39,8 @@ def read_nso_spectrum(path, w_min=3000, w_max=13000, num_pts=64000):
 
 
 if __name__ == '__main__':
-    target_path = '/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/rj122.761.fits'
+    # target_path = '/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/rj122.761.fits'
+    target_path = '/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/rj179.289.fits'
     nso_path = '/Users/samuel/Dropbox/SpecMatch-Emp/nso/nso.fits'
     w_min = 4800
     w_max = 6500
@@ -65,9 +66,9 @@ if __name__ == '__main__':
     # plt.show()
 
     # # # save file
-    # # outfile = os.path.splitext(target_path)[0] + '_adj.fits'
-    # # hdu[0].data = adj[0]
-    # # hdu[1].data = adj[1]
-    # # hdu[2].data = adj[2]
-    # # hdu.writeto(outfile)
+    outfile = os.path.splitext(target_path)[0] + '_adj.fits'
+    hdu[0].data = s_adj
+    hdu[1].data = serr_adj
+    hdu[2].data = w_adj
+    hdu.writeto(outfile, clobber=True)
     # sys.exit()
