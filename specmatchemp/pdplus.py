@@ -3,7 +3,6 @@ Module to augment pandas functionality.
 """
 import pandas as pd
 import numpy as np
-from cStringIO import StringIO
 
 def latex_strip(tab,path):
     """

@@ -1,28 +1,14 @@
 #!/usr/bin/env python
 """
-Place a target spectrum onto a new wavelength scale onto a new
-wavelength scale
+@filename shift_spectra.py
+
+Shift a target spectrum onto a reference spectrum.
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from astropy.io import fits
-import os, sys
-
-def read_spectrum(path):
-    """
-    Opens the spectrum at the specified path.
-
-    Returns:
-        s, serr, w
-    """
-    # open file and read data
-    hdu = fits.open(path)
-    s = hdu[0].data
-    serr = hdu[1].data
-    w = hdu[2].data
-
-    return s, serr, w, hdu
-
+import argparse
+# from specmatch_io import *
+from specmatchemp import specmatch_io
 
 def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
     """
@@ -50,7 +36,6 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
 
     # for every order in the spectrum
     for i in range(len(s)):
-    # for i in [5]:
         ww = w[i]
         ss = s[i]
         sserr = serr[i]
@@ -67,15 +52,17 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
         in_range = np.asarray([True if wr > w_min and wr < w_max else False
             for wr in w_ref])
         start_idx = np.argmax(in_range)
+
         w_ref_c = w_ref[in_range]
         s_ref_c = s_ref[in_range]
 
         # place the target spectrum on the same wavelength scale
         ss, sserr = rescale_w(ss, sserr, ww, w_ref_c)
 
-        # solve for shifts in different sections
-        num_sections = 8
-        l_sect = int(len(w_ref_c)/num_sections)      # length of each section
+        # solve for shifts in different sections (of length 1200 pix)
+        l_sect = 1000
+        num_sections = int(len(w_ref_c)/l_sect)
+        l_sect = int(len(w_ref_c)/num_sections)
         lags = np.empty(num_sections)
         center_pix = np.empty(num_sections)
 
@@ -90,7 +77,7 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
         # we expect that the shifts across every order are close together
         # so we should remove outliers
         med = np.median(lags)
-        tol = 1     # permitted deviation from median
+        tol = 2     # permitted deviation from median
         not_outlier = np.asarray([True if l > med-tol and l < med+tol else False 
             for l in lags])
         lags = lags[not_outlier]
@@ -113,8 +100,9 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
         # plt.plot(ww_shifted, w_ref_c)
         # plt.show()
 
-        pix_min = int(pix_shifted[0]) + 1
-        pix_max = int(pix_shifted[-1])
+        pix_min = max(int(pix_shifted[0]) + 1, 0)
+        pix_max = min(int(pix_shifted[-1]), len(w_ref_c))
+
         # new pixel array
         new_pix = np.arange(pix_min, pix_max)
         # new wavelength array
@@ -173,7 +161,6 @@ def solve_for_shifts(s, s_ref):
 
     return lag, lag_arr, xcorr
 
-
 def rescale_w(s, serr, w, w_ref):
     """
     Place the given spectrum on the wavelength scale specified by w_ref
@@ -186,37 +173,54 @@ def rescale_w(s, serr, w, w_ref):
         The spectrum and associated error on the desired scale.
     """
     snew = np.interp(w_ref, w, s)
-    serrnew = np.interp(w_ref, w, s)
-
-    # snew = np.empty_like(s)
-    # serrnew = np.empty_like(serr)
-
-    # for i in range(len(w)):
-    #     snew[i] = np.interp(w_ref[i], w[i], s[i])
-    #     serrnew[i] = np.interp(w_ref[i], w[i], serr[i])
+    serrnew = np.interp(w_ref, w, serr)
 
     return snew, serrnew
 
+def main(target_path, target_type, reference_path, output_path):
+    if target_type =='hires':
+        try:
+            s, w, serr, header = read_hires_spectrum(target_path)
+        except:
+            raise
+    elif target_type =='standard':
+        try:
+            s, w, serr, header = read_standard_spectrum(target_path)
+        except:
+            raise
 
-def rescale_log_w(s, serr, w):
-    """
-    Place the given spectrum on a constant log-lambda wavelength scale
-    """
-    wlog = np.empty_like(w)
-    slog = np.empty_like(s)
-    serrlog = np.empty_like(serr)
+        s = np.asarray([s])
+        w = np.asarray([w])
+        serr = np.asarray([serr])
 
-    # create a wavelength scale that is uniform in log(lambda)
-    for i in range(len(w)):
-        ww = w[i]
-        ss = s[i]
-        sserr = serr[i]
+    try:
+        s_ref, w_ref, serr_ref, header_ref = read_standard_spectrum(reference_path)
+    except:
+        raise
 
-        logw_min = np.log10(ww[0])
-        logw_max = np.log10(ww[-1])
+    s_adj, serr_adj, w_adj = adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref)
+    # adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref)
 
-        wlog[i] = np.logspace(logw_min, logw_max, len(ww), base=10.0)
-        slog[i] = np.interp(wlog[i], ww, ss)
-        serrlog[i] = np.interp(wlog[i], ww, sserr)
+    # plt.plot(w_adj, s_adj)
+    # plt.plot(w_ref, s_ref)
+    # plt.xlim(6300, 6320)
+    # plt.show()
 
-    return slog, serrlog, wlog
+    try:
+        save_standard_spectrum(output_path, s_adj, w_adj, serr_adj, header)
+    except:
+        print('Could not save to '+output_path)
+        raise
+
+    return s_adj, w_adj, serr_adj
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Shift a target spectrum onto a reference spectrum')
+    parser.add_argument('target_path', type=str)
+    parser.add_argument('target_type', choices=io_types)
+    parser.add_argument('reference_path', type=str)
+    parser.add_argument('output_path', type=str)
+    args = parser.parse_args()
+
+    main(args.target_path, args.target_type, args.reference_path, args.output_path)
