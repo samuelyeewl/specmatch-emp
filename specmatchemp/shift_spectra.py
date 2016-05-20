@@ -10,7 +10,7 @@ import argparse
 # from specmatch_io import *
 from specmatchemp import specmatch_io
 
-def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
+def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, diagnosticfile='img.img'):
     """
     Adjusts the given spectrum by first placing it on the same wavelength scale as
     the specified reference spectrum, then solves for shifts between the two
@@ -21,6 +21,8 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
             Target spectrum, error and wavelength scale
         s_ref, serr_ref, w_ref:
             Reference spectrum, error, and wavelength scale
+        diagnostic:
+            Set to true if diagnostic plots of lags are required
 
     Returns: 
         s_adj, serr_adj, w_adj:
@@ -33,6 +35,8 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
     s_shifted = np.asarray([])
     serr_shifted = np.asarray([])
     ws = np.asarray([])
+
+    plt.cla()
 
     # for every order in the spectrum
     for i in range(len(s)):
@@ -88,8 +92,10 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
         pix_arr = np.arange(0, len(w_ref_c))
         pix_shifted = pix_arr - fit[1] - pix_arr*fit[0]
 
-        # plt.plot(center_pix, lags)
-        # plt.plot(pixs, fit[0]*pixs+fit[1])
+        # if (diagnostic and i==2):
+        if(diagnostic):
+            plt.plot(center_pix, lags)
+            plt.plot(pix_arr, fit[0]*pix_arr+fit[1])
         # plt.show()
 
         # plt.plot(pixs, pix_shifted)
@@ -116,6 +122,10 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref):
         s_shifted = np.append(s_shifted, ss_shifted[50:-50])
         serr_shifted = np.append(serr_shifted, sserr_shifted[50:-50])
         ws = np.append(ws, w_ref_c[50:-50])
+
+    if(diagnostic):
+        plt.savefig(diagnosticfile)
+        plt.clf()
 
     # average any values that appear twice
     w_flattened = np.unique(ws)
@@ -144,6 +154,7 @@ def solve_for_shifts(s, s_ref):
     Returns:
         The pixel shift, the lag and correlation data
     """
+
     # correlate the two spectra
     xcorr = np.correlate(s-1, s_ref-1, mode='same')
     max_corr = np.argmax(xcorr)
@@ -177,15 +188,15 @@ def rescale_w(s, serr, w, w_ref):
 
     return snew, serrnew
 
-def main(target_path, target_type, reference_path, output_path):
+def main(target_path, target_type, reference_path, output_path, diagnostic=False, diagnosticfile='img.img'):
     if target_type =='hires':
         try:
-            s, w, serr, header = read_hires_spectrum(target_path)
+            s, w, serr, header = specmatch_io.read_hires_spectrum(target_path)
         except:
             raise
     elif target_type =='standard':
         try:
-            s, w, serr, header = read_standard_spectrum(target_path)
+            s, w, serr, header = specmatch_io.read_standard_spectrum(target_path)
         except:
             raise
 
@@ -194,20 +205,14 @@ def main(target_path, target_type, reference_path, output_path):
         serr = np.asarray([serr])
 
     try:
-        s_ref, w_ref, serr_ref, header_ref = read_standard_spectrum(reference_path)
+        s_ref, w_ref, serr_ref, header_ref = specmatch_io.read_standard_spectrum(reference_path)
     except:
         raise
 
-    s_adj, serr_adj, w_adj = adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref)
-    # adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref)
-
-    # plt.plot(w_adj, s_adj)
-    # plt.plot(w_ref, s_ref)
-    # plt.xlim(6300, 6320)
-    # plt.show()
+    s_adj, serr_adj, w_adj = adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic, diagnosticfile)
 
     try:
-        save_standard_spectrum(output_path, s_adj, w_adj, serr_adj, header)
+        specmatch_io.save_standard_spectrum(output_path, s_adj, w_adj, serr_adj, header)
     except:
         print('Could not save to '+output_path)
         raise
