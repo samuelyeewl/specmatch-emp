@@ -6,6 +6,7 @@ Defines the Match class
 import pandas as pd
 import numpy as np
 import lmfit
+from scipy.interpolate import UnivariateSpline
 
 # lmfit python package
 
@@ -28,9 +29,17 @@ class Match:
         based on the reference spectrum.
         Stores the tweaked model in spectra.s_mod and serr_mod.
         """
-        amp = params['amp'].value
-        self.spectra['s_mod'] = self.spectra['s_ref']*amp
-        self.spectra['serr_mod'] = self.spectra['serr_ref']*amp
+        # Create a spline
+        x = []
+        y = []
+        for i in range(params['num_knots'].value):
+            p = 'knot_{0:d}'.format(i)
+            x.append(params[p+'_x'].value)
+            y.append(params[p+'_y'].value)
+        s = UnivariateSpline(x, y, s=0)
+
+        self.spectra['s_mod'] = s(self.spectra['w'])*self.spectra['s_ref']
+        self.spectra['serr_mod'] = s(self.spectra['w'])*self.spectra['serr_ref']
 
     def residual(self, params):
         """
@@ -53,9 +62,18 @@ class Match:
         """
         Calculates the best fit model by minimizing over the parameters
         """
-        # Add parameters
+        # Create a spline with 5 knots
         params = lmfit.Parameters()
-        params.add('amp', value=1.0, min=0.1, max=1.5)
+        num_knots = 5
+        params.add('num_knots', value=num_knots, vary=False)
+        interval = int(len(self.spectra)/(num_knots+1))
+        ws = [self.spectra['w'].iloc[interval*(i+1)] for i in range(num_knots)]
+
+        # Add initial parameters
+        for i in range(num_knots):
+            p = 'knot_{0:d}'.format(i)
+            params.add(p+'_x', value=self.spectra['w'].iloc[interval*i], vary=False)
+            params.add(p+'_y', value=self.spectra['s_targ'].iloc[interval*i])
 
         # Minimize chi-squared
         out = lmfit.minimize(self.residual, params)
