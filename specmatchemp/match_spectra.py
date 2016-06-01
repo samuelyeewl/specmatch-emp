@@ -14,7 +14,7 @@ from specmatchemp import match
 
 if __name__ == '__main__':
     specref_path = '/Users/samuel/Dropbox/SpecMatch-Emp/nso/nso_std.fits'
-    spec2_path = '../lib/rj118.463_adj.fits'
+    spec2_path = './lib/rj118.463_adj.fits'
 
     specref, headerref = read_as_dataframe(specref_path)
     query = '6000 < w < 6100'
@@ -23,7 +23,14 @@ if __name__ == '__main__':
     spec2, header2 = read_as_dataframe(spec2_path)
 
     mt = match.Match(spec2, specref)
-    print(mt.chisquared)
+    mt.best_fit()
+    print(mt.best_params['amp'])
+    print(mt.best_chisq)
+    plt.plot(mt.spectra['w'], mt.spectra['s_targ'], label='Target')
+    plt.plot(mt.spectra['w'], mt.spectra['s_ref'], label='Reference')
+    plt.plot(mt.spectra['w'], mt.spectra['s_mod'], label='Modified reference')
+    plt.legend(loc='lower right')
+    plt.show()
 
     # chisquared = calculate_chi_squared(specref, spec2, 6000, 6100)
 
