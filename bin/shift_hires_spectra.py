@@ -21,12 +21,12 @@ if __name__ == '__main__':
 
     s, w, serr = shift_spectra.main(args.target_path, 'hires', args.reference_path, args.output_path, True)
     
-    nso_path = '/Users/samuel/Dropbox/SpecMatch-Emp/nso/nso_std.fits'
-    s_nso, w_nso, serr_nso, h_nso = specmatch_io.read_standard_spectrum(nso_path)
+    # nso_path = '/Users/samuel/Dropbox/SpecMatch-Emp/nso/nso_std.fits'
+    s_ref, w_ref, serr_ref, h_ref = specmatch_io.read_standard_spectrum(args.reference_path)
 
     plt.clf()
-    plt.plot(w_nso, s_nso)
+    plt.plot(w_ref, s_ref)
     plt.plot(w, s)
     plt.plot(w, serr)
-    plt.xlim(5180, 5200)
+    plt.xlim(5525, 5545)
     plt.show()

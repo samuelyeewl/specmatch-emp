@@ -7,7 +7,7 @@ Shift a target spectrum onto a reference spectrum.
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-# from specmatch_io import *
+import warnings
 from specmatchemp import specmatch_io
 
 def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, diagnosticfile='img.img'):
@@ -38,8 +38,17 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, diagnos
 
     plt.cla()
 
+    plt.figure(1)
+
+    # create an array to store shift parameters
+    fit_arr = []
+    w_scaled = []
+    s_scaled = []
+    serr_scaled = []
+
     # for every order in the spectrum
     for i in range(len(s)):
+    # for i in [15]:
         ww = w[i]
         ss = s[i]
         sserr = serr[i]
@@ -55,13 +64,17 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, diagnos
         # get the reference spectrum in the same range
         in_range = np.asarray([True if wr > w_min and wr < w_max else False
             for wr in w_ref])
-        start_idx = np.argmax(in_range)
 
         w_ref_c = w_ref[in_range]
         s_ref_c = s_ref[in_range]
 
         # place the target spectrum on the same wavelength scale
         ss, sserr = rescale_w(ss, sserr, ww, w_ref_c)
+
+        # save updated target spectrum
+        w_scaled.append(w_ref_c)
+        s_scaled.append(ss)
+        serr_scaled.append(sserr)
 
         # solve for shifts in different sections (of length 1200 pix)
         l_sect = 1000
@@ -76,35 +89,57 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, diagnos
                 s_ref_c[j*l_sect:(j+1)*l_sect])
             lags[j] = lag
             center_pix[j] = (j+1/2)*l_sect
-            # plt.plot(lag_arr, xcorr)
+            if (diagnostic):
+                plt.figure(2)
+                plt.plot(lag_arr, xcorr, label='{0:d}'.format(j))
 
         # we expect that the shifts across every order are close together
         # so we should remove outliers
         med = np.median(lags)
-        tol = 2     # permitted deviation from median
+        tol = 10     # permitted deviation from median
         not_outlier = np.asarray([True if l > med-tol and l < med+tol else False 
             for l in lags])
         lags = lags[not_outlier]
         center_pix = center_pix[not_outlier]
 
         # fit a straight line to the shifts
-        fit = np.polyfit(center_pix, lags, 1)
-        pix_arr = np.arange(0, len(w_ref_c))
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
+            try:
+                fit = np.polyfit(center_pix, lags, 1)
+                fit_arr.append(fit)
+
+                 # saved the fit parameters
+                pix_arr = np.arange(0, len(ww))
+                pix_shifted = pix_arr - fit[1] - pix_arr*fit[0]
+
+                if(diagnostic):
+                    plt.figure(1)
+                    plt.plot(center_pix, lags, label='{0:d}'.format(i))
+                    # plt.plot(pix_arr, fit[0]*pix_arr+fit[1], label='{0:d} fit'.format(i))
+            except np.RankWarning:
+                # if we don't get a good fit, we use the previous order
+                fit_arr.append(None)
+
+    # loop through all orders again to shfit them
+    for i in range(len(s)):
+        ww = w_scaled[i]
+        ss = s_scaled[i]
+        sserr = serr_scaled[i]
+
+        start_idx = np.where(w_ref == ww[0])
+
+        # shift the pixel array
+        if (fit_arr[i] is not None):
+            fit = fit_arr[i]
+        else:
+            # use average of two surrounding orders if the fit for this 
+            # order was poor
+            fit = np.mean(np.array([fit_arr[i-1],fit_arr[(i+1) % len(fit_arr)]]),axis=0)
+            print('Used mean for order {0:d}'.format(i))
+
+        pix_arr = np.arange(0, len(ww))
         pix_shifted = pix_arr - fit[1] - pix_arr*fit[0]
-
-        # if (diagnostic and i==2):
-        if(diagnostic):
-            plt.plot(center_pix, lags)
-            plt.plot(pix_arr, fit[0]*pix_arr+fit[1])
-        # plt.show()
-
-        # plt.plot(pixs, pix_shifted)
-        # plt.show()
-
-        # now shift the spectrum
-        # ww_shifted = w_ref_c - fit[1] - w_ref_c*fit[0]
-        # plt.plot(ww_shifted, w_ref_c)
-        # plt.show()
 
         pix_min = max(int(pix_shifted[0]) + 1, 0)
         pix_max = min(int(pix_shifted[-1]), len(w_ref_c))
@@ -112,7 +147,7 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, diagnos
         # new pixel array
         new_pix = np.arange(pix_min, pix_max)
         # new wavelength array
-        w_ref_c = w_ref[start_idx+pix_min:start_idx+pix_max]
+        ww = w_ref[start_idx[0]+pix_min:start_idx[0]+pix_max]
 
         # interpolate the spectrum back onto the reference spectrum
         ss_shifted = np.interp(new_pix, pix_shifted, ss)
@@ -121,11 +156,16 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, diagnos
         # append to array, discarding leading and trailing 50 pixels
         s_shifted = np.append(s_shifted, ss_shifted[50:-50])
         serr_shifted = np.append(serr_shifted, sserr_shifted[50:-50])
-        ws = np.append(ws, w_ref_c[50:-50])
+        ws = np.append(ws, ww[50:-50])
 
     if(diagnostic):
+        plt.figure(1)
+        plt.legend()
         plt.savefig(diagnosticfile)
-        plt.clf()
+        plt.figure(2)
+        plt.legend()
+        plt.savefig('lags'+diagnosticfile)
+        plt.cla()
 
     # average any values that appear twice
     w_flattened = np.unique(ws)
@@ -157,10 +197,12 @@ def solve_for_shifts(s, s_ref):
 
     # correlate the two spectra
     xcorr = np.correlate(s-1, s_ref-1, mode='same')
-    max_corr = np.argmax(xcorr)
-
     # number of pixels
     npix = xcorr.shape[0]
+
+    # find the maximum, assuming shifts cannot be > +/- 50 pix
+    max_corr = np.argmax(xcorr[npix/2-50:npix/2+50])+npix/2-50
+
     lag_arr = np.arange(-npix/2+1, npix/2+1, 1)
 
     # select points around the peak and fit a quadratic
@@ -188,7 +230,7 @@ def rescale_w(s, serr, w, w_ref):
 
     return snew, serrnew
 
-def main(target_path, target_type, reference_path, output_path, diagnostic=False, diagnosticfile='img.img'):
+def main(target_path, target_type, reference_path, output_path, diagnostic=False, diagnosticfile='diag.png'):
     if target_type =='hires':
         try:
             s, w, serr, header = specmatch_io.read_hires_spectrum(target_path)
