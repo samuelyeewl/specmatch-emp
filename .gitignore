@@ -4,6 +4,11 @@ spectra/
 lib
 lib_old
 
+# Ignore plots and working data
+*.png
+chi-squared.csv
+working/
+
 # Byte-compiled / optimized / DLL files
 
 __pycache__/
