@@ -24,13 +24,16 @@ if __name__ == '__main__':
 
     mt = match.Match(spec2, specref)
     mt.best_fit()
+    resid = mt.residual(mt.best_params)
     print(mt.best_chisq)
+    print(mt.best_params)
     plt.figure(figsize=(12,6))
     plt.plot(mt.spectra['w'], mt.spectra['s_targ'], label='Target')
     plt.plot(mt.spectra['w'], mt.spectra['s_ref'], label='Reference')
     plt.plot(mt.spectra['w'], mt.spectra['s_mod'], label='Modified reference')
+    plt.plot(mt.spectra['w'], resid, label='Residuals')
     plt.legend(loc='lower right')
-    plt.savefig('fit_spline_2.png', dpi=300)
+    # plt.savefig('fit_spline_2.png', dpi=300)
     plt.show()
 
     # chisquared = calculate_chi_squared(specref, spec2, 6000, 6100)
