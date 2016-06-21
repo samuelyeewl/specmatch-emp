@@ -41,11 +41,11 @@ if __name__ == '__main__':
     params = mt.best_params
     params['vsini'].set(value=1.0)
     mt2.create_model(params)
-    # plt.plot(mt2.spectra['w'], mt2.spectra['s_mod'], label='Modified reference, no broadening')
+    plt.plot(mt2.spectra['w'], mt2.spectra['s_mod'], label='Modified reference, no broadening')
 
     plt.legend(loc='lower right')
-    plt.savefig('fit_broadening.png', dpi=300)
-    # plt.show()
+    # plt.savefig('fit_broadening.png', dpi=300)
+    plt.show()
 
     # chisquared = calculate_chi_squared(specref, spec2, 6000, 6100)
 
