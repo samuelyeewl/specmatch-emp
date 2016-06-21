@@ -7,7 +7,6 @@ working/
 
 # Ignore plots and data
 *.png
-chi-squared.csv
 
 # Byte-compiled / optimized / DLL files
 

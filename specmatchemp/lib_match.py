@@ -3,7 +3,7 @@
 import pandas as pd 
 import numpy as np
 import matplotlib.pyplot as plt
-from specmatch_io import *
+from specmatchemp.io.io import *
 from specmatchemp import match
 import lmfit
 
@@ -30,4 +30,4 @@ if __name__ == '__main__':
         print(mt.best_chisq)
         lib.loc[index, "params"] = mt.best_params.dumps()
 
-    lib.to_csv('./chi-squared.csv')
+    lib.to_csv('./chi-squared_broadening.csv')
