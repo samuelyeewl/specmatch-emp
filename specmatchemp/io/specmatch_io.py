@@ -1,5 +1,5 @@
 """
-@filename specmatch_io.py
+@filename specmatch.io.specmatch_io.py
 
 Provides functions to read and write spectra for use in specmatchemp
 """
