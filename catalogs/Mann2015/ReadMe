@@ -1,0 +1,133 @@
+J/ApJ/804/64   Empirical and model parameters of 183 M dwarfs      (Mann+, 2015)
+================================================================================
+How to constrain your M dwarf: measuring effective temperature,
+bolometric luminosity, mass, and radius.
+    Mann A.W., Feiden G.A., Gaidos E., Boyajian T., Von Braun K.
+   <Astrophys. J., 804, 64 (2015)>
+   =2015ApJ...804...64M
+================================================================================
+ADC_Keywords: Stars, M-type ; Spectral types ; Effective temperatures ;
+              Abundances ; Photometry
+Keywords: planetary systems - stars: abundances -
+          stars: fundamental parameters - stars: late-type - stars: low-mass -
+          stars: statistics
+
+Abstract:
+    Precise and accurate parameters for late-type (late K and M) dwarf
+    stars are important for characterization of any orbiting planets, but
+    such determinations have been hampered by these stars' complex spectra
+    and dissimilarity to the Sun. We exploit an empirically calibrated
+    method to estimate spectroscopic effective temperature (T_eff_) and
+    the Stefan-Boltzmann law to determine radii of 183 nearby K7-M7 single
+    stars with a precision of 2%-5%. Our improved stellar parameters
+    enable us to develop model-independent relations between T_eff_ or
+    absolute magnitude and radius, as well as between color and T_eff_.
+    The derived T_eff_-radius relation depends strongly on [Fe/H], as
+    predicted by theory. The relation between absolute K_S_magnitude and
+    radius can predict radii accurate to ~=3%. We derive bolometric
+    corrections to the VR_C_I_C_grizJHK_S_ and Gaia passbands as a
+    function of color, accurate to 1%-3%. We confront the reliability of
+    predictions from Dartmouth stellar evolution models using a Markov
+    chain Monte Carlo to find the values of unobservable model parameters
+    (mass, age) that best reproduce the observed effective temperature and
+    bolometric flux while satisfying constraints on distance and
+    metallicity as Bayesian priors. With the inferred masses we derive a
+    semi-empirical mass-absolute magnitude relation with a scatter of 2%
+    in mass. The best-agreement models overpredict stellar T_eff_ values
+    by an average of 2.2% and underpredict stellar radii by 4.6%, similar
+    to differences with values from low-mass eclipsing binaries. These
+    differences are not correlated with metallicity, mass, or indicators
+    of activity, suggesting issues with the underlying model assumptions,
+    e.g., opacities or convective mixing length.
+
+Description:
+    Derived parameters (temperatures, radii, masses, spectral types,
+    abundances) as well as synthetic photometry and model-derived
+    parameters for 183 nearby M dwarfs with 5% or better parallaxes.
+
+File Summary:
+--------------------------------------------------------------------------------
+ FileName   Lrecl  Records   Explanations
+--------------------------------------------------------------------------------
+ReadMe         80        .   This file
+stars.dat     370      183   Data on all 183 stars (tables 5-7 of the paper)
+--------------------------------------------------------------------------------
+
+See also:
+          I/298      : LSPM-North Catalog (Lepine+ 2005)
+   J/AJ/142/138      : All-sky catalog of bright M dwarfs (Lepine+, 2011)
+   J/MNRAS/443/2561  : Trumpeting M dwarfs with CONCH-SHELL (Gaidos+, 2014)
+
+Byte-by-byte Description of file: stars.dat
+--------------------------------------------------------------------------------
+   Bytes Format Units    Label   Explanations
+--------------------------------------------------------------------------------
+   1- 16  A16   ---      Name    LG11, CONCH-Shell, or LSPM Name (1)
+  18- 27  A10   ---      CNS3    Gliese or GJ name
+  29- 37  F9.5  deg      RAdeg   Right Ascension in decimal degrees (J2000)
+  39- 47  F9.5  deg      DEdeg   Declination in decimal degrees (J2000)
+  49- 56  F8.5 10pW/m2   Fbol    [0.02/23] Bolometric Flux (10^-8^erg/cm^2^/s)
+  58- 64  F7.5 10pW/m2 e_Fbol    [0.0002/0.2] Error on Fbol
+  66- 69  I4    K        Teff    [2700/4131] Stellar effective temperature
+  71- 72  I2    K      e_Teff    [60/86] Error on Teff
+  74- 79  F6.4  Rsun     R       [0.1/0.7] Stellar Radius
+  81- 86  F6.4  Rsun   e_R       [0.005/0.04] Error on R
+  88- 93  F6.4  Msun     M       [0.08/0.75] Stellar Mass
+  95-100  F6.4  Msun   e_M       [0.008/0.08] Error on M
+ 102-106  F5.2  [Sun]    [Fe/H]  [-0.61/0.53] Metallicity
+ 108-111  F4.2  [Sun]  e_[Fe/H]  [0.03/0.08]   Error on [Fe/H]
+ 113-118  A6    ---      SpT     MK spectral Type
+ 120-125  F6.3  mag      Bmag    [7.4/18.7] Synthetic Johnson B magnitude
+ 127-131  F5.3  mag    e_Bmag    [0.02/0.04] Error on Bmag
+ 133-138  F6.3  mag      Vmag    Synthetic Johnson V magnitude
+ 140-144  F5.3  mag    e_Vmag    Error on Vmag
+ 146-151  F6.3  mag      Rmag    Synthetic Cousins R magnitude
+ 153-157  F5.3  mag    e_Rmag    Error on Rmag
+ 159-164  F6.3  mag      Imag    Synthetic Cousins I magnitude
+ 166-170  F5.3  mag    e_Imag    Error on Imag
+ 172-177  F6.3  mag      gmag    Synthetic SDSS g magnitude
+ 179-183  F5.3  mag    e_gmag    Error on gmag
+ 185-190  F6.3  mag      rmag    Synthetic SDSS r magnitude
+ 192-196  F5.3  mag    e_rmag    Error on rmag
+ 198-203  F6.3  mag      imag    Synthetic SDSS i magnitude
+ 205-209  F5.3  mag    e_imag    Error on imag
+ 211-216  F6.3  mag      zmag    Synthetic SDSS z magnitude
+ 218-222  F5.3  mag    e_zmag    Error on zmag
+ 224-229  F6.3  mag      Jmag    Synthetic 2MASS J magnitude
+ 231-235  F5.3  mag    e_Jmag    Error on Jmag
+ 237-242  F6.3  mag      Hmag    Synthetic 2MASS H magnitude
+ 244-248  F5.3  mag    e_Hmag    Error on Hmag
+ 250-255  F6.3  mag      Ksmag   Synthetic 2MASS Ks magnitude
+ 257-261  F5.3  mag    e_Ksmag   Error on Ksmag
+ 263-268  F6.3  mag      Gmag    Synthetic Gaia G magnitude
+ 270-274  F5.3  mag    e_Gmag    Error on Gaia
+ 276-281  F6.3  mag      BPmag   Synthetic Gaia Gbp magnitude
+ 283-287  F5.3  mag    e_BPmag   Error on BP
+ 289-294  F6.3  mag      RPmag   Synthetic Gaia Grp magnitude
+ 296-300  F5.3  mag    e_RPmag   Error on RP
+ 302-309  F8.5 10pW/m2   Fbol0   [0.02/23]? Model inferred Bolometric Flux
+ 311-317  F7.5 10pW/m2 e_Fbol0   [0.0004/0.3]? Error on ModFbol
+ 319-322  I4    K        Teff0   [2808/4197]? Model inferred effective
+                                              temperature
+ 324-325  I2    K      e_Teff0   [7/72]? Error on ModTeff
+ 327-332  F6.4  Rsun     R0      [0.13/0.661]? Model inferred Stellar Radius
+ 334-339  F6.4  Rsun   e_R0      [0.002/0.03]? Error on ModR
+ 341-346  F6.4  Msun     M0      [0.1/0.72]? Model inferred Stellar Mass
+ 348-353  F6.4  Msun   e_M0      [0.002/0.03]? Error on ModM
+ 355-358  F4.2  [yr]     Age0    [9.33/9.55]? Model inferred Age
+ 360-363  F4.2  [yr]   e_Age0    [0.48/0.63]? Error on ModAge
+ 365-370  F6.3  ---      chi2    [0/29]? {chi}^2^ for model comparison
+--------------------------------------------------------------------------------
+Note (1): Catalog abbreviations are:
+  PM IHHMMm+DDMMW : from LG11 (Lepine and Caidos 2011, J/AJ/142/138) or
+     CONCH-SHELL (Gaidos et al. 2014, J/MNRAS/443/2561)
+  LSPM JHHMM+DDMMW : from Lepine et al. 2005AJ....129.1483L, Cat. I/298
+--------------------------------------------------------------------------------
+
+Acknowledgements:
+   Andrew Mann, mann.andrew.w@gmail.com
+   Prepared with help from http://authortools.aas.org/MRT/upload.html built
+   by Greg Schwarz [AAS].
+
+================================================================================
+(End)        Andrew Mann [UT Austin], Patricia Vannier [CDS]         01-Jun-2015

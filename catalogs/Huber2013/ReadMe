@@ -1,0 +1,236 @@
+J/ApJ/767/127     Asteroseismic solutions for 77 Kepler stars     (Huber+, 2013)
+================================================================================
+Fundamental properties of Kepler planet-candidate host stars using
+asteroseismology.
+    Huber D., Chaplin W.J., Christensen-Dalsgaard J., Gilliland R.L.,
+    Kjeldsen H., Buchhave L.A., Fischer D.A., Lissauer J.J., Rowe J.F.,
+    Sanchis-Ojeda R., Basu S., Handberg R., Hekker S., Howard A.W.,
+    Isaacson H., Karoff C., Latham D.W., Lund M.N., Lundkvist M., Marcy G.W.,
+    Miglio A., Silva Aguirre V., Stello D., Arentoft T., Barclay T.,
+    Bedding T.R., Burke C.J., Christiansen J.L., Elsworth Y.P., Haas M.R.,
+    Kawaler S.D., Metcalfe T.S., Mullally F., Thompson S.E.
+   <Astrophys. J., 767, 127 (2013)>
+   =2013ApJ...767..127H
+================================================================================
+ADC_Keywords: Stars, double and multiple ; Planets ; Effective temperatures ;
+              Stars, diameters ; Stars, masses
+Keywords: planetary systems; stars: late-type; stars: oscillations;
+          techniques: photometric; techniques: spectroscopic
+
+Abstract:
+    We have used asteroseismology to determine fundamental properties for
+    66 Kepler planet-candidate host stars, with typical uncertainties of
+    3% and 7% in radius and mass, respectively. The results include new
+    asteroseismic solutions for four host stars with confirmed planets
+    (Kepler-4, Kepler-14, Kepler-23 and Kepler-25) and increase the total
+    number of Kepler host stars with asteroseismic solutions to 77. A
+    comparison with stellar properties in the planet-candidate catalog by
+    Batalha et al. (2013, J/ApJS/204/24) shows that radii for subgiants
+    and giants obtained from spectroscopic follow-up are systematically
+    too low by up to a factor of 1.5, while the properties for unevolved
+    stars are in good agreement. We furthermore apply asteroseismology to
+    confirm that a large majority of cool main-sequence hosts are indeed
+    dwarfs and not misclassified giants. Using the revised stellar
+    properties, we recalculate the radii for 107 planet candidates in our
+    sample, and comment on candidates for which the radii change from a
+    previously giant-planet/brown-dwarf/stellar regime to a sub-Jupiter
+    size or vice versa. A comparison of stellar densities from
+    asteroseismology with densities derived from transit models in Batalha
+    et al. assuming circular orbits shows significant disagreement for
+    more than half of the sample due to systematics in the modeled impact
+    parameters or due to planet candidates that may be in eccentric
+    orbits. Finally, we investigate tentative correlations between
+    host-star masses and planet-candidate radii, orbital periods, and
+    multiplicity, but caution that these results may be influenced by the
+    small sample size and detection biases.
+
+Description:
+    For all stars in our sample high-resolution optical spectra were
+    obtained as part of the Kepler follow-up program (Gautier et al.
+    2010arXiv1001.0352G). Spectroscopic observations were taken using four
+    different instruments: the HIRES spectrograph on the 10m telescope at
+    Keck Observatory (Mauna Kea, HI), the FIES spectrograph on the 2.5m
+    Nordic Optical Telescope at the Roque de los Muchachos Observatory (La
+    Palma, Spain), the TRES spectrograph on the 1.5m Tillinghast reflector
+    at the F. L. Whipple Observatory (Mt. Hopkins, AA), and the Tull Coude
+    spectrograph on the 2.7m Harlan J. Smith Telescope at McDonald
+    Observatory (Fort Davis, TX). Typical resolutions of the spectra range
+    from 40000 to 70000.
+
+File Summary:
+--------------------------------------------------------------------------------
+ FileName   Lrecl  Records   Explanations
+--------------------------------------------------------------------------------
+ReadMe         80        .   This file
+table1.dat     94       77   Asteroseismic and spectroscopic observations
+                               of 77 Kepler planet candidate hosts
+table2.dat     89       77   Fundamental properties of 77 Kepler
+                               planet-candidate hosts
+table3.dat     89      107   Re-derived properties of 107 planet candidates
+                               in the sample
+--------------------------------------------------------------------------------
+
+See also:
+ V/133 : Kepler Input Catalog (Kepler Mission Team, 2009)
+ J/ApJS/211/2     : Q1-16 Kepler stars revised stellar properties (Huber+, 2014)
+ J/ApJS/210/19    : Kepler planetary candidates. IV. 22 months (Burke+, 2014)
+ J/ApJS/210/1     : Asteroseismic study of solar-type stars (Chaplin+, 2014)
+ J/ApJS/204/24    : Kepler planetary candidates. III. (Batalha+, 2013)
+ J/ApJ/765/L41    : Asteroseismic classification of KIC objects (Stello+, 2013)
+ J/ApJ/763/41     : Kepler multiple-candidate systems radii (Ciardi+, 2013)
+ J/MNRAS/436/1883 : Properties of KOI host stars (Walkowicz+, 2013)
+ J/MNRAS/434/1422 : Atmospheric param. of FGKM stars (Molenda-Zakowicz+, 2013)
+ J/ApJS/199/30    : KIC stars effective temperature scales (Pinsonneault+, 2012)
+ J/ApJ/757/161    : Spectroscopy of 56 exoplanet host stars (Torres+, 2012)
+ J/ApJ/753/90     : Stellar param. of K5 & later type Kepler stars (Mann+, 2012)
+ J/ApJ/750/114    : Kepler TTVs. IV. 4 multiple-planet systems (Fabrycky+, 2012)
+ J/ApJ/750/113    : Kepler TTVs. II. Confirmed multiplanet systems (Ford+, 2012)
+ J/ApJ/750/L37    : Stellar parameters of low-mass KOIs (Muirhead+, 2012)
+ J/ApJ/749/152    : 22 solar-type stars asteroseismic analysis (Mathur+, 2012)
+ J/PASP/124/1279  : Q3 Kepler's combined photometry (Christiansen+, 2012)
+ J/other/Nat/486.375 : Stellar parameters of KOI stars (Buchhave+, 2012)
+ J/MNRAS/426/1291 : Physical properties of 38 exoplanets (Southworth, 2012)
+ J/MNRAS/423/122  : Abundances of 93 solar-type Kepler targets (Bruntt+, 2012)
+ J/MNRAS/421/2342 : 4 Kepler systems transit timing obs. (Steffen+, 2012)
+ J/MNRAS/419/L34  : Surface gravity for late-type stars (Morel+, 2012)
+ J/A+A/543/A160   : Normalized spectra of 82 Kepler red giants (Thygesen+, 2012)
+ J/AJ/142/112     : KIC photometric calibration (Brown+, 2011)
+ J/A+A/525/A131   : Solar-like oscillations in Kepler red giants (Hekker+, 2011)
+ J/ApJ/736/19     : Kepler planetary candidates. II. (Borucki+, 2011)
+ J/ApJ/729/L10    : KIC stars properties in NGC 6791 and NGC 6819 (Basu+, 2011)
+ J/ApJ/728/117    : Kepler planetary candidates. I. (Borucki+, 2011)
+ J/MNRAS/412/1210 : Kepler asteroseismic targets (Molenda-Zakowicz+, 2011)
+ J/ApJ/718/L97    : Early asteroseismic results from Kepler (Van Grootel+, 2010)
+ J/A+A/512/A54    : Teff and Fbol from Infrared Flux Method (Casagrande+, 2010)
+ J/A+A/506/465    : Solar-like oscillations in red giants (Hekker+, 2009)
+ J/ApJ/664/1185   : Three transits of the exoplanet TrES-2 (Holman+, 2007)
+ J/ApJ/622/1102   : The planet-metallicity correlation. (Fischer+, 2005)
+ J/A+A/415/1153   : [Fe/H] for 98 extra-solar planet-host stars (Santos+, 2004)
+
+Byte-by-byte Description of file: table1.dat
+--------------------------------------------------------------------------------
+   Bytes Format Units   Label     Explanations
+--------------------------------------------------------------------------------
+   1-  4  I4    ---     KOI       [1/2640] KOI host star number
+   6- 13  I8    ---     KIC       KIC number (V/133)
+  15- 19  F5.2  mag     Kpmag     [7.8/14] Kepler magnitude
+  21- 26  F6.1  uHz     numax     [35/3546]? Frequency at which the oscillations
+                                  have maximum power ({nu}_max_, equation 2) (1)
+  28- 32  F5.1  uHz   e_numax     [0.6/119]? numax uncertainty
+  34- 39  F6.2  uHz     Delnu     [5/179]? Frequency separation ({Delta}{nu},
+                                  equation 1) (1)
+  41- 44  F4.2  uHz   e_Delnu     [0.04/6]? Delnu uncertainty
+  46- 50  F5.3  ---     HBR       [1.02/31]? Height-to-background ratio of the
+                                  power excess (2)
+  52- 53  I2    ---     M         [1/31] Number of months of Kepler data 
+                                  used for the analysis
+  55- 56  A2    ---     Cad       Type of Kepler data used for the detection
+                                  (SC = short-cadence, LC = long-cadence)
+  58- 61  F4.1  km/s    vsini     [0.5/16]? Rotational velocity
+  63- 65  F3.1  km/s  e_vsini     [0.5/24]? vsini uncertainty
+  67- 69  I3    ---     S/N       [0.8/300]? Average S/N of the observations
+  71- 75  F5.3  ---     CCF       [0.7/3]? Average cross-correlation
+                                  function (3)
+  77- 78  I2    ---     Nsp       [1/10]? Number of spectra used in the analysis
+  80- 82  A3    ---     Inst      Instrument(s) used to obtain the spectra (4)
+  84- 92  A9    ---     Kepler    Kepler name (5)
+      94  A1    ---     Ref       Reference to solutions in other papers (G1)
+--------------------------------------------------------------------------------
+Note (1): The solar reference values for the asteroseismic observations are
+     {nu}_max,{sun}_=3090+/-30uHz and {Delta}{nu}_{sun}_=135.1+/-0.1uHz
+     (Huber et al. 2011ApJ...743..143H).
+Note (2): "HBR" denotes the height-to-background ratio of the power excess
+     (a measure of signal-to-noise; see, e.g., Kallinger et al.
+     2010A&A...522A...1K).
+Note (3): A measure of the quality of the fit compared to the spectral
+     template; see Buchhave et al. 2012, Cat. J/other/Nat/486.375
+Note (4): Spectrographs used for the observations as follows:
+  F = FIES (on the 2.5m Nordic Optical Telescope),
+  H = HIRES (on the 10m telescope at Keck Observatory),
+  M = Tull Coude spectrograph (on the 2.7m Harlan J. Smith Telescope at
+       McDonald Observatory),
+  T = TRES (on the 1.5m Tillinghast reflector at the F. L. Whipple Observatory)
+Note (5): Note that stars with solutions published in separate papers were
+     not re-analyzed in this study, and hence the columns "HBR" as well as
+     spectroscopic information are not available for these host stars.
+--------------------------------------------------------------------------------
+
+Byte-by-byte Description of file: table2.dat
+--------------------------------------------------------------------------------
+   Bytes Format Units   Label     Explanations
+--------------------------------------------------------------------------------
+   1-  4  I4    ---     KOI       KOI host star number
+       5  A1    ---   f_KOI       [*] Flag on KOI-1054 (6)
+   7- 14  I8    ---     KIC       KIC number (V/133)
+  16- 19  I4    K       Teff      [4553/6463] Effective temperature
+  21- 23  I3    K     e_Teff      [44/117] Teff uncertainty
+  25- 29  F5.2 [Sun]    [Fe/H]    [-1/0.5] Metallicity
+  31- 34  F4.2 [Sun]  e_[Fe/H]    [0.04/0.2] [Fe/H] uncertainty
+  36- 43  F8.6  g/cm3   rho       [0.0019/2.5]? Stellar density (7)
+  45- 52  F8.6  g/cm3 e_rho       [0/0.07]? rho uncertainty
+  54- 59  F6.3  Rsun    Rad       [0.7/10.5]? Stellar radius (7)
+  61- 65  F5.3  Rsun  e_Rad       [0.01/0.7]? Rad uncertainty
+  67- 71  F5.3  Msun    Mass      [0.8/1.8]? Stellar mass (7)
+  73- 77  F5.3  Msun  e_Mass      [0.01/0.3]? Mass uncertainty
+  79- 87  A9    ---     Kepler    Kepler name
+      89  A1    ---     Ref       Reference (G1)
+--------------------------------------------------------------------------------
+Note (6): No full solution was derived for KOI-1054 due to the lack of a
+     reliable {Delta}{nu} measurement.
+Note (7): Note that {rho} is derived directly from scaling relations, while
+     R_{sun}_ and M_{sun}_ are modeled values using asteroseismic
+     constraints. The asteroseismic surface gravity constrained using
+     {nu}_max_ is logg=2.47+/-0.01dex.
+--------------------------------------------------------------------------------
+
+Byte-by-byte Description of file: table3.dat
+--------------------------------------------------------------------------------
+   Bytes Format Units   Label   Explanations
+--------------------------------------------------------------------------------
+   1-  7  F7.2  ---     KOI     [1.01/2640.01] Planet candidate name
+       9  A1    ---   f_KOI     [*+] Flag on KOI (1)
+  11- 23  F13.9 d       Per     [0.8/290] Period (2)
+  25- 35  F11.9 d     e_Per     [0/0.002] Period uncertainty
+  37- 44  F8.6  ---     Rp/R*   [0.004/0.2] Planet radius vs stellar radius (2)
+  46- 53  F8.6  ---   e_Rp/R*   [0/0.004] Rp/R* uncertainty
+  55- 60  F6.3  Rgeo    Rp      [0.3/63.7] Planet radius in Earth radius
+  62- 66  F5.3  Rgeo  e_Rp      [0.02/2.4] Rp uncertainty
+  68- 74  F7.5  AU      a       [0.01/0.9] Planet semi-major axis
+  76- 82  F7.5  AU    e_a       [0.0001/0.03] a uncertainty
+  84- 89  F6.1  Earth   Fp      [1.2/5586] Flux received by planet
+                                  (relative to Earth) (3)
+--------------------------------------------------------------------------------
+Note (1): Flag as follows:
+ + = Asteroseismic false positive.
+ * = Low-mass stellar companion detected by follow-up radial-velocity
+     observations.
+          Note that KOI-113.01, KOI-245.04, KOI-371.01 and KOI-1054.01 have
+          been omitted either due to the large uncertainties in the transit
+          parameters given in Batalha et al. (2013, J/ApJS/204/24)
+          or due to evidence that the transit events are false positives.
+Note (2): Planet period and planet-star size ratio have been adopted from
+          Batalha et al. (2013, J/ApJS/204/24).
+Note (3): The incident flux F(F_{earth}_) has been estimated using the
+          planet-star separation given in Batalha et al. (2013, J/ApJS/204/24)
+          and assuming circular orbits (d/R*=a/R*).
+--------------------------------------------------------------------------------
+
+Global note:
+Note (G1): References to solutions published in separate papers as follows:
+  a = Barclay et al. (2012ApJ...761...53B),
+  b = Christensen-Dalsgaard et al. (2010ApJ...713L.164C),
+  c = Batalha et al. (2011ApJ...729...27B),
+  d = Chaplin et al. (2013ApJ...766..101C),
+  e = Borucki et al. (2012ApJ...745..120B),
+  f = Barclay et al. (2013Natur.494..452B),
+  g = Gilliland et al. (2013ApJ...766...40G),
+  h = Carter et al. (2012Sci...337..556C),
+  i = Howell et al. (2012ApJ...746..123H),
+  j = D. Huber et al. (2014, J/ApJS/211/2).
+--------------------------------------------------------------------------------
+
+History:
+    From electronic version of the journal
+
+================================================================================
+(End)                                     Emmanuelle Perret [CDS]    20-Nov-2014

@@ -2,6 +2,7 @@
 spectra/
 *.bat
 lib
+lib_1
 lib_old
 working/
 
