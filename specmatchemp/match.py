@@ -98,4 +98,5 @@ class Match:
         self.best_chisq = out.redchi
         self.create_model(self.best_params)
 
+        return self.best_chisq
 
