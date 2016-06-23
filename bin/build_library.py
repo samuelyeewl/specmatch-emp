@@ -34,8 +34,10 @@ BREWER_FILENAME = "spocsii_stars.csv"
 CPS_INDEX = "cps_templates.csv"
 CPS_SPECTRA_DIR = "iofitsdb/"
 
-LIB_COLS = ['cps_name', 'obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 'logg', 'u_logg','FeH', 'u_FeH',
-           'mass', 'u_mass', 'vsini', 'source', 'source_name']
+LIB_COLS = ['cps_name', 'obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 'logg', 'u_logg', 'feh', 'u_feh',
+           'mass', 'u_mass', 'age', 'u_age', 'vsini', 'source', 'source_name']
+STAR_PROPS = ['Teff', 'u_Teff', 'radius', 'u_radius', 'logg', 'u_logg', 'feh', 'u_feh',
+           'mass', 'u_mass', 'logage', 'u_logage']
 NOSPECTRA_COLS = ['name', 'source']
 
 def check_cps_database(starname, cps_list):
@@ -78,8 +80,8 @@ def check_cps_database(starname, cps_list):
     
     # KOI identifiers may be prefixed by K or CK and have 5 digits padded by leading zeros
     elif starname.startswith('KOI'):
-        num = starname.split('KOI')[1].strip('-')
-        cps_search_str = 'K'+'0*'+str(num)+'|CK'+'0*'+str(num)
+        num = int(starname.split('KOI')[1].strip('-'))
+        cps_search_str = 'K'+'{0:05d}'.format(num)+'|CK'+'{0:05d}'.format(num)
         
     # WASP identifiers may be either WASP-x or WASPx, x is the idnum
     elif starname.startswith('WASP'):
@@ -145,6 +147,9 @@ def read_brewer(catalogdir, cps_list):
     """
     brewer_data = ascii.read(os.path.join(catalogdir, BREWER_FILENAME))
 
+    stars = pd.DataFrame(columns=LIB_COLS)
+    nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
+
     for row in brewer_data:
         try:
             query_result = find_spectra(row['NAME'])
@@ -156,8 +161,8 @@ def read_brewer(catalogdir, cps_list):
                 new_row['u_Teff'] = 25
                 new_row['logg'] = row['LOGG']
                 new_row['u_logg'] = 0.028
-                new_row['FeH'] = row['FEH']
-                new_row['u_FeH'] = 0.010
+                new_row['feh'] = row['FEH']
+                new_row['u_feh'] = 0.010
                 new_row['vsini'] = row['VSINI']
                 new_row['source'] = 'Brewer'
                 new_row['source_name'] = row['NAME']
@@ -197,8 +202,8 @@ def read_mann(catalogdir, cps_list):
                 new_row['u_Teff'] = row['e_Teff']
                 new_row['radius'] = row['R']
                 new_row['u_radius'] = row['e_R']
-                new_row['FeH'] = row['[Fe/H]']
-                new_row['u_FeH'] = row['e_[Fe/H]']
+                new_row['feh'] = row['[Fe/H]']
+                new_row['u_feh'] = row['e_[Fe/H]']
                 new_row['mass'] = row['M']
                 new_row['u_mass'] = row['e_M']
                 new_row['source'] = 'Mann'
@@ -239,7 +244,8 @@ def read_vonbraun(catalogdir, cps_list):
                 new_row['u_Teff'] = row['eTeff']
                 new_row['radius'] = row['Radius']
                 new_row['u_radius'] = row['eRadius']
-                new_row['FeH'] = row['FeH']
+                new_row['feh'] = row['FeH']
+                new_row['u_feh'] = 0.10
                 new_row['source'] = 'Von Braun'
                 new_row['source_name'] = row['Star']
                 stars = stars.append(pd.Series(new_row), ignore_index=True)
@@ -263,6 +269,7 @@ def read_huber(catalogdir, cps_list):
         nospec (pd.DataFrame): Stars in source which don't have CPS spectra
     """
     huber_data = ascii.read(os.path.join(catalogdir, HUBER_FILENAME), readme=os.path.join(catalogdir, HUBER_README))
+    huber_data = huber_data[huber_data['f_KOI'] != '*']
 
     stars = pd.DataFrame(columns=LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
@@ -276,10 +283,10 @@ def read_huber(catalogdir, cps_list):
                 new_row['obs'] = query_result.obs.values
                 new_row['Teff'] = row['Teff']
                 new_row['u_Teff'] = row['e_Teff']
-                new_row['radius'] = row['Rad']
+                new_row['radius'] = float(row['Rad'])
                 new_row['u_radius'] = row['e_Rad']
-                new_row['FeH'] = row['[Fe/H]']
-                new_row['u_FeH'] = row['e_[Fe/H]']
+                new_row['feh'] = row['[Fe/H]']
+                new_row['u_feh'] = row['e_[Fe/H]']
                 new_row['mass'] = row['Mass']
                 new_row['u_mass'] = row['e_Mass']
                 new_row['source'] = 'Huber'
@@ -316,17 +323,17 @@ def read_catalogs(catalogdir, cpsdir):
     stars_nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     # Read catalogs
-    brewer_stars, brewer_nospec = read_brewer(catalogdir, cps_list)
-    stars = stars.append(brewer_stars)
-    stars_nospectra = stars_nospectra.append(brewer_nospec)
+    # brewer_stars, brewer_nospec = read_brewer(catalogdir, cps_list)
+    # stars = stars.append(brewer_stars)
+    # stars_nospectra = stars_nospectra.append(brewer_nospec)
 
-    mann_stars, mann_nospec = read_mann(catalogdir, cps_list)
-    stars = stars.append(mann_stars)
-    stars_nospectra = stars_nospectra.append(mann_nospec)
+    # mann_stars, mann_nospec = read_mann(catalogdir, cps_list)
+    # stars = stars.append(mann_stars)
+    # stars_nospectra = stars_nospectra.append(mann_nospec)
 
-    vonbraun_stars, vonbraun_nospec = read_vonbraun(catalogdir, cps_list)
-    stars = stars.append(vonbraun_stars)
-    stars_nospectra = stars_nospectra.append(vonbraun_nospec)
+    # vonbraun_stars, vonbraun_nospec = read_vonbraun(catalogdir, cps_list)
+    # stars = stars.append(vonbraun_stars)
+    # stars_nospectra = stars_nospectra.append(vonbraun_nospec)
 
     huber_stars, huber_nospec = read_huber(catalogdir, cps_list)
     stars = stars.append(huber_stars)
@@ -334,11 +341,33 @@ def read_catalogs(catalogdir, cpsdir):
 
     return stars, stars_nospectra
 
+def get_isochrone_params(stars):
+    """Fill out parameter table with values obtained from isochrone package
+
+    Args:
+        stars (pd.DataFrame): star library
+    Returns:
+        stars (pd.DataFrame)
+    """
+
+    return stars
+
 def main(catalogdir, cpsdir, outdir):
     ### 1. Read in the stars with known stellar parameters and check for those with CPS spectra
     stars, stars_nospectra = read_catalogs(catalogdir, cpsdir)
+    # convert numeric columns
+    for col in STAR_PROPS:
+        stars[col] = pd.to_numeric(stars[col], errors='coerce')
     stars.to_csv(os.path.join(outdir, "libstars.csv"))
     stars_nospectra.to_csv(os.path.join(outdir, "stars_nospectra.csv"))
+    ################################################################
+    # stars = pd.read_csv("./lib/libstars_huber.csv", index_col=0)
+    ################################################################
+
+    ### 2. Use isochrones package to obtain the remaining, unknown stellar parameters
+    # stars = get_isochrone_params(stars)
+
+
 
 
 
