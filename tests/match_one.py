@@ -33,8 +33,9 @@ def main():
         specs.append(spec)
 
     starttime = time.time()
-    for i, row_targ in lib.head(10).iterrows():
+    lib_f = lib[lib.obs.str.contains('rj70.782')]
     # for i, row_targ in [(10, lib.iloc[10])]:
+    for i, row_targ in lib_f.iterrows():
         libi = lib.copy()
         spec = specs[i]
         for j, row_ref in lib.iterrows():
@@ -57,13 +58,13 @@ def main():
         
         # find a sort of weighted average (testing only)
         besti.loc[:,'weights'] = (1/besti["chi-squared"])/(1/besti["chi-squared"]).sum()
-        lib.loc[i, teff_der] = np.average(besti['Teff'], weights=besti['weights'])
+        lib.loc[i, 'teff_der'] = np.average(besti['Teff'], weights=besti['weights'])
         # print(teff_avg, lib.iloc[i].Teff)
-        lib.loc[i, radius_der] = np.average(besti['radius'], weights=besti['weights'])
+        lib.loc[i, 'radius_der'] = np.average(besti['radius'], weights=besti['weights'])
         # print(radius_avg, lib.iloc[i].radius)
-        lib.loc[i, mass_der] = np.average(besti['mass'], weights=besti['weights'])
+        lib.loc[i, 'mass_der'] = np.average(besti['mass'], weights=besti['weights'])
         # print(mass_avg, lib.iloc[i].mass)
-        lib.loc[i, feh_der] = np.average(besti['FeH'], weights=besti['weights'])
+        lib.loc[i, 'feh_der'] = np.average(besti['FeH'], weights=besti['weights'])
         # print(feh_avg, lib.iloc[i].FeH)
 
 
