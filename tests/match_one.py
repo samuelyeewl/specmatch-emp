@@ -7,7 +7,7 @@ from specmatchemp.io.io import *
 from specmatchemp import match
 import lmfit
 
-import time
+import cProfile
 
 def main():
     lib = pd.read_csv('~/SpecMatch-Emp/starswithspectra.csv',index_col=0)
@@ -32,7 +32,6 @@ def main():
             continue
         specs.append(spec)
 
-    starttime = time.time()
     lib_f = lib[lib.obs.str.contains('rj70.782')]
     # for i, row_targ in [(10, lib.iloc[10])]:
     for i, row_targ in lib_f.iterrows():
@@ -69,8 +68,7 @@ def main():
 
 
     lib.to_csv('/Users/samuel/SpecMatch-Emp/lib/updated_chi-squared.csv')
-    endtime = time.time()
-    print("Took {0:.4f} seconds".format(endtime-starttime))
+    
 
 if __name__ == '__main__':
-    main()
+    cProfile.run('main()', 'match_one_runstats')

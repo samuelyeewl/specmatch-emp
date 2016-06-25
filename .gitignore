@@ -5,6 +5,7 @@ lib
 lib_1
 lib_old
 working/
+match_one_runstats
 
 # Ignore plots and data
 *.png
