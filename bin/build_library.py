@@ -14,15 +14,17 @@ Builds the SpecMatch-Emp library from the Huber, Mann, Von Braun and Brewer cata
 import glob
 import os
 from argparse import ArgumentParser
-
 import re
 import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+
 from astroquery.simbad import Simbad
 from astropy.io import ascii
+from isochrones.dartmouth import Dartmouth_Isochrone
+from isochrones import StarModel
 
 # relative catalog locations
 MANN_FILENAME = "Mann2015/stars.dat"
@@ -36,9 +38,11 @@ CPS_SPECTRA_DIR = "iofitsdb/"
 
 LIB_COLS = ['cps_name', 'obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 'logg', 'u_logg', 'feh', 'u_feh',
            'mass', 'u_mass', 'age', 'u_age', 'vsini', 'source', 'source_name']
-STAR_PROPS = ['Teff', 'u_Teff', 'radius', 'u_radius', 'logg', 'u_logg', 'feh', 'u_feh',
-           'mass', 'u_mass', 'logage', 'u_logage']
+STAR_PROPS = ['Teff', 'radius', 'logg', 'feh', 'mass', 'age']
 NOSPECTRA_COLS = ['name', 'source']
+
+MIN_PERCENTILE = 0.16
+MAX_PERCENTILE = 0.84
 
 def check_cps_database(starname, cps_list):
     """Checks the CPS databse if a spectrum is available for the given identifier.
@@ -155,7 +159,7 @@ def read_brewer(catalogdir, cps_list):
             query_result = find_spectra(row['NAME'])
             if not query_result.empty:
                 new_row = {}
-                new_row['cps_name'] = query_result.iloc[0].name
+                new_row['cps_name'] = str(query_result.iloc[0].name)
                 new_row['obs'] = query_result.obs.values
                 new_row['Teff'] = row['TEFF']
                 new_row['u_Teff'] = 25
@@ -196,7 +200,7 @@ def read_mann(catalogdir, cps_list):
             query_result = find_spectra(row['CNS3'])
             if not query_result.empty:
                 new_row = {}
-                new_row['cps_name'] = query_result.iloc[0].name
+                new_row['cps_name'] = str(query_result.iloc[0].name)
                 new_row['obs'] = query_result.obs.values
                 new_row['Teff'] = row['Teff']
                 new_row['u_Teff'] = row['e_Teff']
@@ -238,7 +242,7 @@ def read_vonbraun(catalogdir, cps_list):
             query_result = find_spectra(row['Star'])
             if not query_result.empty:
                 new_row = {}
-                new_row['cps_name'] = query_result.iloc[0].name
+                new_row['cps_name'] = str(query_result.iloc[0].name)
                 new_row['obs'] = query_result.obs.values
                 new_row['Teff'] = row['Teff']
                 new_row['u_Teff'] = row['eTeff']
@@ -279,7 +283,7 @@ def read_huber(catalogdir, cps_list):
             query_result = find_spectra('KOI'+str(row['KOI']), cps_list)
             if not query_result.empty:
                 new_row = {}
-                new_row['cps_name'] = query_result.iloc[0].name
+                new_row['cps_name'] = str(query_result.iloc[0].name)
                 new_row['obs'] = query_result.obs.values
                 new_row['Teff'] = row['Teff']
                 new_row['u_Teff'] = row['e_Teff']
@@ -347,25 +351,60 @@ def get_isochrone_params(stars):
     Args:
         stars (pd.DataFrame): star library
     Returns:
-        stars (pd.DataFrame)
+        stars (pd.DataFrame): star library with updated parameters
     """
+    dar = Dartmouth_Isochrone()
 
+    for i, row in stars.iterrows():
+        # get known stellar properties
+        lib_props = {}
+        for p in STAR_PROPS:
+            if not np.isnan(row[p]):
+                # (value, uncertainty)
+                lib_props[p] = (row[p], row['u_'+p])
+        # isochrones requires fitting a distance to at least one magnitude - use arbitrary value
+        lib_props['V'] = 1.
+
+        # create the model and perform the fit
+        model = StarModel(dar, **lib_props)
+        model.fit_mcmc()
+
+        # fill out unknown parameters
+        for p in STAR_PROPS:
+            value = model.samples[p].quantile(0.5)
+            upper_bound = model.samples[p].quantile(MAX_PERCENTILE)
+            lower_bound = model.samples[p].quantile(MIN_PERCENTILE)
+            if p in lib_props:
+                # check for model consistency with known library values
+                if (row[p]+row['u_'+p]) < lower_bound or (row[p]-row['u_'+p]) > upper_bound:
+                    print("Warning: Model for star {0} had inconsistent values in {1}:".format(
+                        row['cps_name'], p))
+                    print("\tLibrary values: {0:.2f} +/- {1:.2f}".format(row[p], row['u_'+p]))
+                    print("\tModel values: {0:.2f}, 1-sigma = ({1:.2f}, {2:.2f})".format(
+                        value, lower_bound, upper_bound))
+            else:
+                # insert unknown values
+                stars.loc[i, p] = np.around(value, 2)
+                stars.loc[i, 'u_'+p] = np.around(max(upper_bound-value, value-lower_bound), 2)
     return stars
 
 def main(catalogdir, cpsdir, outdir):
     ### 1. Read in the stars with known stellar parameters and check for those with CPS spectra
-    stars, stars_nospectra = read_catalogs(catalogdir, cpsdir)
-    # convert numeric columns
-    for col in STAR_PROPS:
-        stars[col] = pd.to_numeric(stars[col], errors='coerce')
-    stars.to_csv(os.path.join(outdir, "libstars.csv"))
-    stars_nospectra.to_csv(os.path.join(outdir, "stars_nospectra.csv"))
+    # stars, stars_nospectra = read_catalogs(catalogdir, cpsdir)
+    # # convert numeric columns
+    # for col in STAR_PROPS:
+    #     stars[col] = pd.to_numeric(stars[col], errors='coerce')
+    #     stars['u_'+col] = pd.to_numeric(stars['u_'+col], errors='coerce')
+    # stars.to_csv(os.path.join(outdir, "libstars_huber.csv"))
+    # stars_nospectra.to_csv(os.path.join(outdir, "stars_nospectra.csv"))
     ################################################################
-    # stars = pd.read_csv("./lib/libstars_huber.csv", index_col=0)
+    stars = pd.read_csv("./lib/libstars_huber.csv", index_col=0)
     ################################################################
 
     ### 2. Use isochrones package to obtain the remaining, unknown stellar parameters
-    # stars = get_isochrone_params(stars)
+    stars = get_isochrone_params(stars)
+
+    ### 3. 
 
 
 
