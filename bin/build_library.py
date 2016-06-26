@@ -26,6 +26,8 @@ from astropy.io import ascii
 from isochrones.dartmouth import Dartmouth_Isochrone
 from isochrones import StarModel
 
+from specmatchemp import library
+
 # relative catalog locations
 MANN_FILENAME = "Mann2015/stars.dat"
 MANN_README = "Mann2015/ReadMe"
@@ -36,8 +38,6 @@ BREWER_FILENAME = "spocsii_stars.csv"
 CPS_INDEX = "cps_templates.csv"
 CPS_SPECTRA_DIR = "iofitsdb/"
 
-LIB_COLS = ['cps_name', 'obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 'logg', 'u_logg', 'feh', 'u_feh',
-           'mass', 'u_mass', 'age', 'u_age', 'vsini', 'source', 'source_name']
 STAR_PROPS = ['Teff', 'radius', 'logg', 'feh', 'mass', 'age']
 NOSPECTRA_COLS = ['name', 'source']
 
@@ -151,7 +151,7 @@ def read_brewer(catalogdir, cps_list):
     """
     brewer_data = ascii.read(os.path.join(catalogdir, BREWER_FILENAME))
 
-    stars = pd.DataFrame(columns=LIB_COLS)
+    stars = pd.DataFrame(columns=library.LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for row in brewer_data:
@@ -192,7 +192,7 @@ def read_mann(catalogdir, cps_list):
     """
     mann_data = ascii.read(os.path.join(catalogdir, MANN_FILENAME), readme=os.path.join(catalogdir, MANN_README))
 
-    stars = pd.DataFrame(columns=LIB_COLS)
+    stars = pd.DataFrame(columns=library.LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for row in mann_data:
@@ -234,7 +234,7 @@ def read_vonbraun(catalogdir, cps_list):
     """
     vb_data = ascii.read(os.path.join(catalogdir, VONBRAUN_FILENAME))
 
-    stars = pd.DataFrame(columns=LIB_COLS)
+    stars = pd.DataFrame(columns=library.LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for row in vb_data:
@@ -275,7 +275,7 @@ def read_huber(catalogdir, cps_list):
     huber_data = ascii.read(os.path.join(catalogdir, HUBER_FILENAME), readme=os.path.join(catalogdir, HUBER_README))
     huber_data = huber_data[huber_data['f_KOI'] != '*']
 
-    stars = pd.DataFrame(columns=LIB_COLS)
+    stars = pd.DataFrame(columns=library.LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for row in huber_data:
@@ -321,7 +321,7 @@ def read_catalogs(catalogdir, cpsdir):
     cps_list = pd.read_csv(cps_index_path)
 
     # Create dataframe to store found stars
-    stars = pd.DataFrame(columns=LIB_COLS)
+    stars = pd.DataFrame(columns=library.LIB_COLS)
 
     # Create dataframe to store stars which have no spectra
     stars_nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
@@ -345,11 +345,13 @@ def read_catalogs(catalogdir, cpsdir):
 
     return stars, stars_nospectra
 
-def get_isochrone_params(stars):
+def get_isochrone_params(stars, diagnostic=False, outdir='~/'):
     """Fill out parameter table with values obtained from isochrone package
 
     Args:
         stars (pd.DataFrame): star library
+        diagnostic (bool)   : whether to save the fitted model as a file
+        outdir (str)        : directory to save fitted models
     Returns:
         stars (pd.DataFrame): star library with updated parameters
     """
@@ -386,9 +388,15 @@ def get_isochrone_params(stars):
                 # insert unknown values
                 stars.loc[i, p] = np.around(value, 2)
                 stars.loc[i, 'u_'+p] = np.around(max(upper_bound-value, value-lower_bound), 2)
+
+        # save model
+        if diagnostic:
+            outpath = os.path.join(outdir, 'isochrone_models/{0}_model.h5'.format(row['cps_name']))
+            model.save_hdf(outpath)
+
     return stars
 
-def main(catalogdir, cpsdir, outdir):
+def main(catalogdir, cpsdir, outdir, diagnostic):
     ### 1. Read in the stars with known stellar parameters and check for those with CPS spectra
     # stars, stars_nospectra = read_catalogs(catalogdir, cpsdir)
     # # convert numeric columns
@@ -402,9 +410,10 @@ def main(catalogdir, cpsdir, outdir):
     ################################################################
 
     ### 2. Use isochrones package to obtain the remaining, unknown stellar parameters
-    stars = get_isochrone_params(stars)
+    stars = get_isochrone_params(stars, diagnostic)
 
-    ### 3. 
+    ### 3. Shift library spectra onto a constant log-lambda scale
+
 
 
 
@@ -415,6 +424,7 @@ if __name__ == '__main__':
     psr.add_argument('catalogdir', type=str, help="Path to catalogs")
     psr.add_argument('cpsdir', type=str, help="Path to CPS spectrum database")
     psr.add_argument('outdir', type=str, help="Path to output directory")
+    psr.add_argument('-d', '--diagnostic', help="Output all intermediate data for diagnostics")
     args = psr.parse_args()
 
-    main(args.catalogdir, args.cpsdir, args.outdir)
+    main(args.catalogdir, args.cpsdir, args.outdir, args.diagnostic)

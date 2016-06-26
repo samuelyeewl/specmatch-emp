@@ -7,7 +7,6 @@ Shift a target spectrum onto a reference spectrum.
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-# from specmatch_io import *
 from specmatchemp import specmatch_io
 
 def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, diagnosticfile='img.img'):
@@ -188,7 +187,7 @@ def rescale_w(s, serr, w, w_ref):
 
     return snew, serrnew
 
-def main(target_path, target_type, reference_path, output_path, diagnostic=False, diagnosticfile='img.img'):
+def shift(target_path, target_type, reference_path, output_path, diagnostic=False, diagnosticfile='img.img'):
     if target_type =='hires':
         try:
             s, w, serr, header = specmatch_io.read_hires_spectrum(target_path)
@@ -228,4 +227,4 @@ if __name__ == '__main__':
     parser.add_argument('output_path', type=str)
     args = parser.parse_args()
 
-    main(args.target_path, args.target_type, args.reference_path, args.output_path)
+    shift(args.target_path, args.target_type, args.reference_path, args.output_path)
