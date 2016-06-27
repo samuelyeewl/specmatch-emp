@@ -4,26 +4,36 @@
 Defines the library class which will be used for matching
 """
 
-LIB_COLS = ['cps_name', 'obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 'logg', 'u_logg', 'feh', 'u_feh',
-           'mass', 'u_mass', 'age', 'u_age', 'vsini', 'source', 'source_name', 'library_index']
+import datetime
+
+import numpy as np
+import pandas as pd
+import h5py
+
+LIB_COLS = ['cps_name', 'obs', 'lib_obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 
+            'logg', 'u_logg', 'feh', 'u_feh', 'mass', 'u_mass', 'age', 'u_age', 
+            'vsini', 'source', 'source_name']
+FLOAT_TOL = 1e-3
 
 class Library():
     """Library class
 
     This object is a container for the library spectrum and stellar 
-    parameters for the library stars.
+    parameters for the library stars. The library is indexed using
+    the library_index column.
 
     Args: 
         library_params (pd.DataFrame): Pandas DataFrame containing
             the parameters for the library stars. It should have
             the columns specified in LIB_COLS, although values can
-            be np.nan. The library_index column specifies the position
-            of the star's spectrum in the library_spectra array.
+            be np.nan. The index of the entry in the dataframe should
+            be the index of the specturm in library_spectra.
 
         wav (np.ndarray): Wavelength scale for the library spectra.
 
-        library_spectra (np.ndarray): 2D array containing the library
-            spectra ordered according to the library_index column.
+        library_spectra (np.ndarray): 3D array containing the library
+            spectra ordered according to the index column.
+            Each entry contains the spectrum and its uncertainty.
 
         header (dict): (optional) Any additional metadata to store
             with the library.
@@ -31,69 +41,199 @@ class Library():
         wavlim (2-element iterable): (optional) The upper and lower
             wavelength limits to be read.
     """
-    target_chunk_bytes = 100e3  # Target number of bytes 
+    target_chunk_bytes = 100e3  # Target number of bytes per chunk
 
-    def __init__(self, library_params, wav, library_spectra, header={}, wavlim = None):
-        return
+    def __init__(self, library_params, wav, library_spectra, header={}, wavlim=None):
+        """
+        Creates a fully-formed library from a given set of spectra.
+        """
+        # ensure that parameter table has the right columns
+        for col in LIB_COLS:
+            assert col in library_params.columns, \
+                "{0} required in parameter table".format(col)
 
-    def __init__(self, wav):
+        # ensure that parameter table, library spectra have same length.
+        num_spec = len(library_spectra)
+        assert len(library_params) == num_spec,    \
+            "Error: Length of parameter table and library spectra are not equal."
+        # ensure that all indices in library_params can be found in library_spectra
+        for i, row in library_params.iterrows():
+            assert i < num_spec,     \
+            "Error: Index {0:d} is out of bounds in library_spectra".format(i)
+
+        # ensure library_spectra is of right shape
+        assert np.shape(library_spectra)[1] == 2 and np.shape(library_spectra)[2] == len(wav), \
+            "Error: library_spectra should have shape ({0:d}, 2, {1:d}".format(num_spec, len(wav))
+
+        self.library_params = library_params
+        self.wav = wav
+        self.library_spectra = library_spectra
+        self.header = header
+        header['date_created'] = str(datetime.date.today())
+        self.wavlim = wavlim
+
+    def __init__(self, wav, header = {}, wavlim=None):
         """
-        Creates empty library - use class methods to add library spectra
+        Creates an empty library. Use insert to add new spectra to the library.
+        Requires the fixed wavelength scale to be provided.
         """
-        return
+        self.library_params = pd.DataFrame(columns=LIB_COLS)
+        self.wav = wav
+        self.library_spectra = np.empty((0, 2, len(wav)))
+        self.header = {'date_created': str(datetime.date.today())}
+        self.wavlim = wavlim
+
+    def insert(self, params, spectrum, u_spectrum):
+        """Insert spectrum and associated stellar parameters into library.
+
+        Args:
+            params (pd.Series): A row to be added to the library array. It
+                should have the fields specified in LIB_COLS.
+            spectrum (np.ndarray): Array containing spectrum to be added.
+                The spectrum should have been shifted and interpolated onto
+                the same wavelength scale as the library.
+            u_spectrum (np.ndarray): Array containing uncertainty in spectrum.
+        """
+        # ensure that parameter table, library spectra have same length.
+        assert len(self.library_params) == len(self.library_spectra),    \
+            "Error: Length of parameter table and library spectra are not equal."
+
+        # ensure that parameter row has the right columns
+        for col in LIB_COLS:
+            assert col in params.columns, \
+                "{0} required in parameter specification.".format(col)
+
+        # ensure that the provided spectrum has the same number of elements
+        # as the wavelength array
+        assert len(spectrum) == len(self.wav), \
+            "Error: spectrum is not the same length as library wavelength array"
+
+        # add new star to library
+        self.library_params = pd.concat((self.library_params, params), ignore_index=True)
+        self.library_spectra = np.vstack((self.library_spectra, [[spectrum, u_spectrum]]))
+
+
+    def to_hdf(self, outfile):
+        """
+        Saves library as a HDF file
+
+        Args:
+            outfile (str): Path to output file
+        """
+
+        with h5py.File(outfile, 'w') as f:
+            for key in self.header.keys():
+                f.attrs[key] = self.header[key]
+
+            library_params = np.array(self.library_params.to_records(index=True))
+            f['library_params'] = library_params
+            f['wav'] = self.wav
+
+            # Compute chunk size - group wavelenth regions together
+            chunk_row = len(self.library_spectra)
+            chunk_depth = 2
+            chunk_col = int(self.target_chunk_bytes / self.library_spectra[:,:,0].nbytes)
+            chunk_size = (chunk_row, chunk_depth, chunk_col)
+
+            print("Storing model spectra with chunks of size {0}".format(chunk_size))
+            dset = f.create_dataset('library_spectra', data=self.library_spectra,
+                compression='gzip', compression_opts=1, shuffle=True, chunks=chunks)
+
+        
 
     def __str__(self):
         """
         String representation of library
         """
-        return
+        outstr = "<specmatchemp.library.Library>\n"
+        for key, val in self.header.items():
+            outstr += "{0}: {1}\n".format(key, val)
+
+        return outstr
 
     ## Container methods
     def __iter__(self):
         """
         Allow library to be an iterable
         """
+        # iterate over the spectrum table
+        # iteration over np.ndarray much faster than pd.DataFrame
+        self.__it_counter = 0
+
         return self
 
     def __next__(self):
         """
         Next item
+
+        Returns:
+            params (pd.Series): Stellar parameters for the next star.
+            spectrum (np.ndarray): Spectrum for the next star
         """
-        return
+        if self.__it_counter >= len(self.library_spectra):
+            raise StopIteration
+
+        idx = self.__it_counter
+        self.__it_counter += 1
+        return self.library_params.loc[idx], self.library_spectra[idx]
 
     def __len__(self):
-        """
-        Length
-        """
-        return
+        """Number of spectra in library.
 
-    def __getitem__(self, key):
+        Returns:
+            Number of spectra stored in library.
+        """
+        return len(self.library_spectra)
+
+    def __getitem__(self, index):
         """
         Get item at specified library_index
-        """
-        return
 
-    def __contains__(self, key):
+        Args:
+            index (int): Library index of desired spectrum.
+        """
+        # Check if library_index specified is in the container
+        if not self.__contains__(index):
+            raise KeyError
+
+        return self.library_params.loc[index], self.library_spectra.loc[index]
+
+    def __contains__(self, index):
         """
         Check if specified library_index is filled
-        """
-        return
 
-    def insert(self, params, spectrum):
+        Args:
+            index (int): Library index to check
         """
-        Insert spectrum and associated parameters
-        """
-        return
+        return index in self.library_params.index
 
-    def to_hdf(self, outfile):
-        """
-        Saves library as a HDF file
-        """
-        return
-
-def read_hdf(infile):
+def read_hdf(infile, wavlim=None):
     """
     Reads in a library from a HDF file
+
+    Args:
+        infile (str): path to h5 file containing library.
+        wavlim (2-element iterable): (optional) The upper and lower wavelength
+            limits to be read.
+
+    Returns:
+        lib (library.Library) object
     """
-    return
+
+    with h5py.File(infile, 'r') as f:
+        header = dict(f.attrs)
+        library_params = pd.DataFrame.from_records(f['library_params'][:])
+        wav = f['wav'][:]
+
+        if wavlim is None:
+            library_spectra = f['library_spectra'][:]
+        else:
+            idxwav, = np.where( (wav > wavlim[0]) & (wav < wavlim[1]))
+            idxmin = idxwav[0]
+            idxmax = idxwav[-1] + 1 # add 1 to include last index when slicing
+            model_spectra = h5['library_spectra'][:,:,idxmin:idxmax]
+            wav = wav[idxmin:idxmax]
+
+    lib = Library(library_params, wav, library_spectra, header=header, wavlim=wavlim)
+    return lib
 

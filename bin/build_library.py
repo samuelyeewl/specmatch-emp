@@ -410,7 +410,7 @@ def main(catalogdir, cpsdir, outdir, diagnostic):
     ################################################################
 
     ### 2. Use isochrones package to obtain the remaining, unknown stellar parameters
-    stars = get_isochrone_params(stars, diagnostic)
+    stars = get_isochrone_params(stars, diagnostic=diagnostic, outdir=outdir)
 
     ### 3. Shift library spectra onto a constant log-lambda scale
 
