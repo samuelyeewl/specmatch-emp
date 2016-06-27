@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import shift_spectra
-import specmatch_io
+import specmatchio
 
 def run_script(lib_restr, ref_path):
     for index, row in lib_restr.iterrows():

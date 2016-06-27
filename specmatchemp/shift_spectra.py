@@ -7,7 +7,7 @@ Shift a target spectrum onto a reference spectrum.
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-from specmatchemp import specmatch_io
+from specmatchemp.io import specmatchio
 
 def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, diagnosticfile='img.img'):
     """

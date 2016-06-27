@@ -16,10 +16,12 @@ import os
 from argparse import ArgumentParser
 import re
 import warnings
+import time
 
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import multiprocessing as mp
 
 from astroquery.simbad import Simbad
 from astropy.io import ascii
@@ -108,6 +110,7 @@ def check_cps_database(starname, cps_list):
         starname = starname.strip('*')
         cps_search_str = starname
 
+    cps_search_str = '^' + cps_search_str + '$'
     return cps_list[cps_list['name'].str.match(cps_search_str)]
 
 def find_spectra(starname, cps_list):
@@ -122,7 +125,6 @@ def find_spectra(starname, cps_list):
     Returns:
         Subset of cps_list corresponding to the observations for the given star.
     """
-
     result = check_cps_database(starname, cps_list)
     
     if result.empty:
@@ -156,10 +158,10 @@ def read_brewer(catalogdir, cps_list):
 
     for row in brewer_data:
         try:
-            query_result = find_spectra(row['NAME'])
+            query_result = find_spectra(row['NAME'], cps_list)
             if not query_result.empty:
                 new_row = {}
-                new_row['cps_name'] = str(query_result.iloc[0].name)
+                new_row['cps_name'] = str(query_result.iloc[0]['name'])
                 new_row['obs'] = query_result.obs.values
                 new_row['Teff'] = row['TEFF']
                 new_row['u_Teff'] = 25
@@ -197,10 +199,10 @@ def read_mann(catalogdir, cps_list):
 
     for row in mann_data:
         try:
-            query_result = find_spectra(row['CNS3'])
+            query_result = find_spectra(row['CNS3'], cps_list)
             if not query_result.empty:
                 new_row = {}
-                new_row['cps_name'] = str(query_result.iloc[0].name)
+                new_row['cps_name'] = str(query_result.iloc[0]['name'])
                 new_row['obs'] = query_result.obs.values
                 new_row['Teff'] = row['Teff']
                 new_row['u_Teff'] = row['e_Teff']
@@ -239,10 +241,10 @@ def read_vonbraun(catalogdir, cps_list):
 
     for row in vb_data:
         try:
-            query_result = find_spectra(row['Star'])
+            query_result = find_spectra(row['Star'], cps_list)
             if not query_result.empty:
                 new_row = {}
-                new_row['cps_name'] = str(query_result.iloc[0].name)
+                new_row['cps_name'] = str(query_result.iloc[0]['name'])
                 new_row['obs'] = query_result.obs.values
                 new_row['Teff'] = row['Teff']
                 new_row['u_Teff'] = row['eTeff']
@@ -283,7 +285,7 @@ def read_huber(catalogdir, cps_list):
             query_result = find_spectra('KOI'+str(row['KOI']), cps_list)
             if not query_result.empty:
                 new_row = {}
-                new_row['cps_name'] = str(query_result.iloc[0].name)
+                new_row['cps_name'] = str(query_result.iloc[0]['name'])
                 new_row['obs'] = query_result.obs.values
                 new_row['Teff'] = row['Teff']
                 new_row['u_Teff'] = row['e_Teff']
@@ -331,13 +333,13 @@ def read_catalogs(catalogdir, cpsdir):
     # stars = stars.append(brewer_stars)
     # stars_nospectra = stars_nospectra.append(brewer_nospec)
 
-    # mann_stars, mann_nospec = read_mann(catalogdir, cps_list)
-    # stars = stars.append(mann_stars)
-    # stars_nospectra = stars_nospectra.append(mann_nospec)
+    mann_stars, mann_nospec = read_mann(catalogdir, cps_list)
+    stars = stars.append(mann_stars)
+    stars_nospectra = stars_nospectra.append(mann_nospec)
 
-    # vonbraun_stars, vonbraun_nospec = read_vonbraun(catalogdir, cps_list)
-    # stars = stars.append(vonbraun_stars)
-    # stars_nospectra = stars_nospectra.append(vonbraun_nospec)
+    vonbraun_stars, vonbraun_nospec = read_vonbraun(catalogdir, cps_list)
+    stars = stars.append(vonbraun_stars)
+    stars_nospectra = stars_nospectra.append(vonbraun_nospec)
 
     huber_stars, huber_nospec = read_huber(catalogdir, cps_list)
     stars = stars.append(huber_stars)
@@ -391,10 +393,17 @@ def get_isochrone_params(stars, diagnostic=False, outdir='~/'):
 
         # save model
         if diagnostic:
-            outpath = os.path.join(outdir, 'isochrone_models/{0}_model.h5'.format(row['cps_name']))
+            outpath = os.path.join(outdir, 'isochrone_models/')
+            if not os.path.exists(outpath):
+                os.makedirs(outpath)
+            outpath = os.path.join(outpath, '{0}_model.h5'.format(row['cps_name']))
             model.save_hdf(outpath)
 
     return stars
+
+def shift_library(stars, diagnostic=False, outdir='~/'):
+
+    return
 
 def main(catalogdir, cpsdir, outdir, diagnostic):
     ### 1. Read in the stars with known stellar parameters and check for those with CPS spectra
@@ -403,17 +412,25 @@ def main(catalogdir, cpsdir, outdir, diagnostic):
     # for col in STAR_PROPS:
     #     stars[col] = pd.to_numeric(stars[col], errors='coerce')
     #     stars['u_'+col] = pd.to_numeric(stars['u_'+col], errors='coerce')
-    # stars.to_csv(os.path.join(outdir, "libstars_huber.csv"))
+    # stars.to_csv(os.path.join(outdir, "libstars_small.csv"))
     # stars_nospectra.to_csv(os.path.join(outdir, "stars_nospectra.csv"))
     ################################################################
-    stars = pd.read_csv("./lib/libstars_huber.csv", index_col=0)
+    stars = pd.read_csv("./lib/libstars_small.csv", index_col=0)
     ################################################################
+
+    stars = stars.head(8)
+
+    start = time.time()
 
     ### 2. Use isochrones package to obtain the remaining, unknown stellar parameters
     stars = get_isochrone_params(stars, diagnostic=diagnostic, outdir=outdir)
 
-    ### 3. Shift library spectra onto a constant log-lambda scale
+    end = time.time()
 
+    print("time to fit 8 stars = {0:d}".format(end-start))
+
+    ### 3. Shift library spectra onto a constant log-lambda scale
+    # stars = shift_library(stars, diagnostic=diagnostic, outdir=outdir)
 
 
 
@@ -424,7 +441,7 @@ if __name__ == '__main__':
     psr.add_argument('catalogdir', type=str, help="Path to catalogs")
     psr.add_argument('cpsdir', type=str, help="Path to CPS spectrum database")
     psr.add_argument('outdir', type=str, help="Path to output directory")
-    psr.add_argument('-d', '--diagnostic', help="Output all intermediate data for diagnostics")
+    psr.add_argument('-d', '--diagnostic', action='store_true', help="Output all intermediate data for diagnostics")
     args = psr.parse_args()
 
     main(args.catalogdir, args.cpsdir, args.outdir, args.diagnostic)
