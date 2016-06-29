@@ -445,6 +445,9 @@ def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/')
 
     stars.is_copy=False
 
+    num_spec = len(stars)
+    current_spec = 1
+
     for i in range(len(shift_reference)):
         min_t = shift_reference.iloc[i].min_t
         max_t = shift_reference.iloc[i].max_t
@@ -469,7 +472,7 @@ def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/')
                 pattern = '^' + ref_spectrum + '$'
                 # search previously-shifted stars
                 if not stars[stars.lib_obs.str.match(pattern)].empty:
-                    ref_idx = stars[stars.lib_obs.str.match(pattern)].iloc[0].name
+                    ref_idx = int(stars[stars.lib_obs.str.match(pattern)].iloc[0].lib_index)
                     s_ref = spectra[ref_idx,0]
                     serr_ref = spectra[ref_idx, 1]
                     w_ref = wav
@@ -481,6 +484,8 @@ def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/')
         query = '{0:.0f} <= Teff < {1:.0f}'.format(min_t, max_t)
         stars_grouped = stars.query(query)
         for targ_idx, targ_params in stars_grouped.iterrows():
+            print("Shifting star {0:d} of {1:d}".format(current_spec, num_spec))
+            current_spec+=1
             # find spectrum for the star
             obs_list = re.sub("[\[\]\'']", '', targ_params.obs).split()
             specpath = None
@@ -507,7 +512,7 @@ def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/')
                 s_ref, serr_ref, w_ref, diagnostic=diagnostic, outfile=outfile, diagnostic_hdr=diag_hdr)
 
             # flatten spectrum within limts
-            s_flat, serr_flat = shift_spectra.flatten_spectrum(s_adj, serr_adj, w_adj, wav, wavlim=WAVLIM)
+            s_flat, serr_flat = shift_spectra.flatten(s_adj, serr_adj, w_adj, wav, wavlim=WAVLIM)
 
             # truncate the spectrum to ensure constant length
             # w_adj, s_adj, serr_adj = specmatchio.truncate_spectrum(WAVLIM, w_adj, s_adj, serr_adj)
@@ -538,6 +543,8 @@ def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
     stars['lib_obs'] = stars['lib_obs'].astype(str)
     ################################################################
 
+    stars = stars.query('4750 < Teff < 4850')
+
     stars.reset_index(drop=True,inplace=True)
 
     ### 3. Shift library spectra onto a constant log-lambda scale
@@ -546,6 +553,12 @@ def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
 
     lib = library.Library(wav, spectra, stars, wavlim=WAVLIM)
     lib.to_hdf('./lib/library_params.h5','./lib/library.h5')
+
+    for param, spectrum in lib:
+        plt.plot(lib.wav, spectrum[0]+param.lib_index)
+
+    plt.xlim(5800,6000)
+    plt.show()
 
 
 if __name__ == '__main__':

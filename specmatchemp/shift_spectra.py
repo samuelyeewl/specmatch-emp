@@ -6,6 +6,7 @@ Shift a target spectrum onto a reference spectrum.
 """
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.interpolate import UnivariateSpline
 import argparse
 from specmatchemp.io import specmatchio
 
@@ -27,16 +28,17 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile
         s_adj, serr_adj, w_adj:
             The adjusted spectrum and wavelength scale.
     """
-    # normalize each order of the target spectrum to the 95th percentile
+    # normalize each order of the target spectrum by fitting a spline
     percen_order = np.percentile(s, 95, axis=1)
     s /= percen_order.reshape(-1,1)
+    serr /= percen_order.reshape(-1,1)
 
     s_shifted = np.asarray([])
     serr_shifted = np.asarray([])
     ws = np.asarray([])
 
     tol = 5     # permitted deviation from median
-    num_sections = 5    # number of sections of each order
+    num_sections = 7    # number of sections of each order
 
     if diagnostic:
         f = open(outfile, 'w')
@@ -148,7 +150,7 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile
     
     return s_shifted, serr_shifted, ws
 
-def flatten_spectrum(s, serr, w, w_ref, wavlim=None):
+def flatten(s, serr, w, w_ref, wavlim=None):
     # create new arrays to contain spectrum
     s_flattened = np.empty_like(w_ref)
     serr_flattened = np.empty_like(w_ref)
@@ -181,17 +183,19 @@ def solve_for_shifts(s, s_ref):
     Returns:
         The pixel shift, the lag and correlation data
     """
-
     # correlate the two spectra
     xcorr = np.correlate(s-1, s_ref-1, mode='same')
+    xcorr = np.nan_to_num(xcorr)
     max_corr = np.argmax(xcorr)
 
     # number of pixels
     npix = xcorr.shape[0]
     lag_arr = np.arange(-npix/2+1, npix/2+1, 1)
+    
 
     # select points around the peak and fit a quadratic
     lag_peaks = lag_arr[max_corr-5:max_corr+5]
+    
     xcorr_peaks = xcorr[max_corr-5:max_corr+5]
     p = np.polyfit(lag_peaks, xcorr_peaks, 2)
     # peak is simply -p[1]/2p[0]
