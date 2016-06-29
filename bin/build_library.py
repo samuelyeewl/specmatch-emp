@@ -16,19 +16,19 @@ import os
 from argparse import ArgumentParser
 import re
 import warnings
-import time
 
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import multiprocessing as mp
 
-from astroquery.simbad import Simbad
-from astropy.io import ascii
-from isochrones.dartmouth import Dartmouth_Isochrone
-from isochrones import StarModel
+# from astroquery.simbad import Simbad
+# from astropy.io import ascii
+# from isochrones.dartmouth import Dartmouth_Isochrone
+# from isochrones import StarModel
 
 from specmatchemp import library
+from specmatchemp import shift_spectra
+from specmatchemp.io import specmatchio
 
 # relative catalog locations
 MANN_FILENAME = "Mann2015/stars.dat"
@@ -38,13 +38,15 @@ HUBER_README = "Huber2013/ReadMe"
 VONBRAUN_FILENAME = "VonBraun-Figure6.txt"
 BREWER_FILENAME = "spocsii_stars.csv"
 CPS_INDEX = "cps_templates.csv"
-CPS_SPECTRA_DIR = "iofitsdb/"
+CPS_SPECTRA_DIR = "iodfitsdb/"
 
 STAR_PROPS = ['Teff', 'radius', 'logg', 'feh', 'mass', 'age']
 NOSPECTRA_COLS = ['name', 'source']
 
 MIN_PERCENTILE = 0.16
 MAX_PERCENTILE = 0.84
+
+WAVLIM = (5000, 6400)
 
 def check_cps_database(starname, cps_list):
     """Checks the CPS databse if a spectrum is available for the given identifier.
@@ -330,24 +332,24 @@ def read_catalogs(catalogdir, cpsdir):
 
     # Read catalogs
     # brewer_stars, brewer_nospec = read_brewer(catalogdir, cps_list)
-    # stars = stars.append(brewer_stars)
+    # stars = pd.concat((stars, brewer_stars), ignore_index=True)
     # stars_nospectra = stars_nospectra.append(brewer_nospec)
 
     mann_stars, mann_nospec = read_mann(catalogdir, cps_list)
-    stars = stars.append(mann_stars)
+    stars = pd.concat((stars, mann_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(mann_nospec)
 
     vonbraun_stars, vonbraun_nospec = read_vonbraun(catalogdir, cps_list)
-    stars = stars.append(vonbraun_stars)
+    stars = pd.concat((stars, vonbraun_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(vonbraun_nospec)
 
     huber_stars, huber_nospec = read_huber(catalogdir, cps_list)
-    stars = stars.append(huber_stars)
+    stars = pd.concat((stars, huber_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(huber_nospec)
 
     return stars, stars_nospectra
 
-def get_isochrone_params(stars, diagnostic=False, outdir='~/'):
+def get_isochrone_params(stars, diagnostic=False, outdir='./'):
     """Fill out parameter table with values obtained from isochrone package
 
     Args:
@@ -358,6 +360,12 @@ def get_isochrone_params(stars, diagnostic=False, outdir='~/'):
         stars (pd.DataFrame): star library with updated parameters
     """
     dar = Dartmouth_Isochrone()
+
+    # create output subfolder
+    if diagnostic:
+        outdir = os.path.join(outdir, 'isochrone_models/')
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
 
     for i, row in stars.iterrows():
         # get known stellar properties
@@ -386,6 +394,15 @@ def get_isochrone_params(stars, diagnostic=False, outdir='~/'):
                     print("\tLibrary values: {0:.2f} +/- {1:.2f}".format(row[p], row['u_'+p]))
                     print("\tModel values: {0:.2f}, 1-sigma = ({1:.2f}, {2:.2f})".format(
                         value, lower_bound, upper_bound))
+                    # Save error messages to file
+                    if diagnostic:
+                        outpath_err = os.path.join(outdir, 'model_errors.txt')
+                        with open(outpath_err, 'a') as f:
+                            f.write("Inconsistent {0} for star {1}".format(p, row['cps_name']))
+                            f.write("\tLibrary values: {0:.2f} +/- {1:.2f}".format(row[p], row['u_'+p]))
+                            f.write("\tModel values: {0:.2f}, 1-sigma = ({1:.2f}, {2:.2f})".format(
+                            value, lower_bound, upper_bound))
+
             else:
                 # insert unknown values
                 stars.loc[i, p] = np.around(value, 2)
@@ -393,55 +410,152 @@ def get_isochrone_params(stars, diagnostic=False, outdir='~/'):
 
         # save model
         if diagnostic:
-            outpath = os.path.join(outdir, 'isochrone_models/')
-            if not os.path.exists(outpath):
-                os.makedirs(outpath)
-            outpath = os.path.join(outpath, '{0}_model.h5'.format(row['cps_name']))
+            outpath = os.path.join(outdir, '{0}_model.h5'.format(row['cps_name']))
             model.save_hdf(outpath)
 
     return stars
 
-def shift_library(stars, diagnostic=False, outdir='~/'):
+def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/'):
+    """Reads in spectra and shifts them to a reference spectrum and interpolates onto
+    a constant log-lambda scale.
 
-    return
+    Args:
+        stars (pd.DataFrame) : star library
+        shift_reference (pd.DataFrame) : DataFrame containing a list of reference spectra.
+            This allows bootstrapping in order to shift spectra in different regions of the
+            parameter space. 
+            The DataFrame should have the following columns:
+                index: Determines order of spectra to shift
+                min_t, max_t: Teff range for this reference spectrum.
+                ref_spectrum: A path to a FITS file, or the obs value of a spectrum that
+                    is in the library and has previously been shifted.
+        diagnostic (bool)   : whether to save the diagnostic data
+        outdir (str)        : directory to save diagnostic data
 
-def main(catalogdir, cpsdir, outdir, diagnostic):
+    Returns:
+        stars (pd.DataFrame) : Updated star library with filled lib_obs, lib_index columns
+        wav (np.ndarray)     : 1-dimensional array containing the common wavelength scale.
+        spectra(np.ndarray)  : 3-dimensional array containing the spectra, u_spectra,
+            indexed by the star library index.
+    """
+    # obey the specified shifting order
+    wav = None
+    spectra = None
+    shift_reference = shift_reference.sort_index()
+
+    stars.is_copy=False
+
+    for i in range(len(shift_reference)):
+        min_t = shift_reference.iloc[i].min_t
+        max_t = shift_reference.iloc[i].max_t
+        ref_spectrum = shift_reference.iloc[i].ref_spectrum
+
+        # for the first round, we must specify a file (or previous library spectrum)
+        if i == 0:
+            if not os.path.isfile(ref_spectrum):
+                print("Error: Unable to find {0} as reference.".format(ref_spectrum))
+                return stars, None, None
+            w_ref, s_ref, serr_ref, hdr_ref = specmatchio.read_standard_spectrum(ref_spectrum, (4900,6500))
+            # use this reference wavelength scale for the library
+            wav, s, serr = specmatchio.truncate_spectrum(WAVLIM, w_ref, s_ref, serr_ref)
+            spectra = np.empty((0,2,len(wav)))
+        # in other rounds, we can look for a file or a previously-shifted spectrum for bootstrapping
+        else:
+            # search for file
+            if os.path.isfile(ref_spectrum):
+                w_ref, s_ref, serr_ref, hdr_ref = specmatchio.read_standard_spectrum(ref_spectrum, (4900,6500))
+            # search in previously-shifted spectra
+            else:
+                pattern = '^' + ref_spectrum + '$'
+                # search previously-shifted stars
+                if not stars[stars.lib_obs.str.match(pattern)].empty:
+                    ref_idx = stars[stars.lib_obs.str.match(pattern)].iloc[0].name
+                    s_ref = spectra[ref_idx,0]
+                    serr_ref = spectra[ref_idx, 1]
+                    w_ref = wav
+                else:
+                    print("Error: Unable to find {0} as reference.".format(ref_spectrum))
+                    continue
+
+        # now shift spectra in each group
+        query = '{0:.0f} <= Teff < {1:.0f}'.format(min_t, max_t)
+        stars_grouped = stars.query(query)
+        for targ_idx, targ_params in stars_grouped.iterrows():
+            # find spectrum for the star
+            obs_list = re.sub("[\[\]\'']", '', targ_params.obs).split()
+            specpath = None
+            ## loop through list of observations
+            for obs in obs_list:
+                specpath = os.path.join(cpsdir, CPS_SPECTRA_DIR, obs+'.fits')
+                if os.path.isfile(specpath):
+                    # record which observation was used
+                    stars.loc[targ_idx, 'lib_obs'] = obs
+                    break
+                else:
+                    specpath=None
+            if specpath is None:
+                print("Could not find any spectra for star {0}".format(targ_params.cps_name))
+                continue
+            ## read in spectrum
+            w_targ, s_targ, serr_targ, hdr_targ = specmatchio.read_hires_spectrum(specpath)
+
+            # shift spectrum
+            outfile = os.path.join(outdir+'/shift_data/{0}.txt'.format(stars.loc[targ_idx].lib_obs))
+            diag_hdr = '# Star: {0}\n# Reference: {1}\n'.format(targ_params.cps_name, ref_spectrum)
+
+            s_adj, serr_adj, w_adj = shift_spectra.adjust_spectra(s_targ, serr_targ, w_targ,\
+                s_ref, serr_ref, w_ref, diagnostic=diagnostic, outfile=outfile, diagnostic_hdr=diag_hdr)
+
+            # flatten spectrum within limts
+            s_flat, serr_flat = shift_spectra.flatten_spectrum(s_adj, serr_adj, w_adj, wav, wavlim=WAVLIM)
+
+            # truncate the spectrum to ensure constant length
+            # w_adj, s_adj, serr_adj = specmatchio.truncate_spectrum(WAVLIM, w_adj, s_adj, serr_adj)
+
+            # append spectrum to spectra table
+            stars.loc[targ_idx, 'lib_index'] = len(spectra)
+            spectra = np.vstack((spectra, [[s_flat, serr_flat]]))
+
+    return stars, wav, spectra
+
+
+def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
     ### 1. Read in the stars with known stellar parameters and check for those with CPS spectra
     # stars, stars_nospectra = read_catalogs(catalogdir, cpsdir)
     # # convert numeric columns
     # for col in STAR_PROPS:
     #     stars[col] = pd.to_numeric(stars[col], errors='coerce')
     #     stars['u_'+col] = pd.to_numeric(stars['u_'+col], errors='coerce')
+
+    # ### 2. Use isochrones package to obtain the remaining, unknown stellar parameters
+    # stars = get_isochrone_params(stars, diagnostic=diagnostic, outdir=outdir)
+
     # stars.to_csv(os.path.join(outdir, "libstars_small.csv"))
     # stars_nospectra.to_csv(os.path.join(outdir, "stars_nospectra.csv"))
+
     ################################################################
     stars = pd.read_csv("./lib/libstars_small.csv", index_col=0)
+    stars['lib_obs'] = stars['lib_obs'].astype(str)
     ################################################################
 
-    stars = stars.head(8)
-
-    start = time.time()
-
-    ### 2. Use isochrones package to obtain the remaining, unknown stellar parameters
-    stars = get_isochrone_params(stars, diagnostic=diagnostic, outdir=outdir)
-
-    end = time.time()
-
-    print("time to fit 8 stars = {0:d}".format(end-start))
+    stars.reset_index(drop=True,inplace=True)
 
     ### 3. Shift library spectra onto a constant log-lambda scale
-    # stars = shift_library(stars, diagnostic=diagnostic, outdir=outdir)
+    shift_ref = pd.read_csv(shift_reference_path, index_col=0)
+    stars, wav, spectra = shift_library(stars, cpsdir, shift_ref, diagnostic=diagnostic, outdir=outdir)
 
-
-
+    lib = library.Library(wav, spectra, stars, wavlim=WAVLIM)
+    lib.to_hdf('./lib/library_params.h5','./lib/library.h5')
 
 
 if __name__ == '__main__':
     psr = ArgumentParser(description="Build the SpecMatch-Emp library from the various catalogs")
     psr.add_argument('catalogdir', type=str, help="Path to catalogs")
     psr.add_argument('cpsdir', type=str, help="Path to CPS spectrum database")
+    psr.add_argument('shift_reference', type=str, help="Path to spectrum shifting reference list")
     psr.add_argument('outdir', type=str, help="Path to output directory")
     psr.add_argument('-d', '--diagnostic', action='store_true', help="Output all intermediate data for diagnostics")
+    psr.add_argument('-a', '--append', action='store_true', help="Append to existing library in outdir")
     args = psr.parse_args()
 
-    main(args.catalogdir, args.cpsdir, args.outdir, args.diagnostic)
+    main(args.catalogdir, args.cpsdir, args.shift_reference, args.outdir, args.diagnostic, args.append)

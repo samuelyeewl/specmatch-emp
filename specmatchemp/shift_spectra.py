@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import argparse
 from specmatchemp.io import specmatchio
 
-def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, diagnosticfile='img.img'):
+def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile='./diag.csv', diagnostic_hdr=None):
     """
     Adjusts the given spectrum by first placing it on the same wavelength scale as
     the specified reference spectrum, then solves for shifts between the two
@@ -35,7 +35,17 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, diagnos
     serr_shifted = np.asarray([])
     ws = np.asarray([])
 
-    plt.cla()
+    tol = 5     # permitted deviation from median
+    num_sections = 5    # number of sections of each order
+
+    if diagnostic:
+        f = open(outfile, 'w')
+        if diagnostic_hdr is not None:
+            f.write(diagnostic_hdr)
+            f.write('# tol = {0:d}, num_sections = {1:d}\n'.format(tol, num_sections))
+        f.close()
+        f = open(outfile, 'ab')
+        list_lags=np.empty((len(s),3,num_sections))
 
     # for every order in the spectrum
     for i in range(len(s)):
@@ -55,16 +65,13 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, diagnos
         in_range = np.asarray([True if wr > w_min and wr < w_max else False
             for wr in w_ref])
         start_idx = np.argmax(in_range)
-
         w_ref_c = w_ref[in_range]
         s_ref_c = s_ref[in_range]
 
         # place the target spectrum on the same wavelength scale
         ss, sserr = rescale_w(ss, sserr, ww, w_ref_c)
 
-        # solve for shifts in different sections (of length 1200 pix)
-        l_sect = 1000
-        num_sections = int(len(w_ref_c)/l_sect)
+        # solve for shifts in different sections
         l_sect = int(len(w_ref_c)/num_sections)
         lags = np.empty(num_sections)
         center_pix = np.empty(num_sections)
@@ -75,27 +82,27 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, diagnos
                 s_ref_c[j*l_sect:(j+1)*l_sect])
             lags[j] = lag
             center_pix[j] = (j+1/2)*l_sect
-            # plt.plot(lag_arr, xcorr)
 
         # we expect that the shifts across every order are close together
         # so we should remove outliers
         med = np.median(lags)
-        tol = 2     # permitted deviation from median
         not_outlier = np.asarray([True if l > med-tol and l < med+tol else False 
             for l in lags])
-        lags = lags[not_outlier]
-        center_pix = center_pix[not_outlier]
+        lags_trunc = lags[not_outlier]
+        center_pix_trunc = center_pix[not_outlier]
 
         # fit a straight line to the shifts
-        fit = np.polyfit(center_pix, lags, 1)
+        fit = np.polyfit(center_pix_trunc, lags_trunc, 1)
         pix_arr = np.arange(0, len(w_ref_c))
         pix_shifted = pix_arr - fit[1] - pix_arr*fit[0]
 
-        # if (diagnostic and i==2):
-        if(diagnostic):
-            plt.plot(center_pix, lags)
-            plt.plot(pix_arr, fit[0]*pix_arr+fit[1])
-        # plt.show()
+        # if(diagnostic):
+        #     plt.plot(center_pix, lags)
+        #     plt.plot(pix_arr, fit[0]*pix_arr+fit[1])
+
+        if diagnostic:
+            fitted = fit[0]*center_pix+fit[1]
+            list_lags[i] = [center_pix, lags, fitted]
 
         # plt.plot(pixs, pix_shifted)
         # plt.show()
@@ -112,31 +119,52 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, diagnos
         new_pix = np.arange(pix_min, pix_max)
         # new wavelength array
         w_ref_c = w_ref[start_idx+pix_min:start_idx+pix_max]
-
+        
         # interpolate the spectrum back onto the reference spectrum
         ss_shifted = np.interp(new_pix, pix_shifted, ss)
         sserr_shifted = np.interp(new_pix, pix_shifted, sserr)
 
-        # append to array, discarding leading and trailing 50 pixels
-        s_shifted = np.append(s_shifted, ss_shifted[50:-50])
-        serr_shifted = np.append(serr_shifted, sserr_shifted[50:-50])
-        ws = np.append(ws, w_ref_c[50:-50])
+        # append to array, discarding leading and trailing 20 pixels
+        s_shifted = np.append(s_shifted, ss_shifted[20:-20])
+        serr_shifted = np.append(serr_shifted, sserr_shifted[20:-20])
+        ws = np.append(ws, w_ref_c[20:-20])
 
-    if(diagnostic):
-        plt.savefig(diagnosticfile)
-        plt.clf()
+    if diagnostic:
+        # reshape into 2d array for storage
+        list_lags = list_lags.reshape((len(s),3*num_sections))
+        np.savetxt(f, list_lags)
+        f.close()
 
-    # average any values that appear twice
-    w_flattened = np.unique(ws)
-    s_flattened = np.empty_like(w_flattened)
-    serr_flattened = np.empty_like(w_flattened)
+    # # average any values that appear twice
+    # w_flattened = np.unique(ws)
+    # s_flattened = np.empty_like(w_flattened)
+    # serr_flattened = np.empty_like(w_flattened)
 
-    for i, wl in enumerate(w_flattened):
-        s_flattened[i] = np.mean(s_shifted[ws == wl])
-        serr_flattened[i] = np.mean(serr_shifted[ws == wl])
+    # for i, wl in enumerate(w_flattened):
+    #     s_flattened[i] = np.mean(s_shifted[ws == wl])
+    #     serr_flattened[i] = np.mean(serr_shifted[ws == wl])
 
-    return s_flattened, serr_flattened, w_flattened
+    # return s_flattened, serr_flattened, w_flattened
     
+    return s_shifted, serr_shifted, ws
+
+def flatten_spectrum(s, serr, w, w_ref, wavlim=None):
+    # create new arrays to contain spectrum
+    s_flattened = np.empty_like(w_ref)
+    serr_flattened = np.empty_like(w_ref)
+
+    for i, wl in enumerate(w_ref):
+        s_wl = s[w==wl]
+        serr_wl = serr[w==wl]
+        if s_wl.size == 0:
+            s_flattened[i] = np.nan
+            serr_flattened[i] = np.nan
+        else:
+            s_flattened[i] = np.mean(s_wl)
+            serr_flattened[i] = np.mean(serr_wl)
+
+    return s_flattened, serr_flattened
+
 def solve_for_shifts(s, s_ref):
     """
     Solve for the pixel shifts required to align two spectra that are on the same
