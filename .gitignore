@@ -11,6 +11,11 @@ match_one_runstats
 *.png
 chi_squared_results.csv
 
+# Ignore plots and working data
+*.png
+chi-squared.csv
+working/
+
 # Byte-compiled / optimized / DLL files
 
 __pycache__/
