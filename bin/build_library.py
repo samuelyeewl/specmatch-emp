@@ -503,23 +503,33 @@ def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/')
             if specpath is None:
                 print("Could not find any spectra for star {0}".format(targ_params.cps_name))
                 continue
-            ## read in spectrum
-            w_targ, s_targ, serr_targ, hdr_targ = specmatchio.read_hires_spectrum(specpath)
 
-            # shift spectrum
-            outfile = os.path.join(outdir+'/shift_data/{0}.txt'.format(stars.loc[targ_idx].lib_obs))
-            diag_hdr = '# Star: {0}\n# Reference: {1}\n'.format(targ_params.cps_name, ref_spectrum)
+            try:
+                ## read in spectrum
+                w_targ, s_targ, serr_targ, hdr_targ = specmatchio.read_hires_spectrum(specpath)
 
-            s_adj, serr_adj, w_adj = shift_spectra.adjust_spectra(s_targ, serr_targ, w_targ,\
-                s_ref, serr_ref, w_ref, diagnostic=diagnostic, outfile=outfile, diagnostic_hdr=diag_hdr)
+                # shift spectrum
+                outfile = os.path.join(outdir+'/shift_data/{0}.txt'.format(stars.loc[targ_idx].lib_obs))
+                diag_hdr = '# Star: {0}\n# Reference: {1}\n'.format(targ_params.cps_name, ref_spectrum)
 
-            # flatten spectrum within limits
-            w_flat, s_flat, serr_flat = shift_spectra.flatten(w_adj, s_adj, serr_adj, w_ref=wav, wavlim=WAVLIM)
+                s_adj, serr_adj, w_adj = shift_spectra.adjust_spectra(s_targ, serr_targ, w_targ,\
+                    s_ref, serr_ref, w_ref, diagnostic=diagnostic, outfile=outfile, diagnostic_hdr=diag_hdr)
+
+                # flatten spectrum within limits
+                w_flat, s_flat, serr_flat = shift_spectra.flatten(w_adj, s_adj, serr_adj, w_ref=wav, wavlim=WAVLIM)
+
+            except Exception as e:
+                print("Error: Failed to shift star {0}, spectrum {1}".format(targ_params.cps_name, targ_params.lib_obs))
+                print("{0}".format(e))
+                continue
+
 
             # append spectrum to spectra table
             stars.loc[targ_idx, 'lib_index'] = len(spectra)
             spectra = np.vstack((spectra, [[s_flat, serr_flat]]))
 
+    # eliminate stars with no spectra
+    stars = stars[np.logical_not(np.isnan(stars.lib_index))]
     return stars, wav, spectra
 
 
@@ -542,7 +552,7 @@ def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
     stars['lib_obs'] = stars['lib_obs'].astype(str)
     ################################################################
 
-    stars = stars.query('4750 < Teff < 4850')
+    # stars = stars.query('4750 < Teff < 4850')
 
     stars.reset_index(drop=True,inplace=True)
 
@@ -550,14 +560,10 @@ def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
     shift_ref = pd.read_csv(shift_reference_path, index_col=0)
     stars, wav, spectra = shift_library(stars, cpsdir, shift_ref, diagnostic=diagnostic, outdir=outdir)
 
+    stars.to_csv(os.path.join(outdir, "libstars_small_shifted.csv"))
+
     lib = library.Library(wav, spectra, stars, wavlim=WAVLIM)
     lib.to_hdf('./lib/library_params.h5','./lib/library.h5')
-
-    for param, spectrum in lib:
-        plt.plot(lib.wav, spectrum[0]+param.lib_index)
-
-    plt.xlim(5800,6000)
-    plt.show()
 
 
 if __name__ == '__main__':

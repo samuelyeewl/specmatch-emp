@@ -9,6 +9,7 @@ match_one_runstats
 
 # Ignore plots and data
 *.png
+chi_squared_results.csv
 
 # Byte-compiled / optimized / DLL files
 

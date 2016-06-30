@@ -68,7 +68,7 @@ class Library():
             "Error: Length of parameter table and library spectra are not equal."
         # ensure that all indices in library_params can be found in library_spectra
         for i, row in library_params.iterrows():
-            assert i < num_spec,     \
+            assert row.lib_index < num_spec,     \
             "Error: Index {0:d} is out of bounds in library_spectra".format(i)
 
         # ensure library_spectra is of right shape

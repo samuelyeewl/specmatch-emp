@@ -93,7 +93,7 @@ class Match:
         for i in range(num_knots):
             p = 'knot_{0:d}'.format(i)
             params.add(p+'_x', value=self.w[interval*i], vary=False)
-            params.add(p+'_y', value=self.s_targ[interval*i])
+            params.add(p+'_y', value=self.s_targ[interval*i], min=0.5, max=1.5)
 
         # Rotational broadening
         params.add('vsini', value=10.0, min=0.0, max=30.0)
