@@ -33,9 +33,9 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile
     s /= percen_order.reshape(-1,1)
     serr /= percen_order.reshape(-1,1)
 
-    s_shifted = np.asarray([])
-    serr_shifted = np.asarray([])
-    ws = np.asarray([])
+    s_shifted = np.asarray([[]])
+    serr_shifted = np.asarray([[]])
+    ws = np.asarray([[]])
 
     tol = 5     # permitted deviation from median
     num_sections = 7    # number of sections of each order
@@ -147,25 +147,84 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile
     #     serr_flattened[i] = np.mean(serr_shifted[ws == wl])
 
     # return s_flattened, serr_flattened, w_flattened
-    
+
     return s_shifted, serr_shifted, ws
 
-def flatten(s, serr, w, w_ref, wavlim=None):
+def flatten(w, s, serr, w_ref=None, wavlim=None):
+    """Flattens a given 2-D spectrum into a 1-D array.
+    Merges overlapped points by taking the mean.
+    If w_ref is given, fills values that don't occur in the 2D spectrum
+    with np.nan
+
+    Args:
+        w (np.ndarray): Wavelength array
+        s (np.ndarray): Spectrum
+        serr (np.ndarray): (optional) Uncertainty in spectrum
+        w_ref (np.nadarray): (optional) Reference, 1-D wavelength array
+        wavlim (2-element iterable): (optional) Wavelength limits
+    
+    Returns:
+        w, s, serr: Wavelength, spectrum and uncertainty in spectrum
+    """
+    assert np.shape(w) == np.shape(s), "w, s not the same shape!"
+    assert np.shape(w) == np.shape(serr), "w, serr not the same shape!"
+
+    if w_ref is None:
+        w_flattened = np.unique(w)
+    else:
+        w_flattened = w_ref
+
     # create new arrays to contain spectrum
-    s_flattened = np.empty_like(w_ref)
-    serr_flattened = np.empty_like(w_ref)
+    s_flattened = np.empty_like(w_flattened)
+    serr_flattened = np.empty_like(w_flattened)
+    idx_max = len(w)-1
+    c_idx = 0
+    n_idx = 0
 
     for i, wl in enumerate(w_ref):
-        s_wl = s[w==wl]
-        serr_wl = serr[w==wl]
-        if s_wl.size == 0:
+        while w[c_idx] < wl and c_idx < idx_max and not np.isclose(w[c_idx], wl):
+            c_idx += 1
+
+        if c_idx >= idx_max:
             s_flattened[i] = np.nan
             serr_flattened[i] = np.nan
-        else:
-            s_flattened[i] = np.mean(s_wl)
-            serr_flattened[i] = np.mean(serr_wl)
+            continue
 
-    return s_flattened, serr_flattened
+        overlap = False
+        if np.isclose(w[c_idx], wl):
+            # scan for overlapping region
+            while n_idx < idx_max:
+                n_idx += 1
+                if c_idx == n_idx:
+                    continue
+                elif np.isclose(w[n_idx], wl):
+                    overlap=True
+                    break
+                elif w[n_idx] > w[c_idx] and w[n_idx] < w[n_idx-1]:
+                    # lock at start of new order
+                    n_idx -= 1
+                    break
+            if overlap:
+                s_flattened[i] = (s[c_idx]+s[n_idx])/2
+                serr_flattened[i] = (serr[c_idx]+serr[n_idx])/2
+            else:
+                s_flattened[i] = s[c_idx]
+                serr_flattened[i] = serr[c_idx]
+            c_idx += 1
+        else:
+            s_flattened[i] = np.nan
+            serr_flattened[i] = np.nan
+
+        # s_wl = s[w==wl]
+        # serr_wl = serr[w==wl]
+        # if s_wl.size == 0:
+        #     s_flattened[i] = np.nan
+        #     serr_flattened[i] = np.nan
+        # else:
+        #     s_flattened[i] = np.mean(s_wl)
+        #     serr_flattened[i] = np.mean(serr_wl)
+
+    return w_flattened, s_flattened, serr_flattened
 
 def solve_for_shifts(s, s_ref):
     """
@@ -195,8 +254,8 @@ def solve_for_shifts(s, s_ref):
 
     # select points around the peak and fit a quadratic
     lag_peaks = lag_arr[max_corr-5:max_corr+5]
-    
     xcorr_peaks = xcorr[max_corr-5:max_corr+5]
+
     p = np.polyfit(lag_peaks, xcorr_peaks, 2)
     # peak is simply -p[1]/2p[0]
     lag = -p[1]/(2*p[0])
