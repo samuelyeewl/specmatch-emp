@@ -513,13 +513,8 @@ def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/')
             s_adj, serr_adj, w_adj = shift_spectra.adjust_spectra(s_targ, serr_targ, w_targ,\
                 s_ref, serr_ref, w_ref, diagnostic=diagnostic, outfile=outfile, diagnostic_hdr=diag_hdr)
 
-            start = time.time()
-            # flatten spectrum within limts
+            # flatten spectrum within limits
             w_flat, s_flat, serr_flat = shift_spectra.flatten(w_adj, s_adj, serr_adj, w_ref=wav, wavlim=WAVLIM)
-            end = time.time()
-            print("Flatten took {0:.3f} seconds".format(end-start))
-            # truncate the spectrum to ensure constant length
-            # w_adj, s_adj, serr_adj = specmatchio.truncate_spectrum(WAVLIM, w_adj, s_adj, serr_adj)
 
             # append spectrum to spectra table
             stars.loc[targ_idx, 'lib_index'] = len(spectra)

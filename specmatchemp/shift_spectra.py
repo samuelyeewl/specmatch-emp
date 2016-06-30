@@ -137,17 +137,6 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile
         np.savetxt(f, list_lags)
         f.close()
 
-    # # average any values that appear twice
-    # w_flattened = np.unique(ws)
-    # s_flattened = np.empty_like(w_flattened)
-    # serr_flattened = np.empty_like(w_flattened)
-
-    # for i, wl in enumerate(w_flattened):
-    #     s_flattened[i] = np.mean(s_shifted[ws == wl])
-    #     serr_flattened[i] = np.mean(serr_shifted[ws == wl])
-
-    # return s_flattened, serr_flattened, w_flattened
-
     return s_shifted, serr_shifted, ws
 
 def flatten(w, s, serr, w_ref=None, wavlim=None):
@@ -214,15 +203,6 @@ def flatten(w, s, serr, w_ref=None, wavlim=None):
         else:
             s_flattened[i] = np.nan
             serr_flattened[i] = np.nan
-
-        # s_wl = s[w==wl]
-        # serr_wl = serr[w==wl]
-        # if s_wl.size == 0:
-        #     s_flattened[i] = np.nan
-        #     serr_flattened[i] = np.nan
-        # else:
-        #     s_flattened[i] = np.mean(s_wl)
-        #     serr_flattened[i] = np.mean(serr_wl)
 
     return w_flattened, s_flattened, serr_flattened
 

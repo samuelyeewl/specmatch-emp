@@ -75,7 +75,11 @@ class Library():
         assert np.shape(library_spectra)[1] == 2 and np.shape(library_spectra)[2] == len(wav), \
             "Error: library_spectra should have shape ({0:d}, 2, {1:d}".format(num_spec, len(wav))
 
+        # set index to be equal to lib_index
+        library_params.lib_index = library_params.lib_index.astype(int)
         self.library_params = library_params
+        self.library_params.set_index('lib_index', inplace=True, drop=False)
+
         self.wav = wav
         self.library_spectra = library_spectra
         self.header = header
@@ -123,6 +127,8 @@ class Library():
         """
 
         # store params
+        self.library_params.lib_index = self.library_params.lib_index.astype(int)
+        self.library_params.set_index('lib_index', inplace=True, drop=False)
         self.library_params.to_hdf(paramfile, 'library_params', format='table', mode='w')
 
         # store spectrum
@@ -198,7 +204,7 @@ class Library():
         if not self.__contains__(index):
             raise KeyError
 
-        return self.library_params.loc[index], self.library_spectra.loc[index]
+        return self.library_params.loc[index], self.library_spectra[index]
 
     def __contains__(self, index):
         """
@@ -207,7 +213,7 @@ class Library():
         Args:
             index (int): Library index to check
         """
-        return index in self.library_params.index
+        return index in self.library_params.lib_index
 
 def read_hdf(paramfile, specfile, wavlim=None):
     """
@@ -234,7 +240,7 @@ def read_hdf(paramfile, specfile, wavlim=None):
             idxwav, = np.where( (wav > wavlim[0]) & (wav < wavlim[1]))
             idxmin = idxwav[0]
             idxmax = idxwav[-1] + 1 # add 1 to include last index when slicing
-            model_spectra = h5['library_spectra'][:,:,idxmin:idxmax]
+            library_spectra = f['library_spectra'][:,:,idxmin:idxmax]
             wav = wav[idxmin:idxmax]
 
     lib = Library(wav, library_spectra, library_params, header=header, wavlim=wavlim)

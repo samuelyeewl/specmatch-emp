@@ -12,15 +12,22 @@ import scipy.ndimage as nd
 import specmatchemp.kernels
 
 class Match:
-    def __init__(self, target, reference):
+    def __init__(self, wav, s_targ, serr_targ, s_ref, serr_ref):
         """
         The Match class used for matching two spectra
 
-        target, reference spectra should be given as Pandas dataframes.
+        Args:
+            wav (np.ndarray): Common wavelength scale
+            s_targ (np.ndarray): Target spectrum
+            serr_targ (np.ndarray): Uncertainty in target spectrum
+            s_ref (np.ndarray): Reference spectrum
+            serr_ref (np.ndarray): Uncertainty in reference spectrum
         """
-        target.columns = ['s_targ', 'serr_targ', 'w']
-        reference.columns = ['s_ref', 'serr_ref', 'w']
-        self.spectra = pd.merge(target, reference, how='inner', on='w')
+        self.w = wav
+        self.s_targ = s_targ
+        self.serr_targ = serr_targ
+        self.s_ref = s_ref
+        self.serr_ref = serr_ref
         self.best_params = lmfit.Parameters()
         self.best_chisq = np.NaN
 
@@ -38,18 +45,19 @@ class Match:
             x.append(params[p+'_x'].value)
             y.append(params[p+'_y'].value)
         s = UnivariateSpline(x, y, s=0)
+        spl = s(self.w)
 
-        self.spectra['s_mod'] = s(self.spectra['w'])*self.spectra['s_ref']
-        self.spectra['serr_mod'] = s(self.spectra['w'])*self.spectra['serr_ref']
+        self.s_mod = spl*self.s_ref
+        self.serr_mod = spl*self.serr_ref
 
         # Apply broadening kernel
         SPEED_OF_LIGHT = 2.99792e5
-        dv = (self.spectra['w'].iloc[1]-self.spectra['w'].iloc[0])/self.spectra['w'].iloc[0]*SPEED_OF_LIGHT
+        dv = (self.w[1]-self.w[0])/self.w[0]*SPEED_OF_LIGHT
         n = 151 # fixed number of points in the kernel
         vsini = params['vsini'].value
         varr, kernel = specmatchemp.kernels.rot(n, dv, vsini)
-        self.spectra['s_mod'] = nd.convolve1d(self.spectra['s_mod'], kernel)
-        self.spectra['serr_mod'] = nd.convolve1d(self.spectra['serr_mod'], kernel)
+        self.s_mod = nd.convolve1d(self.s_mod, kernel)
+        self.serr_mod = nd.convolve1d(self.serr_mod, kernel)
 
     def residual(self, params):
         """
@@ -64,8 +72,8 @@ class Match:
         self.create_model(params)
 
         # Calculate residuals
-        diffsq = self.spectra['s_targ']-self.spectra['s_mod']
-        variance = np.sqrt((self.spectra['serr_targ']**2+self.spectra['serr_mod']**2))
+        diffsq = np.abs(self.s_targ-self.s_mod)
+        variance = np.sqrt(self.serr_targ**2+self.serr_mod**2)
 
         return diffsq/variance
 
@@ -79,16 +87,16 @@ class Match:
         params = lmfit.Parameters()
         num_knots = 5
         params.add('num_knots', value=num_knots, vary=False)
-        interval = int(len(self.spectra)/(num_knots+1))
+        interval = int(len(self.w)/(num_knots+1))
 
         # Add spline positions
         for i in range(num_knots):
             p = 'knot_{0:d}'.format(i)
-            params.add(p+'_x', value=self.spectra['w'].iloc[interval*i], vary=False)
-            params.add(p+'_y', value=self.spectra['s_targ'].iloc[interval*i])
+            params.add(p+'_x', value=self.w[interval*i], vary=False)
+            params.add(p+'_y', value=self.s_targ[interval*i])
 
         # Rotational broadening
-        params.add('vsini', value=10.0, min=0.0)
+        params.add('vsini', value=10.0, min=0.0, max=30.0)
 
         # Minimize chi-squared
         out = lmfit.minimize(self.residual, params)
