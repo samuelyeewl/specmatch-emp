@@ -96,7 +96,7 @@ class Match:
             params.add(p+'_y', value=self.s_targ[interval*i], min=0.5, max=1.5)
 
         # Rotational broadening
-        params.add('vsini', value=10.0, min=0.0, max=30.0)
+        params.add('vsini', value=10.0, min=0.0, max=15.0)
 
         # Minimize chi-squared
         out = lmfit.minimize(self.residual, params)
