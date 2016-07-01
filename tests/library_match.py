@@ -43,4 +43,4 @@ if __name__ == '__main__':
             chisq_results.append(res)
 
     df = pd.DataFrame(chisq_results, columns=cols)
-    df.to_csv('/Users/samuel/SpecMatch-Emp/tests/chi_squared_results.csv')
+    df.to_csv('/Users/samuel/SpecMatch-Emp/tests/chi_squared_results_noerr.csv')

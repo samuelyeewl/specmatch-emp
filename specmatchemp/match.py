@@ -72,10 +72,12 @@ class Match:
         self.create_model(params)
 
         # Calculate residuals
-        diffsq = np.abs(self.s_targ-self.s_mod)
-        variance = np.sqrt(self.serr_targ**2+self.serr_mod**2)
+        diff = np.abs(self.s_targ-self.s_mod)
+        # variance = np.sqrt(self.serr_targ**2+self.serr_mod**2)
 
-        return diffsq/variance
+        # return diffsq/variance
+
+        return diff
 
     def best_fit(self):
         """
