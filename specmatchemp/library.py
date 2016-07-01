@@ -116,6 +116,21 @@ class Library():
         self.library_params = pd.concat((self.library_params, params), ignore_index=True)
         self.library_spectra = np.vstack((self.library_spectra, [[spectrum, u_spectrum]]))
 
+    def get_index(self, searchstr):
+        """Searches the library for the given search string. Checks columns
+        lib_obs, cps_name, source_name in order.
+        """
+        pattern='^'+searchstr+'$'
+        res = self.library_params[self.library_params.lib_obs.str.match(pattern)]
+        if len(res)==1:
+            return res.iloc[0].name
+        res = self.library_params[self.library_params.cps_name.str.match(pattern)]
+        if len(res)==1:
+            return res.iloc[0].name
+        res = self.library_params[self.library_params.source_name.str.match(pattern)]
+        if len(res)==1:
+            return res.iloc[0].name
+
 
     def to_hdf(self, paramfile, specfile):
         """

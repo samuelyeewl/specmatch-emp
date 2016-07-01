@@ -105,8 +105,16 @@ class Match:
 
         # Save best fit parameters
         self.best_params = out.params
-        self.best_chisq = out.redchi
-        self.create_model(self.best_params)
+        # self.best_chisq = out.redchi
+        self.best_chisq = np.sum(self.residual(self.best_params))
 
         return self.best_chisq
+
+    def best_residuals(self):
+        """Returns the residuals between the target spectrum and best-fit spectrum
+        
+        Returns:
+            np.ndarray
+        """
+        return (self.s_targ-self.s_mod)
 
