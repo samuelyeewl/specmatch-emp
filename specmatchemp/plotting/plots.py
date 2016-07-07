@@ -244,8 +244,8 @@ def plot_library_comparison(df_match, lib, param_x, param_y, num_mean=1, exclude
     y = []
     
     for targ_idx in grouped_match.groups:
-        if lib.library_params.loc[targ_idx].Teff > 4500:
-            continue
+        # if lib.library_params.loc[targ_idx].Teff > 4500:
+        #     continue
         cut = df_match.ix[grouped_match.groups[targ_idx]]
         cut.rename(columns={'ref_idx': 'lib_index'}, inplace=True)
         values = pd.merge(cut, lib.library_params, how='left', on='lib_index')
@@ -266,9 +266,9 @@ def plot_library_comparison(df_match, lib, param_x, param_y, num_mean=1, exclude
         y.append(matched_param_y)
         y.append(None)
         
-    plt.plot(lib.library_params[param_x], lib.library_params[param_y], 'ko')
-    lib.library_params.apply(lambda x : plt.text(x[param_x],x[param_y],x['cps_name'], size='x-small', zorder=0),  axis=1)
-    plt.plot(x, y, 'r')
+    plt.plot(lib.library_params[param_x], lib.library_params[param_y], 'ko', label='Library value')
+    # lib.library_params.apply(lambda x : plt.text(x[param_x],x[param_y],x['cps_name'], size='x-small', zorder=0),  axis=1)
+    plt.plot(x, y, 'r', label='SpecMatch-Emp value')
 
 def plot_library_differences(df_match, lib, param, num_mean=1, exclude_snr=0):
     """Plots the differences between the library and matched values for a 
@@ -286,8 +286,8 @@ def plot_library_differences(df_match, lib, param, num_mean=1, exclude_snr=0):
     y=[]
     
     for targ_idx in grouped_match.groups:
-        if lib.library_params.loc[targ_idx].Teff > 4500:
-            continue
+        # if lib.library_params.loc[targ_idx].Teff > 4500:
+        #     continue
         cut = df_match.ix[grouped_match.groups[targ_idx]]
         cut.rename(columns={'ref_idx': 'lib_index'}, inplace=True)
         values = pd.merge(cut, lib.library_params, how='left', on='lib_index')
@@ -304,11 +304,14 @@ def plot_library_differences(df_match, lib, param, num_mean=1, exclude_snr=0):
     x = np.array(x)
     y = np.array(y)
     # clip outliers
-    mask = np.where(y < 1000)
-    x = x[mask]
-    y = y[mask]
+    # sig = np.std(y)
+    # mask = np.where((y < 2*sig) & (y > -2*sig))
+    # x = x[mask]
+    # y = y[mask]
     rms = np.sqrt(np.mean(y**2))
-    plt.text(np.min(x), np.min(y), "RMS: {0:.3f}".format(rms))
+    ax = plt.gca()
+    plt.text(0.05, 0.1, "Mean Diff: {0:.3g}\nRMS Diff: {1:.3g}".\
+        format(np.mean(y),rms), transform=ax.transAxes)
     plt.axhline(y=0,color='k',linestyle='dashed')
     plt.plot(x, y, 'bo')
 

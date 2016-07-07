@@ -123,13 +123,13 @@ class Library():
         pattern='^'+searchstr+'$'
         res = self.library_params[self.library_params.lib_obs.str.match(pattern)]
         if len(res)==1:
-            return res.iloc[0].name
+            return res.iloc[0].lib_index
         res = self.library_params[self.library_params.cps_name.str.match(pattern)]
         if len(res)==1:
-            return res.iloc[0].name
+            return res.iloc[0].lib_index
         res = self.library_params[self.library_params.source_name.str.match(pattern)]
         if len(res)==1:
-            return res.iloc[0].name
+            return res.iloc[0].lib_index
 
 
     def to_hdf(self, paramfile, specfile):
