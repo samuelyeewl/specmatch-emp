@@ -160,25 +160,31 @@ class Library():
         return None
 
 
-    def to_hdf(self, paramfile, specfile):
+    def to_hdf(self, path):
         """
         Saves library as a HDF file
 
         Args:
-            paramfile (str): Path to store star params
-            specfile (str): Path to store spectra
+            path (str): Path to store library
         """
-
-        # store params
         self.library_params.lib_index = self.library_params.lib_index.astype(int)
         self.library_params.set_index('lib_index', inplace=True, drop=False)
-        self.library_params.to_hdf(paramfile, 'library_params', format='table', mode='w')
 
         # store spectrum
         with h5py.File(specfile, 'w') as f:
             for key in self.header.keys():
                 f.attrs[key] = self.header[key]
             f['wav'] = self.wav
+
+            # convert library_params to record array
+            r = self.library_params.to_records()
+            dt = r.dtype.descr
+            for i in range(len(dt)):
+                if dt[i][1] == "|O":
+                    # max string length = 100
+                    dt[i] = (dt[i][0], 'S100')
+            r = np.array(r, dtype=dt)
+            f['params'] = r
 
             # Compute chunk size - group wavelenth regions together
             chunk_row = len(self.library_spectra)
@@ -190,7 +196,6 @@ class Library():
             dset = f.create_dataset('library_spectra', data=self.library_spectra,
                 compression='gzip', compression_opts=1, shuffle=True, chunks=chunk_size)
 
-        
 
     def __str__(self):
         """
@@ -270,7 +275,7 @@ class Library():
         """
         return index in self.library_params.lib_index
 
-def read_hdf(paramfile, specfile, wavlim=None):
+def read_hdf(path, wavlim=None):
     """
     Reads in a library from a HDF file
 
@@ -283,11 +288,10 @@ def read_hdf(paramfile, specfile, wavlim=None):
     Returns:
         lib (library.Library) object
     """
-    library_params = pd.read_hdf(paramfile, 'library_params')
-
     with h5py.File(specfile, 'r') as f:
         header = dict(f.attrs)
         wav = f['wav'][:]
+        library_params = pd.DataFrame.from_records(f['params'][:])
 
         if wavlim is None:
             library_spectra = f['library_spectra'][:]
