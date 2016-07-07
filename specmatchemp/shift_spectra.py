@@ -139,6 +139,12 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile
 
     return s_shifted, serr_shifted, ws
 
+def _isclose(a, b, abs_tol=1e-6):
+    """Small helper function to determine if two floats are close.
+    Only accepts absolute tolerances.
+    """
+    return abs(a-b) <= abs_tol
+
 def flatten(w, s, serr, w_ref=None, wavlim=None):
     """Flattens a given 2-D spectrum into a 1-D array.
     Merges overlapped points by taking the mean.
@@ -171,7 +177,7 @@ def flatten(w, s, serr, w_ref=None, wavlim=None):
     n_idx = 0
 
     for i, wl in enumerate(w_ref):
-        while w[c_idx] < wl and c_idx < idx_max and not np.isclose(w[c_idx], wl):
+        while w[c_idx] < wl and c_idx < idx_max and not _isclose(w[c_idx], wl):
             c_idx += 1
 
         if c_idx >= idx_max:
@@ -180,13 +186,13 @@ def flatten(w, s, serr, w_ref=None, wavlim=None):
             continue
 
         overlap = False
-        if np.isclose(w[c_idx], wl):
+        if _isclose(w[c_idx], wl):
             # scan for overlapping region
             while n_idx < idx_max:
                 n_idx += 1
                 if c_idx == n_idx:
                     continue
-                elif np.isclose(w[n_idx], wl):
+                elif _isclose(w[n_idx], wl):
                     overlap=True
                     break
                 elif w[n_idx] > w[c_idx] and w[n_idx] < w[n_idx-1]:
