@@ -531,6 +531,9 @@ def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/')
             stars.loc[targ_idx, 'lib_index'] = len(spectra)
             spectra = np.vstack((spectra, [[s_flat, serr_flat]]))
 
+            # calculate the signal-to-noise-ratio
+            stars.loc[targ_idx, 'snr'] = np.percentile(1/serr_flat, 90)
+
     # eliminate stars with no spectra
     stars = stars[np.logical_not(np.isnan(stars.lib_index))]
     return stars, wav, spectra
@@ -561,6 +564,8 @@ def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
     stars, wav, spectra = shift_library(stars, cpsdir, shift_ref, diagnostic=diagnostic, outdir=outdir)
 
     stars.to_csv(os.path.join(outdir, "libstars_small_shifted.csv"))
+
+    ### 4. Create and save the library
 
     lib = library.Library(wav, spectra, stars, wavlim=WAVLIM)
     lib.to_hdf('./lib/library_params.h5','./lib/library.h5')

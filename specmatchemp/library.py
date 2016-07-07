@@ -12,7 +12,7 @@ import h5py
 
 LIB_COLS = ['lib_index','cps_name', 'obs', 'lib_obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 
             'logg', 'u_logg', 'feh', 'u_feh', 'mass', 'u_mass', 'age', 'u_age', 
-            'vsini', 'source', 'source_name']
+            'vsini', 'source', 'source_name', 'snr']
 FLOAT_TOL = 1e-3
 
 class Library():
@@ -58,9 +58,9 @@ class Library():
 
         # otherwise we need to include the provided tables
         # ensure that parameter table has the right columns
-        for col in LIB_COLS:
-            assert col in library_params.columns, \
-                "{0} required in parameter table".format(col)
+        for col in library_params:
+            assert col in LIB_COL, \
+                "{0} is not an allowed column".format(col)
 
         # ensure that parameter table, library spectra have same length.
         num_spec = len(library_spectra)
@@ -86,8 +86,8 @@ class Library():
         header['date_created'] = str(datetime.date.today())
         self.wavlim = wavlim
 
-    def insert(self, params, spectrum, u_spectrum):
-        """Insert spectrum and associated stellar parameters into library.
+    def append(self, params, spectrum, u_spectrum):
+        """Adds spectrum and associated stellar parameters into library.
 
         Args:
             params (pd.Series): A row to be added to the library array. It
@@ -102,9 +102,9 @@ class Library():
             "Error: Length of parameter table and library spectra are not equal."
 
         # ensure that parameter row has the right columns
-        for col in LIB_COLS:
-            assert col in params.columns, \
-                "{0} required in parameter specification.".format(col)
+        for col in params.columns:
+            assert col in LIB_COLS, \
+                "{0} is not an allowed column".format(col)
 
         # ensure that the provided spectrum has the same number of elements
         # as the wavelength array
@@ -115,10 +115,37 @@ class Library():
         params.lib_index = len(self.library_spectra)
         self.library_params = pd.concat((self.library_params, params), ignore_index=True)
         self.library_spectra = np.vstack((self.library_spectra, [[spectrum, u_spectrum]]))
+        self.library_params.set_index('lib_index', inplace=True, drop=False)
+
+    def remove(self, index):
+        """Removes the spectrum and parameters with the given index from the library.
+
+        Args:
+            index (int): Index of spectrum to remove.
+        """
+        if not isinstance(type(index), int):
+            raise TypeError
+        if not self.__contains__(index):
+            raise KeyError
+
+        self.library_spectra = np.delete(self.library_spectra, [index], axis=0)
+        self.library_params = self.library_params[self.library_params.lib_index != index]
+
+        # reset index
+        self.library_params.lib_index = self.library_params.lib_index.apply(\
+            lambda i: i-1 if i > index else i)
+        self.library_params.set_index('lib_index', inplace=True, drop=False)
+
 
     def get_index(self, searchstr):
         """Searches the library for the given search string. Checks columns
         lib_obs, cps_name, source_name in order.
+
+        Args:
+            searchstr (str): String to search for
+        Returns:
+            lib_index (int): Library index of the found star. Returns None if no
+                object found. 
         """
         pattern='^'+searchstr+'$'
         res = self.library_params[self.library_params.lib_obs.str.match(pattern)]
@@ -130,6 +157,7 @@ class Library():
         res = self.library_params[self.library_params.source_name.str.match(pattern)]
         if len(res)==1:
             return res.iloc[0].lib_index
+        return None
 
 
     def to_hdf(self, paramfile, specfile):
@@ -201,7 +229,8 @@ class Library():
         return self.library_params.loc[idx], self.library_spectra[idx]
 
     def __len__(self):
-        """Number of spectra in library.
+        """
+        Number of spectra in library.
 
         Returns:
             Number of spectra stored in library.
@@ -216,10 +245,21 @@ class Library():
             index (int): Library index of desired spectrum.
         """
         # Check if library_index specified is in the container
+        if not isinstance(type(index), int):
+            raise TypeError
         if not self.__contains__(index):
             raise KeyError
 
         return self.library_params.loc[index], self.library_spectra[index]
+
+    def __delitem__(self, index):
+        """
+        Deletes the item at the given index. Alias for Library.remove
+
+        Args:
+            index (int): Library index of spectrum to remove.
+        """
+        self.remove(index)
 
     def __contains__(self, index):
         """
