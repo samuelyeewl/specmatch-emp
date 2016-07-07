@@ -169,9 +169,10 @@ class Library():
         """
         self.library_params.lib_index = self.library_params.lib_index.astype(int)
         self.library_params.set_index('lib_index', inplace=True, drop=False)
+        self.library_params.index.rename('idx', inplace=True)
 
         # store spectrum
-        with h5py.File(specfile, 'w') as f:
+        with h5py.File(path, 'w') as f:
             for key in self.header.keys():
                 f.attrs[key] = self.header[key]
             f['wav'] = self.wav

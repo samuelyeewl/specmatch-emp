@@ -31,7 +31,6 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile
     # normalize each order of the target spectrum by fitting a spline
     percen_order = np.percentile(s, 95, axis=1)
     s /= percen_order.reshape(-1,1)
-    serr /= percen_order.reshape(-1,1)
 
     s_shifted = np.asarray([[]])
     serr_shifted = np.asarray([[]])

@@ -21,10 +21,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# from astroquery.simbad import Simbad
-# from astropy.io import ascii
-# from isochrones.dartmouth import Dartmouth_Isochrone
-# from isochrones import StarModel
+from astroquery.simbad import Simbad
+from astropy.io import ascii
+from isochrones.dartmouth import Dartmouth_Isochrone
+from isochrones import StarModel
 
 from specmatchemp import library
 from specmatchemp import shift_spectra
@@ -337,18 +337,22 @@ def read_catalogs(catalogdir, cpsdir):
     stars_nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     # Read catalogs
+    print("\tReading Brewer catalog")
     brewer_stars, brewer_nospec = read_brewer(catalogdir, cps_list)
     stars = pd.concat((stars, brewer_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(brewer_nospec)
 
+    print("\tReading Mann catalog")
     mann_stars, mann_nospec = read_mann(catalogdir, cps_list)
     stars = pd.concat((stars, mann_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(mann_nospec)
 
+    print("\tReading von Braun catalog")
     vonbraun_stars, vonbraun_nospec = read_vonbraun(catalogdir, cps_list)
     stars = pd.concat((stars, vonbraun_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(vonbraun_nospec)
 
+    print("\tReading Huber catalog")
     huber_stars, huber_nospec = read_huber(catalogdir, cps_list)
     stars = pd.concat((stars, huber_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(huber_nospec)
@@ -373,7 +377,11 @@ def get_isochrone_params(stars, diagnostic=False, outdir='./'):
         if not os.path.exists(outdir):
             os.makedirs(outdir)
 
+    num_stars = len(stars)
+    current_star = 1
     for i, row in stars.iterrows():
+        print("Getting isochrone parameters for star {0} of {1}".format(current_star, num_stars))
+        current_star += 1
         # get known stellar properties
         lib_props = {}
         for p in STAR_PROPS:
@@ -384,7 +392,7 @@ def get_isochrone_params(stars, diagnostic=False, outdir='./'):
         lib_props['V'] = 1.
 
         # create the model and perform the fit
-        model = StarModel(dar, **lib_props)
+        model = StarModel(dar, use_emcee=True, **lib_props)
         model.fit_mcmc()
 
         # fill out unknown parameters
@@ -533,7 +541,7 @@ def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/')
             spectra = np.vstack((spectra, [[s_flat, serr_flat]]))
 
             # calculate the signal-to-noise-ratio
-            stars.loc[targ_idx, 'snr'] = np.percentile(1/serr_flat, 90)
+            stars.loc[targ_idx, 'snr'] = np.nanpercentile(1/serr_flat, 90)
 
     # eliminate stars with no spectra
     stars = stars[np.logical_not(np.isnan(stars.lib_index))]
@@ -541,32 +549,38 @@ def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/')
 
 def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
     ### 1. Read in the stars with known stellar parameters and check for those with CPS spectra
-    stars, stars_nospectra = read_catalogs(catalogdir, cpsdir)
-    # convert numeric columns
-    for col in STAR_PROPS:
-        stars[col] = pd.to_numeric(stars[col], errors='coerce')
-        stars['u_'+col] = pd.to_numeric(stars['u_'+col], errors='coerce')
+    # print("Step 1: Reading catalogs...")
+    # stars, stars_nospectra = read_catalogs(catalogdir, cpsdir)
+    # # convert numeric columns
+    # for col in STAR_PROPS:
+    #     stars[col] = pd.to_numeric(stars[col], errors='coerce')
+    #     stars['u_'+col] = pd.to_numeric(stars['u_'+col], errors='coerce')
 
-    ### 2. Use isochrones package to obtain the remaining, unknown stellar parameters
-    stars = get_isochrone_params(stars, diagnostic=diagnostic, outdir=outdir)
+    # ### 2. Use isochrones package to obtain the remaining, unknown stellar parameters
+    # print("Step 2: Obtaining isochrone parameters...")
+    # stars = get_isochrone_params(stars, diagnostic=diagnostic, outdir=outdir)
 
-    stars.to_csv(os.path.join(outdir, "libstars.csv"))
-    stars_nospectra.to_csv(os.path.join(outdir, "stars_nospectra.csv"))
+    # stars.to_csv(os.path.join(outdir, "libstars.csv"))
+    # stars_nospectra.to_csv(os.path.join(outdir, "stars_nospectra.csv"))
+
+    # stars['obs'] = stars['obs'].astype(str)
 
     ################################################################
-    # stars = pd.read_csv("./lib/libstars_small.csv", index_col=0)
-    # stars['lib_obs'] = stars['lib_obs'].astype(str)
+    stars = pd.read_csv("./lib/libstars.csv", index_col=0)
+    stars['lib_obs'] = stars['lib_obs'].astype(str)
     ################################################################
 
     stars.reset_index(drop=True,inplace=True)
 
     ### 3. Shift library spectra onto a constant log-lambda scale
+    print("Step 3: Shifting library spectra...")
     shift_ref = pd.read_csv(shift_reference_path, index_col=0)
     stars, wav, spectra = shift_library(stars, cpsdir, shift_ref, diagnostic=diagnostic, outdir=outdir)
 
     stars.to_csv(os.path.join(outdir, "libstars_shifted.csv"))
 
     ### 4. Create and save the library
+    print("Step 4: Saving library...")
     stars = stars.drop('obs', axis=1)
     lib = library.Library(wav, spectra, stars, wavlim=WAVLIM)
     lib.to_hdf('./lib/library.h5')
