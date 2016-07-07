@@ -6,6 +6,7 @@ Helper functions to plot various data from SpecMatch-Emp
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import pandas as pd
 import os
 import lmfit
@@ -13,6 +14,8 @@ import lmfit
 from specmatchemp import library
 from specmatchemp import match
 from specmatchemp.io import specmatchio
+
+UNSHIFTED_PATH = '/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/{0}.fits'
 
 ######################### Library and Spectrum plots ###########################
 def plot_library_params(lib, param_x, param_y, grouped=True):
@@ -37,48 +40,48 @@ def plot_library_params(lib, param_x, param_y, grouped=True):
     else:
         plt.plot(lib.library_params[x], lib.library_params[y], '.')
 
-def plot_hires_spectrum(filename, wavlim, label=None, offset=0):
+def plot_hires_spectrum(filename, wavlim=None, label=None, offset=0):
     """Plot a HIRES spectrum within a given wavelength range
 
     Args:
         filename (str): FITS file containing HIRES spectrum
-        wavlim (2-element iterable): Wavelength range
+        wavlim (2-element iterable): (optional) Wavelength range
         label (str): (optional) Label for this specturm
         offset (float): (optional) Vertical offset of spectrum
     """
     w, s, serr, hdr = specmatchio.read_hires_spectrum(filename)
     w = w.reshape(-1)
     s = s.reshape(-1)
-    w, s, serr = specmatchio.truncate_spectrum(wavlim, w, s)
+    if wavlim is not None:
+        w, s, serr = specmatchio.truncate_spectrum(wavlim, w, s)
     percen = np.percentile(s,95)
     s /= percen
     plt.plot(w, s+offset, label=label)
-    plt.xlim(wavlim)
 
-def plot_standard_spectrum(filename, wavlim, label=None, offset=0):
+def plot_standard_spectrum(filename, wavlim=None, label=None, offset=0):
     """Plot a standard spectrum saved by specmatchemp.io.io within
     a given wavelength range
 
     Args:
         filename (str): FITS file containing spectrum
-        wavlim (2-element iterable): Wavelength range
+        wavlim (2-element iterable): (optional) Wavelength range
         label (str): (optional) Label for this specturm
         offset (float): (optional) Vertical offset of spectrum
     """
     w, s, serr, hdr = specmatchio.read_standard_spectrum(filename)
-    w, s, serr = specmatchio.truncate_spectrum(wavlim, w, s)
+    if wavlim is not None:
+        w, s, serr = specmatchio.truncate_spectrum(wavlim, w, s)
     percen = np.percentile(s,95)
     s /= percen
     plt.plot(w, s+offset, label=label)
-    plt.xlim(wavlim)
 
-def plot_library_spectrum(lib, lib_index, wavlim, label=None, offset=0):
+def plot_library_spectrum(lib, lib_index, wavlim=None, label=None, offset=0):
     """Plot a spectrum from the library.
 
     Args:
         lib (library.Library): The library object
         lib_index (int): Index of spectrum in library
-        wavlim (2-element iterable): Wavelength range
+        wavlim (2-element iterable): (optional) Wavelength range
         label (str): (optional) Label for this specturm
         offset (float): (optional) Vertical offset of spectrum
     """
@@ -89,14 +92,14 @@ def plot_library_spectrum(lib, lib_index, wavlim, label=None, offset=0):
     s = lib.library_spectra[lib_index, 0]
     serr = lib.library_spectra[lib_index,1]
     w = lib.wav
-    w, s, serr = specmatchio.truncate_spectrum(wavlim, w, s, serr)
+    if wavlim is not None:
+        w, s, serr = specmatchio.truncate_spectrum(wavlim, w, s, serr)
     plt.plot(w, s+offset, label=label)
-    plt.xlim(wavlim)
 ######################### Library and Spectrum plots ###########################
 
 
 ################################# Shift plots ##################################
-def plot_shifted_spectrum(lib, lib_index, ref, wavlim, offset=True):
+def shifted_spectrum_plot(lib, lib_index, ref, wavlim=None, offset=True):
     """Plot the shifted and unshifted spectra against the reference
 
     Args:
@@ -104,7 +107,7 @@ def plot_shifted_spectrum(lib, lib_index, ref, wavlim, offset=True):
         lib_index (int): Index of spectrum in library
         ref: Either path to a FITS file containing a standard spectrum, or
             a library index to the spectrum used as a reference.
-        wavlim (2-element iterable): Wavelength range
+        wavlim (2-element iterable): (optional) Wavelength range
         offset (bool): Whether to plot the spectra offset from each other.
     """
     # find reference spectrum
@@ -120,11 +123,12 @@ def plot_shifted_spectrum(lib, lib_index, ref, wavlim, offset=True):
         s_ref = lib.library_spectra[ref_idx,0]
         serr_ref = lib.library_spectra[ref_idx,1]
         w_ref = lib.wav
+    if wavlim is not None:
         w_ref, s_ref, serr_ref = specmatchio.truncate_spectrum(wavlim, w_ref, s_ref, serr_ref)
     
     # find unshifted spectrum
     param, spectrum = lib[lib_index]
-    unshifted_file = '/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/{0}.fits'.format(param.lib_obs)
+    unshifted_file = UNSHIFTED_PATH.format(param.lib_obs)
     
     if offset:
         plt.plot(w_ref, s_ref, label="Reference")
@@ -135,11 +139,13 @@ def plot_shifted_spectrum(lib, lib_index, ref, wavlim, offset=True):
         plot_hires_spectrum(unshifted_file, wavlim, label="Unshifted")
         plot_library_spectrum(lib, param.lib_obs, wavlim, label="Shifted")
     
-    plt.title('Star: {0}, Spectrum: {1}, Reference: {2}'.format(param.cps_name, param.lib_obs, ref))
+    plt.title('Star: {0}, Spectrum: {1}\nReference: {2}'.format(param.cps_name, param.lib_obs, ref))
     plt.xlabel('Wavelength (Angstroms)')
-    plt.legend()
+    plt.legend(loc='best')
 
-def plot_shift_data(lib, lib_index):    
+def shift_data_plot(lib, lib_index):    
+    """Plots lags for each order of the spectrum
+    """
     param, spectrum = lib[lib_index]
     shift_datafile = '/Users/samuel/SpecMatch-Emp/lib/shift_data/{0}.txt'.format(param.lib_obs)
     list_lags = np.loadtxt(shift_datafile)
@@ -148,9 +154,18 @@ def plot_shift_data(lib, lib_index):
     for i in range(len(list_lags)):
         plt.plot(list_lags[i,0], list_lags[i,1], '.')
         plt.plot(list_lags[i,0], list_lags[i,2], 'r-')
-    plt.title('Star: {0}, Spectrum: {1}'.format(param.cps_name, param.lib_obs))
+    # plt.title('Star: {0}, Spectrum: {1}'.format(param.cps_name, param.lib_obs))
     plt.xlabel('Pixel value')
     plt.ylabel('Lag')
+
+def shift_plot(lib, lib_index, wavlim=(5160,5190)):
+    gs = gridspec.GridSpec(3,1)
+    plt.subplot(gs[0])
+    ref_path = '/Users/samuel/Dropbox/SpecMatch-Emp/nso/nso_std.fits'
+    shifted_spectrum_plot(lib, lib_index, wavlim, ref_path)
+    plt.subplot(gs[1:2])
+    shift_data_plot(lib, lib_index)
+
 ################################# Shift plots ##################################
 
 ################################# Match plots ##################################
@@ -195,7 +210,7 @@ def plot_param_chi_squared(targ_idx, values, lib, param):
     plt.plot(values.head(10)[param], values.head(10).chi_squared, 'r.')
     plt.axvline(x=lib.library_params.loc[targ_idx][param], color='k')
     
-def plot_chi_squared(targ_idx, df_match, lib, exclude_snr=0):
+def chi_squared_plot(targ_idx, df_match, lib, exclude_snr=0):
     """Creates a composite plot of chi-squared as a function of Teff, logg, [Fe/H]
 
     Args:
@@ -214,169 +229,80 @@ def plot_chi_squared(targ_idx, df_match, lib, exclude_snr=0):
     snr_query = "snr > {0}".format(exclude_snr)
     values = values.query(snr_query)
     
-    plt.title('Star: {0}'.format(star))
+    plt.suptitle('Star: {0}'.format(star))
     plt.subplot(131)
     plt.semilogy()
     plot_param_chi_squared(targ_idx, values, lib, 'Teff')
-    plt.xlabel('Teff (K)')
+    plt.ylabel(r'$\chi^2$')
+    plt.xlabel(r'$T_{eff}$ (K)')
     plt.subplot(132)
     plt.semilogy()
     plot_param_chi_squared(targ_idx, values, lib, 'logg')
-    plt.xlabel('Log g')
+    plt.xlabel(r'$\log\ g$ (dex)')
     plt.subplot(133)
     plt.semilogy()
     plot_param_chi_squared(targ_idx, values, lib, 'feh')
-    plt.xlabel('[Fe/H]')
+    plt.xlabel(r'$[Fe/H]$ (dex)')
+    plt.tight_layout()
 
-def plot_library_comparison(df_match, lib, param_x, param_y, num_mean=1, exclude_snr=0):
+def library_comparison_plot(lib, param_x, param_y, xlabel=None, ylabel=None, ptlabels=False):
     """Plots comparison between library and matched values.
 
     Args:
-        df_match (pd.DataFrame): Dataframe containing match results
-        lib (library.Library): library object
+        lib (library.Library): library object containing SpecMatch results as param_sm
         param_x (str): Parameter to plot on x-axis
         param_y (str): Parameter to plot on y-axis
-        num_mean (int): (optional) Number of best matches to average
-        exclude_snr (float): (optional) Signal-to-noise-ratio cutoff
-    """
-    grouped_match = df_match.groupby('targ_idx')
-    x = []
-    y = []
-    
-    for targ_idx in grouped_match.groups:
-        # if lib.library_params.loc[targ_idx].Teff > 4500:
-        #     continue
-        cut = df_match.ix[grouped_match.groups[targ_idx]]
-        cut.rename(columns={'ref_idx': 'lib_index'}, inplace=True)
-        values = pd.merge(cut, lib.library_params, how='left', on='lib_index')
-        values = values.sort_values(by='chi_squared')
-        # remove matches with poor snr
-        snr_query = "snr > {0}".format(exclude_snr)
-        values = values.query(snr_query)
-
-        lib_param_x = lib.library_params.loc[targ_idx][param_x]
-        matched_param_x = values.head(num_mean).mean()[param_x]
-        x.append(lib_param_x)
-        x.append(matched_param_x)
-        x.append(None)
-
-        lib_param_y = lib.library_params.loc[targ_idx][param_y]
-        matched_param_y = values.head(num_mean).mean()[param_y]
-        y.append(lib_param_y)
-        y.append(matched_param_y)
-        y.append(None)
-        
+        xlabel (str): (optional) x-axis label
+        ylabel (str): (optional) y-axis label
+        ptlabels (bool): (optional) Set to true to print the name of the star next to each point
+    """ 
     plt.plot(lib.library_params[param_x], lib.library_params[param_y], 'ko', label='Library value')
-    # lib.library_params.apply(lambda x : plt.text(x[param_x],x[param_y],x['cps_name'], size='x-small', zorder=0),  axis=1)
-    plt.plot(x, y, 'r', label='SpecMatch-Emp value')
+    x = lib.library_params[[param_x+'_sm', param_x]]
+    y = lib.library_params[[param_y+'_sm', param_y]]
+    plt.plot(x.T, y.T, 'r')
+    plt.plot(x.iloc[0], y.iloc[0], 'r', label='SpecMatch-Emp value')
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend(loc='best')
 
-def plot_library_differences(df_match, lib, param, num_mean=1, exclude_snr=0):
-    """Plots the differences between the library and matched values for a 
-    single param.
+    if ptlabels:
+        lib.library_params.apply(lambda x : plt.text(x[param_x],x[param_y],x['cps_name'], size='x-small', zorder=0),  axis=1)
 
-    Args:
-        df_match (pd.DataFrame): Dataframe containing match results
-        lib (library.Library): library object
-        param_x (str): Parameter to plot on x-axis
-        num_mean (int): (optional) Number of best matches to average
-        exclude_snr (float): (optional) Signal-to-noise-ratio cutoff
-    """
-    grouped_match = df_match.groupby('targ_idx')
-    x=[]
-    y=[]
+def library_difference_plot(lib, param, label=None, clipping=0):
+    resid = lib.library_params[param+'_sm'] - lib.library_params[param]
+    sig = np.std(resid)
+    mask = np.where((resid < clipping*sig) & (resid > -clipping*sig))
+    plt.plot(lib.library_params[param][mask], resid[mask], 'bo')
+
+    mean = np.mean(resid[mask])
+    rms = np.sqrt(np.mean(resid[mask]**2))
     
-    for targ_idx in grouped_match.groups:
-        # if lib.library_params.loc[targ_idx].Teff > 4500:
-        #     continue
-        cut = df_match.ix[grouped_match.groups[targ_idx]]
-        cut.rename(columns={'ref_idx': 'lib_index'}, inplace=True)
-        values = pd.merge(cut, lib.library_params, how='left', on='lib_index')
-        values = values.sort_values(by='chi_squared')
-        # remove matches with poor snr
-        snr_query = "snr > {0}".format(exclude_snr)
-        values = values.query(snr_query)
-
-        lib_param = lib.library_params.loc[targ_idx][param]
-        matched_param = values.head(num_mean).mean()[param]
-        x.append(lib_param)
-        y.append(matched_param-lib_param)
-
-    x = np.array(x)
-    y = np.array(y)
-    # clip outliers
-    # sig = np.std(y)
-    # mask = np.where((y < 2*sig) & (y > -2*sig))
-    # x = x[mask]
-    # y = y[mask]
-    rms = np.sqrt(np.mean(y**2))
     ax = plt.gca()
-    plt.text(0.05, 0.1, "Mean Diff: {0:.3g}\nRMS Diff: {1:.3g}".\
-        format(np.mean(y),rms), transform=ax.transAxes)
-    plt.axhline(y=0,color='k',linestyle='dashed')
-    plt.plot(x, y, 'bo')
+    if clipping == 0:
+        plt.text(0.05, 0.1, "Mean Diff: {0:.3g}\nRMS Diff: {1:.3g}".format(mean, rms)\
+            ,transform=ax.transAxes)
+    else:
+        plt.text(0.05, 0.1, "Mean Diff: {0:.3g}\nRMS Diff: {1:.3g}\nClipping: {2:d}".format(mean, rms)\
+            +r'$\sigma$',transform=ax.transAxes)
+    plt.axhline(y=0, color='k', linestyle='dashed')
 
+    if label is not None:
+        plt.xlabel(label)
+        plt.ylabel(r'$\Delta\ $'+label)
 
-def print_best_fit(targ_idx, df_match, lib, num_best=1, printed_params=None):
-    """Prints the best_fit parameters for the given star
+def diagnostic_plots(lib):
+    gs = gridspec.GridSpec(6,2)
+    plt.subplot(gs[0:3,0])
+    library_comparison_plot(lib, 'Teff', 'logg', r'$T_{eff}$ (K)', r'$\log\ g$ (dex)')
+    plt.subplot(gs[3:6,0])
+    library_comparison_plot(lib, 'feh', 'logg', r'$[Fe/H]$ (dex)', r'$\log\ g$ (dex)')
+    plt.subplot(gs[0:2,1])
+    library_difference_plot(lib, 'Teff', r'$T_{eff}$ (K)')
+    plt.subplot(gs[2:4,1])
+    library_difference_plot(lib, 'logg', r'$\log\ g$ (dex)')
+    plt.subplot(gs[4:6,1])
+    library_difference_plot(lib, 'feh', r'$[Fe/H]$ (dex)')
+    plt.tight_layout()
 
-    Args:
-        targ_idx (int): Library index of target
-        df_match (pd.DataFrame): Dataframe containing match results
-        lib (library.Library): library object
-        num_best (int): (optional) Number of best matches to print
-        printed_params (list): (optional) List of fit parameters to print
-    """
-    grouped_matched = df_match.groupby('targ_idx')
-    cut = df_match.ix[grouped_matched.groups[targ_idx]]
-    cut = cut.sort_values(by='chi_squared').head(num_best)
-    
-    param, spectrum = lib[targ_idx]
-    print("Best matches for star: {0}, spectrum: {1}".format(param.cps_name, param.lib_obs))
-    print("Library parameters: Teff = {0:.0f}, logg = {1:.3f}, [Fe/H] = {2:.3f}"\
-         .format(param.Teff, param.logg, param.feh))
-    
-    i = 1
-    for row in cut.itertuples():
-        match_idx = row.ref_idx
-        param_match, spectrum_match = lib[match_idx]
-        fit_params = lmfit.Parameters()
-        fit_params.loads(row.fit_params)
-        print("Match {0:d}, Star: {1}, Spectrum: {2}".format(i, param_match.cps_name, param_match.lib_obs))
-        print("\tMatch parameters: Teff = {0:.0f}, logg = {1:.3f}, [Fe/H] = {2:.3f}"\
-             .format(param_match.Teff, param_match.logg, param_match.feh))
-        if printed_params is None:
-            fit_params.pretty_print()
-        else:
-            for p in printed_params:
-                if p in fit_params:
-                    print("\t{0}: {1}".format(p, fit_params[p].value))
-        
-        i+=1
-
-def generate_best_match(targ_idx, df_match, lib, match_idx=1):
-    """Generates match objects for the best matching spectra
-
-    Args:
-        targ_idx (int): Library index of target
-        df_match (pd.DataFrame): Dataframe containing match results
-        lib (library.Library): library object
-        match_idx (int): The rank of the best match to print
-    """
-    grouped_matched = df_match.groupby('targ_idx')
-    cut = df_match.ix[grouped_matched.groups[targ_idx]]
-    cut = cut.sort_values(by='chi_squared')
-
-    param_targ, spec_targ = lib[targ_idx]
-    
-    ref_idx = cut.iloc[match_idx].ref_idx
-    param_ref, spec_ref = lib[ref_idx]
-
-    fit_params = lmfit.Parameters()
-    fit_params.loads(cut.iloc[match_idx].fit_params)
-
-    mt = match.Match(lib.wav, spec_targ[0], spec_targ[1], spec_ref[0], spec_ref[1])
-    mt.create_model(fit_params)
-
-    return mt
 
 ############################# Library test plots ###############################

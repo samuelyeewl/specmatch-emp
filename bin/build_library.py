@@ -535,7 +535,6 @@ def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/')
     stars = stars[np.logical_not(np.isnan(stars.lib_index))]
     return stars, wav, spectra
 
-
 def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
     ### 1. Read in the stars with known stellar parameters and check for those with CPS spectra
     # stars, stars_nospectra = read_catalogs(catalogdir, cpsdir)
