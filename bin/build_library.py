@@ -110,9 +110,12 @@ def check_cps_database(starname, cps_list):
     
     # else the search string is simply the name
     # e.g. BD+, EPIC, HTR, HATS, HIP, HII
-    else:
+    elif starname.upper().startswith(('BD+', 'EPIC', 'HTR', 'HATS', 'HIP', 'HII')):
         starname = starname.strip('*')
         cps_search_str = starname
+    # don't match any other identifiers
+    else:
+        cps_search_str = 'NOSTARFOUND'
 
     cps_search_str = '^' + cps_search_str + '$'
     return cps_list[cps_list['name'].str.match(cps_search_str)]
@@ -551,8 +554,6 @@ def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
     stars = pd.read_csv("./lib/libstars_small.csv", index_col=0)
     stars['lib_obs'] = stars['lib_obs'].astype(str)
     ################################################################
-
-    # stars = stars.query('4750 < Teff < 4850')
 
     stars.reset_index(drop=True,inplace=True)
 
