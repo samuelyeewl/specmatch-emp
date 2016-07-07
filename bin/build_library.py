@@ -38,7 +38,8 @@ MANN_README = "Mann2015/ReadMe"
 HUBER_FILENAME = "Huber2013/table2.dat"
 HUBER_README = "Huber2013/ReadMe"
 VONBRAUN_FILENAME = "VonBraun-Figure6.txt"
-BREWER_FILENAME = "spocsii_stars.csv"
+# BREWER_FILENAME = "spocsii_stars.csv"
+BREWER_FILENAME = "brewer_cut.csv"
 CPS_INDEX = "cps_templates.csv"
 CPS_SPECTRA_DIR = "iodfitsdb/"
 
@@ -336,9 +337,9 @@ def read_catalogs(catalogdir, cpsdir):
     stars_nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     # Read catalogs
-    # brewer_stars, brewer_nospec = read_brewer(catalogdir, cps_list)
-    # stars = pd.concat((stars, brewer_stars), ignore_index=True)
-    # stars_nospectra = stars_nospectra.append(brewer_nospec)
+    brewer_stars, brewer_nospec = read_brewer(catalogdir, cps_list)
+    stars = pd.concat((stars, brewer_stars), ignore_index=True)
+    stars_nospectra = stars_nospectra.append(brewer_nospec)
 
     mann_stars, mann_nospec = read_mann(catalogdir, cps_list)
     stars = pd.concat((stars, mann_stars), ignore_index=True)
@@ -540,21 +541,21 @@ def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/')
 
 def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
     ### 1. Read in the stars with known stellar parameters and check for those with CPS spectra
-    # stars, stars_nospectra = read_catalogs(catalogdir, cpsdir)
-    # # convert numeric columns
-    # for col in STAR_PROPS:
-    #     stars[col] = pd.to_numeric(stars[col], errors='coerce')
-    #     stars['u_'+col] = pd.to_numeric(stars['u_'+col], errors='coerce')
+    stars, stars_nospectra = read_catalogs(catalogdir, cpsdir)
+    # convert numeric columns
+    for col in STAR_PROPS:
+        stars[col] = pd.to_numeric(stars[col], errors='coerce')
+        stars['u_'+col] = pd.to_numeric(stars['u_'+col], errors='coerce')
 
-    # ### 2. Use isochrones package to obtain the remaining, unknown stellar parameters
-    # stars = get_isochrone_params(stars, diagnostic=diagnostic, outdir=outdir)
+    ### 2. Use isochrones package to obtain the remaining, unknown stellar parameters
+    stars = get_isochrone_params(stars, diagnostic=diagnostic, outdir=outdir)
 
-    # stars.to_csv(os.path.join(outdir, "libstars_small.csv"))
-    # stars_nospectra.to_csv(os.path.join(outdir, "stars_nospectra.csv"))
+    stars.to_csv(os.path.join(outdir, "libstars.csv"))
+    stars_nospectra.to_csv(os.path.join(outdir, "stars_nospectra.csv"))
 
     ################################################################
-    stars = pd.read_csv("./lib/libstars_small.csv", index_col=0)
-    stars['lib_obs'] = stars['lib_obs'].astype(str)
+    # stars = pd.read_csv("./lib/libstars_small.csv", index_col=0)
+    # stars['lib_obs'] = stars['lib_obs'].astype(str)
     ################################################################
 
     stars.reset_index(drop=True,inplace=True)
@@ -563,12 +564,12 @@ def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
     shift_ref = pd.read_csv(shift_reference_path, index_col=0)
     stars, wav, spectra = shift_library(stars, cpsdir, shift_ref, diagnostic=diagnostic, outdir=outdir)
 
-    stars.to_csv(os.path.join(outdir, "libstars_small_shifted.csv"))
+    stars.to_csv(os.path.join(outdir, "libstars_shifted.csv"))
 
     ### 4. Create and save the library
     stars = stars.drop('obs', axis=1)
     lib = library.Library(wav, spectra, stars, wavlim=WAVLIM)
-    lib.to_hdf('./lib/library_params.h5','./lib/library.h5')
+    lib.to_hdf('./lib/library.h5')
 
 
 if __name__ == '__main__':

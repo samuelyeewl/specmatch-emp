@@ -59,7 +59,7 @@ class Library():
         # otherwise we need to include the provided tables
         # ensure that parameter table has the right columns
         for col in library_params:
-            assert col in LIB_COL, \
+            assert col in LIB_COLS, \
                 "{0} is not an allowed column".format(col)
 
         # ensure that parameter table, library spectra have same length.
