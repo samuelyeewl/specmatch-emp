@@ -123,8 +123,6 @@ class Library():
         Args:
             index (int): Index of spectrum to remove.
         """
-        if not isinstance(type(index), int):
-            raise TypeError
         if not self.__contains__(index):
             raise KeyError
 
@@ -251,8 +249,6 @@ class Library():
             index (int): Library index of desired spectrum.
         """
         # Check if library_index specified is in the container
-        if not isinstance(type(index), int):
-            raise TypeError
         if not self.__contains__(index):
             raise KeyError
 
@@ -289,10 +285,10 @@ def read_hdf(path, wavlim=None):
     Returns:
         lib (library.Library) object
     """
-    with h5py.File(specfile, 'r') as f:
+    with h5py.File(path, 'r') as f:
         header = dict(f.attrs)
         wav = f['wav'][:]
-        library_params = pd.DataFrame.from_records(f['params'][:])
+        library_params = pd.DataFrame.from_records(f['params'][:], index='idx')
 
         if wavlim is None:
             library_spectra = f['library_spectra'][:]

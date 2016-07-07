@@ -8,6 +8,7 @@ import numpy as np
 import lmfit
 from scipy.interpolate import UnivariateSpline
 import scipy.ndimage as nd
+import scipy.signal
 
 import specmatchemp.kernels
 
@@ -56,8 +57,10 @@ class Match:
         n = 151 # fixed number of points in the kernel
         vsini = params['vsini'].value
         varr, kernel = specmatchemp.kernels.rot(n, dv, vsini)
-        self.s_mod = nd.convolve1d(self.s_mod, kernel)
-        self.serr_mod = nd.convolve1d(self.serr_mod, kernel)
+        # self.s_mod = nd.convolve1d(self.s_mod, kernel)
+        # self.serr_mod = nd.convolve1d(self.serr_mod, kernel)
+        self.s_mod = signal.fftconvolve(s_mod, kernel, mode='same')
+        self.serr_mod = signal.fftconvolve(serr_mod, kernel, mode='same')
 
     def residual(self, params):
         """
@@ -98,7 +101,7 @@ class Match:
             params.add(p+'_y', value=self.s_targ[interval*i], min=0.5, max=1.5)
 
         # Rotational broadening
-        params.add('vsini', value=10.0, min=0.0, max=15.0)
+        params.add('vsini', value=1.0, min=0.0, max=10.0)
 
         # Minimize chi-squared
         out = lmfit.minimize(self.residual, params)
