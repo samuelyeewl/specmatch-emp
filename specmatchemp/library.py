@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import h5py
 
-LIB_COLS = ['lib_index','cps_name', 'obs', 'lib_obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 
+LIB_COLS = ['lib_index','cps_name', 'lib_obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 
             'logg', 'u_logg', 'feh', 'u_feh', 'mass', 'u_mass', 'age', 'u_age', 
             'vsini', 'source', 'source_name', 'snr']
 FLOAT_TOL = 1e-3

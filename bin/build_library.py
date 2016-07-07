@@ -566,7 +566,7 @@ def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
     stars.to_csv(os.path.join(outdir, "libstars_small_shifted.csv"))
 
     ### 4. Create and save the library
-
+    stars = stars.drop('obs', axis=1)
     lib = library.Library(wav, spectra, stars, wavlim=WAVLIM)
     lib.to_hdf('./lib/library_params.h5','./lib/library.h5')
 
