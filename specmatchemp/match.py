@@ -7,8 +7,7 @@ import pandas as pd
 import numpy as np
 import lmfit
 from scipy.interpolate import UnivariateSpline
-import scipy.ndimage as nd
-import scipy.signal
+from scipy import signal
 
 import specmatchemp.kernels
 
@@ -59,8 +58,8 @@ class Match:
         varr, kernel = specmatchemp.kernels.rot(n, dv, vsini)
         # self.s_mod = nd.convolve1d(self.s_mod, kernel)
         # self.serr_mod = nd.convolve1d(self.serr_mod, kernel)
-        self.s_mod = signal.fftconvolve(s_mod, kernel, mode='same')
-        self.serr_mod = signal.fftconvolve(serr_mod, kernel, mode='same')
+        self.s_mod = signal.fftconvolve(self.s_mod, kernel, mode='same')
+        self.serr_mod = signal.fftconvolve(self.serr_mod, kernel, mode='same')
 
     def residual(self, params):
         """

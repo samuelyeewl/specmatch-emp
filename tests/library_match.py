@@ -15,20 +15,17 @@ if __name__ == '__main__':
     cols = ['targ_idx', 'ref_idx', 'chi_squared', 'fit_params']
     chisq_results = []
     # total
-    # total_matches = len(lib)**2
-    total_matches = len(lib)
+    total_matches = len(lib)**2
     # counter
     i = 0
     prev_perc = -1 
-    # for (param, spec), (param_ref, spec_ref) in itertools.product(lib, repeat=2):
-    param, spec = lib[0]
-    for (param_ref, spec_ref) in lib:
+    for (param, spec), (param_ref, spec_ref) in itertools.product(lib, repeat=2):
         # progress meter
-        # perc = int(i/total_matches*100)
-        # if perc > prev_perc:
-        #     print("{0:d}% complete".format(perc))
-        #     prev_perc = perc
-        # i+=1
+        perc = int(i/total_matches*100)
+        if perc > prev_perc:
+            print("{0:d}% complete".format(perc))
+            prev_perc = perc
+        i+=1
 
         # don't match a spectrum against itself
         if param.cps_name == param_ref.cps_name:
