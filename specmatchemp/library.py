@@ -289,6 +289,10 @@ def read_hdf(path, wavlim=None):
         header = dict(f.attrs)
         wav = f['wav'][:]
         library_params = pd.DataFrame.from_records(f['params'][:], index='idx')
+        # decode strings
+        for (col_name, dt) in library_params.dtypes.iteritems():
+            if dt == 'object':
+                library_params[col_name] = library_params[col_name].str.decode('utf-8')
 
         if wavlim is None:
             library_spectra = f['library_spectra'][:]
