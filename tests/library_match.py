@@ -31,7 +31,7 @@ if __name__ == '__main__':
         if param.cps_name == param_ref.cps_name:
             continue
         else:
-            mt = match.Match(lib.wav, spec[0], spec[1], spec_ref[0], spec_ref[1])
+            mt = match.Match(lib.wav, spec, spec_ref)
             mt.best_fit()
 
             res = [param.lib_index, param_ref.lib_index, \
