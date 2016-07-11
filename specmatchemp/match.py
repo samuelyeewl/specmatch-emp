@@ -72,11 +72,11 @@ class Match:
         self.create_model(params)
 
         # Calculate residuals
-        diff = np.abs(self.s_targ-self.s_mod)
+        diff = self.s_targ-self.s_mod
 
         return diff
 
-    def best_fit(self):
+    def best_fit(self, params=None):
         """
         Calculates the best fit model by minimizing over the parameters:
         - spline fitting to the continuum
@@ -84,7 +84,8 @@ class Match:
         """
         ### Spline parameters
         # Create a spline with 5 knots
-        params = lmfit.Parameters()
+        if params is None:
+            params = lmfit.Parameters()
         num_knots = 5
         params.add('num_knots', value=num_knots, vary=False)
         interval = int(len(self.w)/(num_knots+1))
@@ -102,7 +103,7 @@ class Match:
 
         # Save best fit parameters
         self.best_params = out.params
-        self.best_chisq = np.sum(self.residual(self.best_params))
+        self.best_chisq = np.sum(np.abs(self.residual(self.best_params)))
 
         return self.best_chisq
 
@@ -112,6 +113,10 @@ class Match:
         Returns:
             np.ndarray
         """
+        self.s_mod = self.s_ref
+        self.serr_mod = self.serr_ref
+        self.create_model(self.best_params)
+
         return (self.s_targ-self.s_mod)
 
 
@@ -163,8 +168,15 @@ class MatchLincomb(Match):
         self.create_model(params)
 
         # Calculate residuals
-        ############ Multiply by narrow Gaussian
-        diff = np.abs(self.s_targ-self.s_mod)
+        diff = self.s_targ-self.s_mod
+        # divide by narrow Gaussian
+        sum_coeff = 0
+        for i in range(self.num_refs):
+            p = 'coeff_{0:d}'.format(i)
+            sum_coeff += params[p].value
+
+        SUM_WIDTH = 1e-3    
+        diff /= np.exp(-(sum_coeff-1)**2/(2*SUM_WIDTH**2))
 
         return diff
 
@@ -183,4 +195,16 @@ class MatchLincomb(Match):
             params.add(p, value=1/self.num_refs, min=0.0, max=1.0)
 
         # Call standard Match class parameters
-        return super().best_fit()
+        return super().best_fit(params)
+
+    def best_residuals(self):
+        """Returns the residuals between the target spectrum and best-fit spectrum
+        
+        Returns:
+            np.ndarray
+        """
+        self.s_mod = np.zeros_like(self.w)
+        self.serr_mod = np.zeros_like(self.w)
+        self.create_model(self.best_params)
+
+        return (self.s_targ-self.s_mod)

@@ -190,6 +190,21 @@ def plot_match(mt, plot_resid=True, offset=False):
 
     if plot_resid:
         plt.plot(mt.w, mt.best_residuals(), label="Residuals")
+
+def plot_library_match(lib, targ_idx, ref_idx, plot_resid=True, offset=False):
+    """Generate and plot the match object at the given indices
+
+    Args:
+        lib
+        targ_idx
+        ref_idx
+    """
+    targ_spec = lib.library_spectra[targ_idx]
+    ref_spec = lib.library_spectra[ref_idx]
+    mt = match.Match(lib.wav, targ_spec, ref_spec)
+    mt.best_fit()
+    plot_match(mt, plot_resid, offset)
+    
 ################################# Match plots ##################################
 
 ############################# Library test plots ###############################
@@ -266,23 +281,27 @@ def library_comparison_plot(lib, param_x, param_y, xlabel=None, ylabel=None, ptl
     plt.legend(loc='best')
 
     if ptlabels:
-        lib.library_params.apply(lambda x : plt.text(x[param_x],x[param_y],x['cps_name'], size='x-small', zorder=0),  axis=1)
+        lib.library_params.apply(lambda x : plt.text(x[param_x],x[param_y],x['lib_index'], size='x-small', zorder=0),  axis=1)
 
-def library_difference_plot(lib, param, label=None, clipping=0):
+def library_difference_plot(lib, param, label=None, clipping=None):
     resid = lib.library_params[param+'_sm'] - lib.library_params[param]
     sig = np.std(resid)
-    mask = np.where((resid < clipping*sig) & (resid > -clipping*sig))
+    if clipping is None:
+        mask = np.full_like(resid, True, dtype=bool)
+    else:
+        mask = (resid < clipping*sig) & (resid > -clipping*sig)
+    
     plt.plot(lib.library_params[param][mask], resid[mask], 'bo')
 
     mean = np.mean(resid[mask])
     rms = np.sqrt(np.mean(resid[mask]**2))
     
     ax = plt.gca()
-    if clipping == 0:
+    if clipping is None:
         plt.text(0.05, 0.1, "Mean Diff: {0:.3g}\nRMS Diff: {1:.3g}".format(mean, rms)\
             ,transform=ax.transAxes)
     else:
-        plt.text(0.05, 0.1, "Mean Diff: {0:.3g}\nRMS Diff: {1:.3g}\nClipping: {2:d}".format(mean, rms)\
+        plt.text(0.05, 0.1, "Mean Diff: {0:.3g}\nRMS Diff: {1:.3g}\nClipping: {2:d}".format(mean, rms, clipping)\
             +r'$\sigma$',transform=ax.transAxes)
     plt.axhline(y=0, color='k', linestyle='dashed')
 
@@ -290,19 +309,29 @@ def library_difference_plot(lib, param, label=None, clipping=0):
         plt.xlabel(label)
         plt.ylabel(r'$\Delta\ $'+label)
 
-def diagnostic_plots(lib):
+def diagnostic_plots(lib, query=None, clipping=2):
+    temp_params = lib.library_params
+    if query is not None:
+        lib.library_params = lib.library_params.query(query)
+
     gs = gridspec.GridSpec(6,2)
     plt.subplot(gs[0:3,0])
     library_comparison_plot(lib, 'Teff', 'logg', r'$T_{eff}$ (K)', r'$\log\ g$ (dex)')
+    plt.xlim(plt.xlim()[::-1])
+    plt.ylim(plt.ylim()[::-1])
     plt.subplot(gs[3:6,0])
     library_comparison_plot(lib, 'feh', 'logg', r'$[Fe/H]$ (dex)', r'$\log\ g$ (dex)')
+    plt.ylim(plt.ylim()[::-1])
     plt.subplot(gs[0:2,1])
-    library_difference_plot(lib, 'Teff', r'$T_{eff}$ (K)')
+    library_difference_plot(lib, 'Teff', r'$T_{eff}$ (K)', clipping=clipping)
+    plt.xlim(plt.xlim()[::-1])
     plt.subplot(gs[2:4,1])
-    library_difference_plot(lib, 'logg', r'$\log\ g$ (dex)')
+    library_difference_plot(lib, 'logg', r'$\log\ g$ (dex)', clipping=clipping)
     plt.subplot(gs[4:6,1])
-    library_difference_plot(lib, 'feh', r'$[Fe/H]$ (dex)')
+    library_difference_plot(lib, 'feh', r'$[Fe/H]$ (dex)', clipping=clipping)
     plt.tight_layout()
+
+    lib.library_params = temp_params
 
 
 ############################# Library test plots ###############################

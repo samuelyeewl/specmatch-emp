@@ -11,14 +11,12 @@ Builds the SpecMatch-Emp library from the Huber, Mann, Von Braun and Brewer cata
 4.  Saves library table and spectra as a Library object in a hdf file.
 """
 
-import glob
 import os
 from argparse import ArgumentParser
 import re
 import warnings
 
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 
 from astroquery.simbad import Simbad
@@ -379,6 +377,7 @@ def get_isochrone_params(stars, diagnostic=False, outdir='./'):
 
     num_stars = len(stars)
     current_star = 1
+
     for i, row in stars.iterrows():
         print("Getting isochrone parameters for star {0} of {1}".format(current_star, num_stars))
         current_star += 1
@@ -406,7 +405,7 @@ def get_isochrone_params(stars, diagnostic=False, outdir='./'):
                     print("Warning: Model for star {0} had inconsistent values in {1}:".format(
                         row['cps_name'], p))
                     print("\tLibrary values: {0:.2f} +/- {1:.2f}".format(row[p], row['u_'+p]))
-                    print("\tModel values: {0:.2f}, 1-sigma = ({1:.2f}, {2:.2f})".format(
+                    print("\tModel values: {0:.2f}, 1-sigma = ({1:.2f}, {2:.2f})\n".format(
                         value, lower_bound, upper_bound))
                     # Save error messages to file
                     if diagnostic:
@@ -521,7 +520,7 @@ def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/')
                 w_targ, s_targ, serr_targ, hdr_targ = specmatchio.read_hires_spectrum(specpath)
 
                 # shift spectrum
-                outfile = os.path.join(outdir+'/shift_data/{0}.txt'.format(stars.loc[targ_idx].lib_obs))
+                outfile = os.path.join(outdir,'/shift_data/{0}.txt'.format(stars.loc[targ_idx].lib_obs))
                 diag_hdr = '# Star: {0}\n# Reference: {1}\n'.format(targ_params.cps_name, ref_spectrum)
 
                 s_adj, serr_adj, w_adj = shift_spectra.adjust_spectra(s_targ, serr_targ, w_targ,\
@@ -571,6 +570,7 @@ def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
     ################################################################
 
     stars.reset_index(drop=True,inplace=True)
+    stars = stars.loc[[234,]]
 
     ### 3. Shift library spectra onto a constant log-lambda scale
     print("Step 3: Shifting library spectra...")

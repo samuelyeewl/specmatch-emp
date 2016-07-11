@@ -6,25 +6,41 @@ from specmatchemp import library
 import lmfit
 import itertools
 
-WAVLIM = (6000, 6100)
+import os
+import sys
+from argparse import ArgumentParser
+
 
 if __name__ == '__main__':
+    # Argument parser
+    psr = ArgumentParser(description="Cross-match the SpecMatch-Emp library with itself")
+    psr.add_argument('library', type=str, help="Path to library")
+    psr.add_argument('min_w', type=float, help="Minimum wavelength")
+    psr.add_argument('max_w', type=float, help="Maximum waevlength")
+    psr.add_argument('outpath', type=str, help="Path to output file")
+    args = psr.parse_args()
+
+    # check if library file exists
+    if not os.path.isfile(args.library):
+        print("Could not find file at {0}".format(args.library))
+        sys.exit()
     # read in library
-    lib = library.read_hdf('/Users/samuel/SpecMatch-Emp/lib/library.h5',wavlim=WAVLIM)
+    lib = library.read_hdf(args.library, wavlim=(args.min_w, args.max_w))
 
     cols = ['targ_idx', 'ref_idx', 'chi_squared', 'fit_params']
     chisq_results = []
-    # total
+    
+    # variables for progress meter
     total_matches = len(lib)**2
-    # counter
     i = 0
     prev_perc = -1 
+
     for (param, spec), (param_ref, spec_ref) in itertools.product(lib, repeat=2):
         # progress meter
         perc = int(i/total_matches*100)
         if perc > prev_perc:
             print("{0:d}% complete".format(perc))
-            prev_perc = perc
+            prev_perc = prev_perc+1
         i+=1
 
         # don't match a spectrum against itself
@@ -34,9 +50,9 @@ if __name__ == '__main__':
             mt = match.Match(lib.wav, spec, spec_ref)
             mt.best_fit()
 
-            res = [param.lib_index, param_ref.lib_index, \
-                    mt.best_chisq, mt.best_params.dumps()]
+            # record results
+            res = [param.lib_index, param_ref.lib_index, mt.best_chisq, mt.best_params.dumps()]
             chisq_results.append(res)
 
     df = pd.DataFrame(chisq_results, columns=cols)
-    df.to_csv('/Users/samuel/SpecMatch-Emp/tests/chi_squared_results_noerr.csv')
+    df.to_csv(outpath)

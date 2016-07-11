@@ -13,6 +13,7 @@ import h5py
 LIB_COLS = ['lib_index','cps_name', 'lib_obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 
             'logg', 'u_logg', 'feh', 'u_feh', 'mass', 'u_mass', 'age', 'u_age', 
             'vsini', 'source', 'source_name', 'snr']
+STAR_PROPS = ['Teff', 'radius', 'logg', 'feh', 'mass', 'age']
 FLOAT_TOL = 1e-3
 
 class Library():
@@ -149,12 +150,18 @@ class Library():
         res = self.library_params[self.library_params.lib_obs.str.match(pattern)]
         if len(res)==1:
             return res.iloc[0].lib_index
+        elif len(res)>1:
+            return np.array(res.iloc[:].lib_index)
         res = self.library_params[self.library_params.cps_name.str.match(pattern)]
         if len(res)==1:
             return res.iloc[0].lib_index
+        elif len(res)>1:
+            return np.array(res.iloc[:].lib_index)
         res = self.library_params[self.library_params.source_name.str.match(pattern)]
         if len(res)==1:
             return res.iloc[0].lib_index
+        elif len(res)>1:
+            return np.array(res.iloc[:].lib_index)
         return None
 
 
@@ -194,7 +201,6 @@ class Library():
             print("Storing model spectra with chunks of size {0}".format(chunk_size))
             dset = f.create_dataset('library_spectra', data=self.library_spectra,
                 compression='gzip', compression_opts=1, shuffle=True, chunks=chunk_size)
-
 
     def __str__(self):
         """
