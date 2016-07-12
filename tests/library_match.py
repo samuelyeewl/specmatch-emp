@@ -15,9 +15,9 @@ if __name__ == '__main__':
     # Argument parser
     psr = ArgumentParser(description="Cross-match the SpecMatch-Emp library with itself")
     psr.add_argument('library', type=str, help="Path to library")
-    psr.add_argument('min_w', type=float, help="Minimum wavelength")
-    psr.add_argument('max_w', type=float, help="Maximum wavelength")
     psr.add_argument('outpath', type=str, help="Path to output file")
+    psr.add_argument('min_w', type=float, help="Minimum wavelength")
+    psr.add_argument('length_w', type=float, help="Length of wavelength region")
     args = psr.parse_args()
 
     # check if library file exists
@@ -25,7 +25,7 @@ if __name__ == '__main__':
         print("Could not find file at {0}".format(args.library))
         sys.exit()
     # read in library
-    lib = library.read_hdf(args.library, wavlim=(args.min_w, args.max_w))
+    lib = library.read_hdf(args.library, wavlim=(args.min_w, args.min_w+args.length_w))
 
     cols = ['targ_idx', 'ref_idx', 'chi_squared', 'fit_params']
     chisq_results = []

@@ -47,76 +47,85 @@ def find_closest_star(row, lib):
     return lib.library_params.apply(dist, args=(row,), axis=1).sort_values().index[1]
 
 
-def main(library_path, results_path, outdir, prefix):
+def main(library_path, results_path, outdir, prefix, title):
     lib = library.read_hdf(library_path)
     results = pd.DataFrame.from_csv(results_path)
 
     # # Plot library
-    # plt.figure(figsize=(12,8))
+    # fig = plt.figure(figsize=(12,8))
     # plots.plot_library_params(lib, 'Teff', 'logg')
     # plots.reverse_x()
     # plots.reverse_y()
     # plt.legend()
     # plt.savefig(os.path.join(outdir, prefix+"_library_Teff_logg.png"))
+    # plt.close(fig)
 
-    # plt.figure(figsize=(12,8))
+    # fig = plt.figure(figsize=(12,8))
     # plots.plot_library_params(lib, 'feh', 'logg')
     # plots.reverse_y()
     # plt.legend()
     # plt.savefig(os.path.join(outdir, prefix+"_library_feh_logg.png"))
+    # plt.close(fig)
 
     # Diagnostic plot for best match
     lib.library_params = generate_sm_values(lib, results, method='best_match', suffix='_bm')
 
     fig = plt.figure(figsize=(15,12))
     plots.diagnostic_plots(lib, clipping=None, suffix='_bm')
-    fig.suptitle("SpecMatch-Emp Results, Method: Best Match", fontsize=18)
+    fig.suptitle("SpecMatch-Emp Results, Method: Best Match\n"+title, fontsize=18)
     plt.tight_layout(rect=[0,0.03,1,0.95])
     plt.savefig(os.path.join(outdir, prefix+"_diagnostic.png"))
+    plt.close(fig)
 
     fig = plt.figure(figsize=(15,12))
     plots.diagnostic_plots(lib, clipping=2, suffix='_bm')
-    fig.suptitle("SpecMatch-Emp Results, Method: Best Match, Residuals clipped", fontsize=18)
+    fig.suptitle("SpecMatch-Emp Results, Method: Best Match, Residuals clipped\n"+title, fontsize=18)
     plt.tight_layout(rect=[0,0.03,1,0.95])
     plt.savefig(os.path.join(outdir, prefix+"_diagnostic_clipped.png"))
+    plt.close(fig)
 
     fig = plt.figure(figsize=(15,12))
     plots.diagnostic_plots(lib, query='Teff < 4500', clipping=None, suffix='_bm')
-    fig.suptitle(r"SpecMatch-Emp Results, $T_{eff} < 4500$ K, Method: Best Match", fontsize=18)
+    fig.suptitle(r"SpecMatch-Emp Results, $T_{eff} < 4500$ K, Method: Best Match"+"\n"+title, fontsize=18)
     plt.tight_layout(rect=[0,0.03,1,0.95])
     plt.savefig(os.path.join(outdir, prefix+"_diagnostic_cool.png"))
+    plt.close(fig)
 
     # Highlight points where closest star was found
     lib.library_params['closest_star'] = lib.library_params.apply(find_closest_star, args=(lib,), axis=1)
-    plt.figure(figsize=(12,8))
+    fig = plt.figure(figsize=(12,8))
     plots.library_comparison_plot(lib, 'Teff', 'logg', xlabel=r'$T_{eff}$ (K)', ylabel=r'$\log\ g$ (dex)', suffix='_bm')
     mask = lib.library_params.closest_star == lib.library_params.best_match
     plt.plot(lib.library_params[mask].Teff,lib.library_params[mask].logg, 'o', color='cyan')
     plots.reverse_x()
     plots.reverse_y()
-    plt.title("SpecMatch-Emp Results, Method: Best Match")
+    plt.title("SpecMatch-Emp Results, Method: Best Match\n"+title)
     plt.savefig(os.path.join(outdir, prefix+"_best_match_highlights.png"))
+    plt.close(fig)
 
     # Chi-squared histogram
-    plt.figure(figsize=(10,7))
+    fig = plt.figure(figsize=(10,7))
     lib.library_params.best_chi_squared.hist()
-    plt.title("Histogram of lowest chi-squared match")
+    plt.title("Histogram of lowest chi-squared match\n"+title)
     plt.savefig(os.path.join(outdir, prefix+"_chi_squared_hist.png"))
+    plt.close(fig)
 
     # Diagnostic plot for average
     lib.library_params = generate_sm_values(lib, results, method='average', suffix='_avg')
 
     fig = plt.figure(figsize=(15,12))
     plots.diagnostic_plots(lib, clipping=None, suffix='_avg')
-    fig.suptitle("SpecMatch-Emp Results, Method: Average of 3", fontsize=18)
+    fig.suptitle("SpecMatch-Emp Results, Method: Average of 3\n"+title, fontsize=18)
     plt.tight_layout(rect=[0,0.03,1,0.95])
     plt.savefig(os.path.join(outdir, prefix+"_diagnostic_avg3.png"))
+    plt.close(fig)
 
     fig = plt.figure(figsize=(15,12))
     plots.diagnostic_plots(lib, query='Teff < 4500', clipping=None, suffix='_avg')
-    fig.suptitle(r"SpecMatch-Emp Results, $T_{eff} < 4500$ K, Method: Average of 3", fontsize=18)
+    fig.suptitle(r"SpecMatch-Emp Results, $T_{eff} < 4500$ K, Method: Average of 3"+"\n"+title, fontsize=18)
     plt.tight_layout(rect=[0,0.03,1,0.95])
     plt.savefig(os.path.join(outdir, prefix+"_diagnostic_avg3_cool.png"))
+    plt.close(fig)
     
 
 if __name__ == '__main__':
@@ -126,6 +135,7 @@ if __name__ == '__main__':
     psr.add_argument('results', type=str, help="Path to results csv file")
     psr.add_argument('outdir', type=str, help="Path to output directory")
     psr.add_argument('prefix', type=str, help="String to prefix to output files")
+    psr.add_argument('title', type=str, help="String to add to title")
     args = psr.parse_args()
 
     mpl.rcParams['figure.dpi'] = 200
@@ -138,4 +148,4 @@ if __name__ == '__main__':
         print("Could not find {0}".format(args.results))
         sys.exit()
 
-    main(args.library, args.results, args.outdir, args.prefix)
+    main(args.library, args.results, args.outdir, args.prefix, args.title)
