@@ -17,6 +17,13 @@ from specmatchemp.io import specmatchio
 
 UNSHIFTED_PATH = '/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/{0}.fits'
 
+############################## Helper functions ################################
+def reverse_x():
+    plt.xlim(plt.xlim()[::-1])
+
+def reverse_y():
+    plt.ylim(plt.ylim()[::-1])
+
 ######################### Library and Spectrum plots ###########################
 def plot_library_params(lib, param_x, param_y, grouped=True):
     """Plot a H-R diagram from the library
@@ -204,7 +211,7 @@ def plot_library_match(lib, targ_idx, ref_idx, plot_resid=True, offset=False):
     mt = match.Match(lib.wav, targ_spec, ref_spec)
     mt.best_fit()
     plot_match(mt, plot_resid, offset)
-    
+
 ################################# Match plots ##################################
 
 ############################# Library test plots ###############################
@@ -260,7 +267,7 @@ def chi_squared_plot(targ_idx, df_match, lib, exclude_snr=0):
     plt.xlabel(r'$[Fe/H]$ (dex)')
     plt.tight_layout()
 
-def library_comparison_plot(lib, param_x, param_y, xlabel=None, ylabel=None, ptlabels=False):
+def library_comparison_plot(lib, param_x, param_y, xlabel=None, ylabel=None, ptlabels=False, suffix='_sm'):
     """Plots comparison between library and matched values.
 
     Args:
@@ -272,8 +279,8 @@ def library_comparison_plot(lib, param_x, param_y, xlabel=None, ylabel=None, ptl
         ptlabels (bool): (optional) Set to true to print the name of the star next to each point
     """ 
     plt.plot(lib.library_params[param_x], lib.library_params[param_y], 'ko', label='Library value')
-    x = lib.library_params[[param_x+'_sm', param_x]]
-    y = lib.library_params[[param_y+'_sm', param_y]]
+    x = lib.library_params[[param_x+suffix, param_x]]
+    y = lib.library_params[[param_y+suffix, param_y]]
     plt.plot(x.T, y.T, 'r')
     plt.plot(x.iloc[0], y.iloc[0], 'r', label='SpecMatch-Emp value')
     plt.xlabel(xlabel)
@@ -283,8 +290,8 @@ def library_comparison_plot(lib, param_x, param_y, xlabel=None, ylabel=None, ptl
     if ptlabels:
         lib.library_params.apply(lambda x : plt.text(x[param_x],x[param_y],x['lib_index'], size='x-small', zorder=0),  axis=1)
 
-def library_difference_plot(lib, param, label=None, clipping=None):
-    resid = lib.library_params[param+'_sm'] - lib.library_params[param]
+def library_difference_plot(lib, param, label=None, clipping=None, suffix='_sm'):
+    resid = lib.library_params[param+suffix] - lib.library_params[param]
     sig = np.std(resid)
     if clipping is None:
         mask = np.full_like(resid, True, dtype=bool)
@@ -309,27 +316,26 @@ def library_difference_plot(lib, param, label=None, clipping=None):
         plt.xlabel(label)
         plt.ylabel(r'$\Delta\ $'+label)
 
-def diagnostic_plots(lib, query=None, clipping=2):
+def diagnostic_plots(lib, query=None, clipping=2, suffix='_sm'):
     temp_params = lib.library_params
     if query is not None:
         lib.library_params = lib.library_params.query(query)
 
     gs = gridspec.GridSpec(6,2)
     plt.subplot(gs[0:3,0])
-    library_comparison_plot(lib, 'Teff', 'logg', r'$T_{eff}$ (K)', r'$\log\ g$ (dex)')
+    library_comparison_plot(lib, 'Teff', 'logg', r'$T_{eff}$ (K)', r'$\log\ g$ (dex)', suffix=suffix)
     plt.xlim(plt.xlim()[::-1])
     plt.ylim(plt.ylim()[::-1])
     plt.subplot(gs[3:6,0])
-    library_comparison_plot(lib, 'feh', 'logg', r'$[Fe/H]$ (dex)', r'$\log\ g$ (dex)')
+    library_comparison_plot(lib, 'feh', 'logg', r'$[Fe/H]$ (dex)', r'$\log\ g$ (dex)', suffix=suffix)
     plt.ylim(plt.ylim()[::-1])
     plt.subplot(gs[0:2,1])
-    library_difference_plot(lib, 'Teff', r'$T_{eff}$ (K)', clipping=clipping)
+    library_difference_plot(lib, 'Teff', r'$T_{eff}$ (K)', clipping=clipping, suffix=suffix)
     plt.xlim(plt.xlim()[::-1])
     plt.subplot(gs[2:4,1])
-    library_difference_plot(lib, 'logg', r'$\log\ g$ (dex)', clipping=clipping)
+    library_difference_plot(lib, 'logg', r'$\log\ g$ (dex)', clipping=clipping, suffix=suffix)
     plt.subplot(gs[4:6,1])
-    library_difference_plot(lib, 'feh', r'$[Fe/H]$ (dex)', clipping=clipping)
-    plt.tight_layout()
+    library_difference_plot(lib, 'feh', r'$[Fe/H]$ (dex)', clipping=clipping, suffix=suffix)
 
     lib.library_params = temp_params
 

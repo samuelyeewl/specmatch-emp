@@ -16,7 +16,7 @@ if __name__ == '__main__':
     psr = ArgumentParser(description="Cross-match the SpecMatch-Emp library with itself")
     psr.add_argument('library', type=str, help="Path to library")
     psr.add_argument('min_w', type=float, help="Minimum wavelength")
-    psr.add_argument('max_w', type=float, help="Maximum waevlength")
+    psr.add_argument('max_w', type=float, help="Maximum wavelength")
     psr.add_argument('outpath', type=str, help="Path to output file")
     args = psr.parse_args()
 
@@ -55,4 +55,4 @@ if __name__ == '__main__':
             chisq_results.append(res)
 
     df = pd.DataFrame(chisq_results, columns=cols)
-    df.to_csv(outpath)
+    df.to_csv(args.outpath)
