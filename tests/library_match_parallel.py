@@ -16,7 +16,7 @@ if __name__ == '__main__':
     psr = ArgumentParser(description="Cross-match the SpecMatch-Emp library with itself")
     psr.add_argument('library', type=str, help="Path to library")
     psr.add_argument('outpath', type=str, help="Path to output file")
-    psr.add_argument('targ_idx', type=str, help="Target index")
+    psr.add_argument('targ_idx', type=int, help="Target index")
     psr.add_argument('min_w', type=float, help="Minimum wavelength")
     psr.add_argument('length_w', type=float, help="Length of wavelength region")
     args = psr.parse_args()
