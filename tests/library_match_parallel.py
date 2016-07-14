@@ -3,8 +3,6 @@
 import pandas as pd 
 from specmatchemp import match
 from specmatchemp import library
-import lmfit
-import itertools
 
 import os
 import sys
