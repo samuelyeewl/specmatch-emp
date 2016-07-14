@@ -82,7 +82,7 @@ def plot_standard_spectrum(filename, wavlim=None, label=None, offset=0):
     s /= percen
     plt.plot(w, s+offset, label=label)
 
-def plot_library_spectrum(lib, lib_index, wavlim=None, label=None, offset=0):
+def plot_library_spectrum(lib, lib_index, wavlim=None, offset=0, plt_kw={}):
     """Plot a spectrum from the library.
 
     Args:
@@ -101,7 +101,7 @@ def plot_library_spectrum(lib, lib_index, wavlim=None, label=None, offset=0):
     w = lib.wav
     if wavlim is not None:
         w, s, serr = specmatchio.truncate_spectrum(wavlim, w, s, serr)
-    plt.plot(w, s+offset, label=label)
+    plt.plot(w, s+offset, **plt_kw)
 ######################### Library and Spectrum plots ###########################
 
 
@@ -176,16 +176,18 @@ def shift_plot(lib, lib_index, wavlim=(5160,5190)):
 ################################# Shift plots ##################################
 
 ################################# Match plots ##################################
-def plot_match(mt, plot_resid=True, offset=False):
+def plot_match(mt, plot_targ=True, plot_resid=True, offset=False):
     """Plot a match object
 
     Args:
         mt (match.Match): Match object
+        plot_targ (bool): If false, does not plot the target 
         plot_resid (bool): If true, plots the residuals between the spectrum
             and library values.
         offset (bool): If true, offsets the target, reference and modified spectra
     """
-    plt.plot(mt.w, mt.s_targ, label="Target")
+    if plot_targ:
+        plt.plot(mt.w, mt.s_targ, label="Target")
     if mt.s_mod is None:
         off = 1 if offset else 0
         plt.plot(mt.w, mt.s_ref+off, label="Library")
@@ -198,7 +200,7 @@ def plot_match(mt, plot_resid=True, offset=False):
     if plot_resid:
         plt.plot(mt.w, mt.best_residuals(), label="Residuals")
 
-def plot_library_match(lib, targ_idx, ref_idx, plot_resid=True, offset=False):
+def plot_library_match(lib, targ_idx, ref_idx, plot_targ=True, plot_resid=True, offset=False):
     """Generate and plot the match object at the given indices
 
     Args:
@@ -210,7 +212,7 @@ def plot_library_match(lib, targ_idx, ref_idx, plot_resid=True, offset=False):
     ref_spec = lib.library_spectra[ref_idx]
     mt = match.Match(lib.wav, targ_spec, ref_spec)
     mt.best_fit()
-    plot_match(mt, plot_resid, offset)
+    plot_match(mt, plot_targ, plot_resid, offset)
 
 ################################# Match plots ##################################
 
@@ -322,18 +324,19 @@ def diagnostic_plots(lib, query=None, clipping=2, suffix='_sm'):
         lib.library_params = lib.library_params.query(query)
 
     gs = gridspec.GridSpec(6,2)
-    plt.subplot(gs[0:3,0])
-    library_comparison_plot(lib, 'Teff', 'logg', r'$T_{eff}$ (K)', r'$\log\ g$ (dex)', suffix=suffix)
+    ax = plt.subplot(gs[0:3,0])
+    library_comparison_plot(lib, 'Teff', 'logr', r'$T_{eff}$ (K)', r'$\log\ R (R_\odot)$', suffix=suffix)
     plt.xlim(plt.xlim()[::-1])
-    plt.ylim(plt.ylim()[::-1])
-    plt.subplot(gs[3:6,0])
-    library_comparison_plot(lib, 'feh', 'logg', r'$[Fe/H]$ (dex)', r'$\log\ g$ (dex)', suffix=suffix)
-    plt.ylim(plt.ylim()[::-1])
+    # ax.set_yscale('log')
+    ax = plt.subplot(gs[3:6,0])
+    library_comparison_plot(lib, 'feh', 'logr', r'$[Fe/H]$ (dex)', r'$\log\ R (R_\odot)$', suffix=suffix)
+    # ax.set_yscale('log')
     plt.subplot(gs[0:2,1])
     library_difference_plot(lib, 'Teff', r'$T_{eff}$ (K)', clipping=clipping, suffix=suffix)
     plt.xlim(plt.xlim()[::-1])
-    plt.subplot(gs[2:4,1])
-    library_difference_plot(lib, 'logg', r'$\log\ g$ (dex)', clipping=clipping, suffix=suffix)
+    ax = plt.subplot(gs[2:4,1])
+    library_difference_plot(lib, 'logr', r'$\log\ R (R_\odot)$', clipping=clipping, suffix=suffix)
+    # ax.set_yscale('log')
     plt.subplot(gs[4:6,1])
     library_difference_plot(lib, 'feh', r'$[Fe/H]$ (dex)', clipping=clipping, suffix=suffix)
 

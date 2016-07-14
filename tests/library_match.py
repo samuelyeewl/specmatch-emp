@@ -40,7 +40,7 @@ if __name__ == '__main__':
         perc = int(i/total_matches*100)
         if perc > prev_perc:
             print("{0:d}% complete".format(perc))
-            prev_perc = prev_perc+1
+            prev_perc += 1
         i+=1
 
         # don't match a spectrum against itself
