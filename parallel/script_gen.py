@@ -13,9 +13,18 @@ if __name__ == '__main__':
 
     f = open(args.outpath, "w")
 
+#     for i in range(WAV_MIN, WAV_MAX, 100):
+#         for j in range(TARG_MAX):
+#             f.write("source ~/.bash_profile; python /home/syee/specmatchemp-working/specmatchemp/tests/library_match_parallel.py \
+# '/home/syee/specmatchemp-working/specmatchemp/lib/library_reduced.h5' \
+# '/home/syee/specmatchemp-working/specmatchemp/results/{0:d}_results_{1:d}.csv' {1:d} {0:d} 100\n".format(i, j))
+#     f.close()
+    
     for i in range(WAV_MIN, WAV_MAX, 100):
-        for j in range(TARG_MAX):
-            f.write("source ~/.bash_profile; python /home/syee/specmatchemp-working/specmatchemp/tests/library_match_parallel.py \
-'/home/syee/specmatchemp-working/specmatchemp/lib/library_reduced.h5' \
-'/home/syee/specmatchemp-working/specmatchemp/results/{0:d}_results_{1:d}.csv' {1:d} {0:d} 100\n".format(i, j))
+        for j in range(2, 6):
+            f.write("source ~/.bash_profile; python /home/syee/specmatchemp-working/specmatchemp/tests/library_match_lincomb.py " + \
+                "'/home/syee/specmatchemp-working/specmatchemp/lib/library_reduced.h5' "+\
+                "'/home/syee/specmatchemp-working/specmatchemp/results/{0:d}_results.csv' ".format(i)+\
+                "'/home/syee/specmatchemp-working/specmatchemp/results/{0:d}_results_lincomb_{1:d}.csv' ".format(i,j)+\
+                "{1:d} {0:d} 100\n".format(i,j))
     f.close()
