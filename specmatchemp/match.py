@@ -147,7 +147,7 @@ class Match:
 
 
 class MatchLincomb(Match):
-    def __init__(self, wav, s_targ, s_refs, vsini, mode='default'):
+    def __init__(self, wav, s_targ, s_refs, vsini, mode='default', opt='lm'):
         """
         Match subclass to find the best match from a linear combination of 
         reference spectra.
@@ -172,6 +172,16 @@ class MatchLincomb(Match):
         self.best_params = lmfit.Parameters()
         self.best_chisq = np.NaN
         self.mode = mode
+        self.opt = opt
+
+        # add spline knots
+        num_knots = 5
+        interval = int(len(self.w)/(num_knots+1))
+        # Add spline positions
+        self.knot_x = []
+        for i in range(1, num_knots+1):
+            self.knot_x.append(self.w[interval*i])
+        self.knot_x = np.array(self.knot_x)
 
     def create_model(self, params):
         """
