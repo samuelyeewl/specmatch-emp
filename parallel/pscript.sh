@@ -3,7 +3,7 @@
 #PBS -N specmatchemp
 #PBS -q default
 #PBS -l nodes=24
-#PBS -l walltime=12:00:00
+#PBS -l walltime=0:15:00
 #PBS -V
 #PBS -m bae -M syee@caltech.edu
 
