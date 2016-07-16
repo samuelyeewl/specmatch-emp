@@ -10,7 +10,7 @@ if __name__ == '__main__':
     # Argument parser
     psr = ArgumentParser(description="Combine match results")
     psr.add_argument('dir', type=str, help="Path to directory")
-    psr.add_argument('suffix', type=str, help="File suffix to search for")
+    psr.add_argument('searchstr', type=str, help="Stiring pattern to search for")
     psr.add_argument('outfile', type=str, help="Output filename")
     args = psr.parse_args()
 
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     cols = ['targ_idx', 'ref_idx', 'chi_squared', 'fit_params']
     df = pd.DataFrame(columns=cols)
 
-    for file in glob.glob(os.path.join(args.dir, "*"+ args.suffix)):
+    for file in glob.glob(os.path.join(args.dir, args.searchstr)):
         res = pd.DataFrame.from_csv(file)
         df = pd.concat((df, res))
 
