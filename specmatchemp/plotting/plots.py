@@ -25,27 +25,35 @@ def reverse_y():
     plt.ylim(plt.ylim()[::-1])
 
 ######################### Library and Spectrum plots ###########################
-def plot_library_params(lib, param_x, param_y, grouped=True):
+def plot_library_params(lib, param_x, param_y, grouped=False, plt_kw={}):
     """Plot a H-R diagram from the library
 
     Args:
         lib (library.Library): The library object
+            or (pd.DataFrame): The library params dataframe
         param_x (str): Parameter to be plot on the x-axis
         param_y (str): Parameter to be plot on the y-axis
         grouped (bool): (optional): Whether to group library by source catalog
     """
+    if type(lib) is library.Library:
+        params = lib.library_params
+    elif type(lib) is pd.DataFrame:
+        params = lib
+    else:
+        raise TypeError
+
     x = param_x
     y = param_y
-    assert x in lib.library_params.columns, "{0} not in library_params".format(x)
-    assert y in lib.library_params.columns, "{0} not in library_params".format(y)
+    assert x in params.columns, "{0} not in library_params".format(x)
+    assert y in params.columns, "{0} not in library_params".format(y)
     
     if grouped:
-        g = lib.library_params.groupby('source')
+        g = params.groupby('source')
         for source in g.groups:
-            cut = lib.library_params.ix[g.groups[source]]
+            cut = params.ix[g.groups[source]]
             plt.plot(cut[x], cut[y], '.', label=source)
     else:
-        plt.plot(lib.library_params[x], lib.library_params[y], '.')
+        plt.plot(params[x], params[y], '.', **plt_kw)
 
 def plot_hires_spectrum(filename, wavlim=None, label=None, offset=0):
     """Plot a HIRES spectrum within a given wavelength range

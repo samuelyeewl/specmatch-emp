@@ -13,7 +13,7 @@ from scipy.ndimage.filters import convolve1d
 import specmatchemp.kernels
 
 class Match:
-    def __init__(self, wav, s_targ, s_ref, mode='default'):
+    def __init__(self, wav, s_targ, s_ref, mode='default', opt='lm'):
         """
         The Match class used for matching two spectra
 
@@ -22,6 +22,8 @@ class Match:
             s_targ (np.ndarray): 2d array containing target spectrum and uncertainty
             s_ref (np.ndarray): 2d array containing reference spectrum and uncertainty
             mode: default (unnormalized chi-square), normalized (normalized chi-square)
+            opt: lm (Levenberg-Marquadt optimization), nelder (Nelder-Mead)
+            splline: linear (linear least squares), nonlinear (nonlinear)
         """
         self.w = np.copy(wav)
         self.s_targ = np.copy(s_targ[0])
@@ -31,6 +33,7 @@ class Match:
         self.best_params = lmfit.Parameters()
         self.best_chisq = np.NaN
         self.mode = mode
+        self.opt = opt
 
     def create_model(self, params):
         """
@@ -41,15 +44,15 @@ class Match:
         self.s_mod = np.copy(self.s_ref)
         self.serr_mod = np.copy(self.serr_ref)
 
-        # Create a spline
-        spl = self.create_spline(params)
-        self.s_mod *= spl
-        self.serr_mod *= spl
-
         # Apply broadening kernel
         vsini = params['vsini'].value
         self.s_mod = self.broaden(vsini, self.s_mod)
         self.serr_mod = self.broaden(vsini, self.serr_mod)
+
+        # Create a spline
+        spl = self.create_spline(params)
+        self.s_mod *= spl
+        self.serr_mod *= spl
 
     def create_spline(self, params):
         """
@@ -107,7 +110,10 @@ class Match:
 
         chi_square = np.sum(residuals**2)
 
-        return chi_square
+        if self.opt == 'lm':
+            return residuals
+        elif self.opt == 'nelder':
+            return chi_square
 
     def best_fit(self, params=None):
         """
@@ -124,12 +130,15 @@ class Match:
         ### Rotational broadening parameters
         params.add('vsini', value=1.0, min=0.0, max=10.0)
 
-        # Minimize chi-squared
-        out = lmfit.minimize(self.objective, params, method='nelder')
+        # Perform fit
+        if self.opt == 'lm':
+            out = lmfit.minimize(self.objective, params)
+            self.best_chisq = np.sum(self.objective(out.params)**2)
+        elif self.opt == 'nelder':
+            out = lmfit.minimize(self.objective, params, method='nelder')
+            self.best_chisq = self.objective(out.params)
 
-        # Save best fit parameters
         self.best_params = out.params
-        self.best_chisq = self.objective(self.best_params)
 
         return self.best_chisq
 
