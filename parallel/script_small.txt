@@ -1,0 +1,1 @@
+source ~/.bash_profile; python /home/syee/specmatchemp-working/specmatchemp/tests/library_match_parallel.py '/home/syee/specmatchemp-working/specmatchemp/lib/library_reduced.h5' '/home/syee/specmatchemp-working/specmatchemp/results/5100_results_0' 0 5100 100

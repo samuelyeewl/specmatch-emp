@@ -8,6 +8,32 @@ import os
 import sys
 from argparse import ArgumentParser
 
+import time
+
+def main(libpath, outpath, targ_idx, min_w, length_w):
+    # read in library
+    lib = library.read_hdf(libpath, wavlim=(min_w, min_w+length_w))
+
+    cols = ['targ_idx', 'ref_idx', 'chi_squared', 'fit_params']
+    chisq_results = []
+
+    param, spec = lib[targ_idx]
+
+    for param_ref, spec_ref in lib:
+        # don't match a spectrum against itself
+        if param.cps_name == param_ref.cps_name:
+            continue
+        else:
+            mt = match.Match(lib.wav, spec, spec_ref, opt='lm')
+            mt.best_fit()
+
+            # record results
+            res = [param.lib_index, param_ref.lib_index, mt.best_chisq, mt.best_params.dumps()]
+            chisq_results.append(res)
+
+    df = pd.DataFrame(chisq_results, columns=cols)
+    df.to_csv(args.outpath)
+
 
 if __name__ == '__main__':
     # Argument parser
@@ -23,25 +49,5 @@ if __name__ == '__main__':
     if not os.path.isfile(args.library):
         print("Could not find file at {0}".format(args.library))
         sys.exit()
-    # read in library
-    lib = library.read_hdf(args.library, wavlim=(args.min_w, args.min_w+args.length_w))
 
-    cols = ['targ_idx', 'ref_idx', 'chi_squared', 'fit_params']
-    chisq_results = []
-
-    param, spec = lib[args.targ_idx]
-
-    for param_ref, spec_ref in lib:
-        # don't match a spectrum against itself
-        if param.cps_name == param_ref.cps_name:
-            continue
-        else:
-            mt = match.Match(lib.wav, spec, spec_ref)
-            mt.best_fit()
-
-            # record results
-            res = [param.lib_index, param_ref.lib_index, mt.best_chisq, mt.best_params.dumps()]
-            chisq_results.append(res)
-
-    df = pd.DataFrame(chisq_results, columns=cols)
-    df.to_csv(args.outpath)
+    main(args.library, args.outpath, args.targ_idx, args.min_w, args.length_w)
