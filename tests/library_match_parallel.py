@@ -24,7 +24,7 @@ def main(libpath, outpath, targ_idx, min_w, length_w):
         if param.cps_name == param_ref.cps_name:
             continue
         else:
-            mt = match.Match(lib.wav, spec, spec_ref, opt='nelder')
+            mt = match.Match(lib.wav, spec, spec_ref, opt='lm')
             mt.best_fit()
 
             # record results
