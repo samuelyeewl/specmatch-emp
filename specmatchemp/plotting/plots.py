@@ -301,22 +301,14 @@ def library_comparison_plot(lib, param_x, param_y, xlabel=None, ylabel=None, ptl
         lib.library_params.apply(lambda x : plt.text(x[param_x],x[param_y],x['lib_index'], size='x-small', zorder=0),  axis=1)
 
 def library_difference_plot(lib, param, label=None, clipping=None, suffix='_sm'):
-    if param == 'dr_r':
-        resid = (lib.library_params['radius'+suffix] - lib.library_params['radius'])/lib.library_params['radius']
-    else:
-        resid = lib.library_params[param+suffix] - lib.library_params[param]
+    resid = lib.library_params[param+suffix] - lib.library_params[param]
     sig = np.std(resid)
     if clipping is None:
         mask = np.full_like(resid, True, dtype=bool)
     else:
         mask = (resid < clipping*sig) & (resid > -clipping*sig)
     
-    
-    if param == 'dr_r':
-        plt.plot(lib.library_params['radius'][mask], resid[mask], 'bo')
-    else:
-        plt.plot(lib.library_params[param][mask], resid[mask], 'bo')
-
+    plt.plot(lib.library_params[param][mask], resid[mask], 'bo')
 
     mean = np.mean(resid[mask])
     rms = np.sqrt(np.mean(resid[mask]**2))
@@ -341,18 +333,17 @@ def diagnostic_plots(lib, query=None, clipping=2, suffix='_sm'):
 
     gs = gridspec.GridSpec(6,2)
     ax = plt.subplot(gs[0:3,0])
-    library_comparison_plot(lib, 'Teff', 'radius', r'$T_{eff}$ (K)', r'$R\ (R_\odot)$', suffix=suffix)
-    reverse_x()
-    ax.set_yscale('log')
+    library_comparison_plot(lib, 'Teff', 'logr', r'$T_{eff}$ (K)', r'$\log\ R (R_\odot)$', suffix=suffix)
+    plt.xlim(plt.xlim()[::-1])
+    # ax.set_yscale('log')
     ax = plt.subplot(gs[3:6,0])
-    library_comparison_plot(lib, 'feh', 'radius', r'$[Fe/H]$ (dex)', r'$R\ (R_\odot)$', suffix=suffix)
-    ax.set_yscale('log')
+    library_comparison_plot(lib, 'feh', 'logr', r'$[Fe/H]$ (dex)', r'$\log\ R (R_\odot)$', suffix=suffix)
+    # ax.set_yscale('log')
     plt.subplot(gs[0:2,1])
     library_difference_plot(lib, 'Teff', r'$T_{eff}$ (K)', clipping=clipping, suffix=suffix)
-    plt.ylim(-500,500)
-    reverse_x()
+    plt.xlim(plt.xlim()[::-1])
     ax = plt.subplot(gs[2:4,1])
-    library_difference_plot(lib, 'dr_r', r'$R (R_\odot)$', clipping=clipping, suffix=suffix)
+    library_difference_plot(lib, 'logr', r'$\log\ R (R_\odot)$', clipping=clipping, suffix=suffix)
     # ax.set_yscale('log')
     plt.subplot(gs[4:6,1])
     library_difference_plot(lib, 'feh', r'$[Fe/H]$ (dex)', clipping=clipping, suffix=suffix)
