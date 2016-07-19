@@ -72,7 +72,7 @@ if __name__ == '__main__':
         vsini = np.array(vsini)
 
         mt = match.MatchLincomb(lib.wav, spec, spec_refs, vsini)
-        best_chisq = mt.best_fit()
+        mt.best_fit()
         
         # save results
         coeffs = []
@@ -86,4 +86,5 @@ if __name__ == '__main__':
         chisq_results.append(res)
 
     df = pd.DataFrame(chisq_results, columns=cols)
+    df['targ_idx'] = df['targ_idx'].astype(np.int64)
     df.to_csv(args.outpath)

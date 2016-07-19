@@ -147,7 +147,7 @@ class Match:
 
 
 class MatchLincomb(Match):
-    def __init__(self, wav, s_targ, s_refs, vsini, mode='default', opt='lm'):
+    def __init__(self, wav, s_targ, s_refs, vsini, mode='default'):
         """
         Match subclass to find the best match from a linear combination of 
         reference spectra.
@@ -172,7 +172,7 @@ class MatchLincomb(Match):
         self.best_params = lmfit.Parameters()
         self.best_chisq = np.NaN
         self.mode = mode
-        self.opt = opt
+        self.opt = 'nelder'
 
         # add spline knots
         num_knots = 5
@@ -224,7 +224,7 @@ class MatchLincomb(Match):
             p = 'coeff_{0:d}'.format(i)
             sum_coeff += params[p].value
 
-        WIDTH = 1e-3
+        WIDTH = 1e-2
         chi_square += (sum_coeff-1)**2/(2*WIDTH**2)
 
         return chi_square
@@ -238,7 +238,7 @@ class MatchLincomb(Match):
         """
         params = lmfit.Parameters()
         ### Linear combination parameters
-        params = self.add_lincomb_params(params)
+        params = self.add_lincomb_coeffs(params)
 
         # Minimize chi-squared
         out = lmfit.minimize(self.objective, params, method='nelder')
@@ -249,7 +249,7 @@ class MatchLincomb(Match):
 
         return self.best_chisq
 
-    def add_lincomb_params(self, params):
+    def add_lincomb_coeffs(self, params):
         params.add('num_refs', value=self.num_refs, vary=False)
 
         for i in range(self.num_refs):
@@ -257,3 +257,13 @@ class MatchLincomb(Match):
             params.add(p, value=1/self.num_refs, min=0.0, max=1.0)
 
         return params
+
+    def get_lincomb_coeffs(self, params):
+        num_refs = params['num_refs']
+
+        coeffs = []
+        for i in range(num_refs):
+            p = 'coeff_{0:d}'.format(i)
+            coeffs.append(params[p].value)
+
+        return coeffs
