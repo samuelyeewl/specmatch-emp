@@ -38,12 +38,12 @@ def main(library_path, results_path, outdir, prefix, title):
     results['ref_idxs'] = results.ref_idxs.apply(lambda s: \
         np.array(s.strip('[]').split()).astype(int))
     results['coeffs'] = results.coeffs.apply(lambda s: \
-        np.array(s.strip('[]').split(', ')).astype(float))
+        np.array(s.strip('[]').split()).astype(float))
 
     lib.library_params = generate_sm_values(lib, results, method='lincomb', suffix='_sm')
 
     fig = plt.figure(figsize=(15,12))
-    plots.diagnostic_plots(lib, clipping=3, suffix='_sm')
+    plots.diagnostic_plots(lib, clipping=None, suffix='_sm')
     fig.suptitle("SpecMatch-Emp Results, Method: Linear Combination\n"+title, fontsize=18)
     plt.tight_layout(rect=[0,0.03,1,0.95])
     plt.savefig(os.path.join(outdir, prefix+"_diagnostic_lincomb.png"))
