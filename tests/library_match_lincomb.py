@@ -37,6 +37,8 @@ if __name__ == '__main__':
         sys.exit()
     # read in matches
     matches = pd.DataFrame.from_csv(args.match_results, index_col=0)
+    matches['targ_idx'] = matches.targ_idx.astype(int)
+    matches['ref_idx'] = matches.targ_idx.astype(int)
     grouped_matches = matches.groupby('targ_idx')
 
     num_best = args.num_best
@@ -60,7 +62,7 @@ if __name__ == '__main__':
 
         # get best matches
         best_matches = grouped_matches.get_group(param.lib_index).sort_values(by='chi_squared')
-        ref_idxs = np.array(best_matches.head(num_best).ref_idx)
+        ref_idxs = np.array(best_matches.head(num_best).ref_idx.astype(int))
         spec_refs = lib.library_spectra[ref_idxs]
 
         # get rotational broadening
@@ -75,13 +77,7 @@ if __name__ == '__main__':
         mt.best_fit()
         
         # save results
-        coeffs = []
-        # get coefficients
-        for i in range(num_best):
-            p = 'coeff_{0:d}'.format(i)
-            coeffs.append(mt.best_params[p].value)
-        coeffs = np.array(coeffs)
-
+        coeffs = mt.get_lincomb_coeffs(mt.best_params)
         res = [param.lib_index, ref_idxs, coeffs, mt.best_chisq, mt.best_params.dumps()]  
         chisq_results.append(res)
 

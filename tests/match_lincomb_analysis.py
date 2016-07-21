@@ -6,30 +6,12 @@ import matplotlib.pyplot as plt
 import pandas as pd 
 
 from specmatchemp import library
+from specmatchemp import analysis
 from specmatchemp.plotting import plots
 
 import os
 import sys
 from argparse import ArgumentParser
-
-def generate_sm_values(lib, results, method='lincomb', suffix='_sm'):
-    params = lib.library_params
-
-    # Use closest matched spectra as sm values
-    if method == 'lincomb':
-        results.set_index('targ_idx', inplace=True)
-        for p in library.STAR_PROPS:
-            psm = p+suffix
-            params[psm] = params.lib_index.apply(lambda i: \
-                lincomb_props(lib.library_params, p, results.loc[i].ref_idxs, results.loc[i].coeffs))
-    return params
-
-def lincomb_props(library_params, prop, idxs, coeffs):
-    sm_prop = 0
-    for i in range(len(idxs)):
-        lib_prop = library_params.loc[idxs[i], prop]
-        sm_prop += lib_prop*coeffs[i]
-    return sm_prop
 
 def main(library_path, results_path, outdir, prefix, title):
     lib = library.read_hdf(library_path)
@@ -40,20 +22,52 @@ def main(library_path, results_path, outdir, prefix, title):
     results['coeffs'] = results.coeffs.apply(lambda s: \
         np.array(s.strip('[]').split()).astype(float))
 
-    lib.library_params = generate_sm_values(lib, results, method='lincomb', suffix='_sm')
+    lib.library_params = analysis.generate_sm_values(lib.library_params, results, method='lincomb', suffix='_sm')
+    lib.library_params = analysis.generate_residuals(lib.library_params, '_sm')
+    lib.library_params, polycoeffs = analysis.detrend_params(lib.library_params, '_sm')
 
+    # Diagnostic plots for all, cool, hot stars
     fig = plt.figure(figsize=(15,12))
-    plots.diagnostic_plots(lib, clipping=None, suffix='_sm')
+    plots.diagnostic_plots(lib, clipping=None, suffix='_sm', trend=polycoeffs)
     fig.suptitle("SpecMatch-Emp Results, Method: Linear Combination\n"+title, fontsize=18)
     plt.tight_layout(rect=[0,0.03,1,0.95])
     plt.savefig(os.path.join(outdir, prefix+"_diagnostic_lincomb.png"))
     plt.close(fig)
 
     fig = plt.figure(figsize=(15,12))
-    plots.diagnostic_plots(lib, query='Teff < 4500', clipping=None, suffix='_sm')
-    fig.suptitle(r"SpecMatch-Emp Results, $T_{eff} < 4500$ K, Method: Best Match"+"\n"+title, fontsize=18)
+    plots.diagnostic_plots(lib, query='Teff < 4500', clipping=None, suffix='_sm', trend=polycoeffs)
+    fig.suptitle(r"SpecMatch-Emp Results, $T_{eff} < 4500$ K, Method: Linear Combination"+"\n"+title, fontsize=18)
     plt.tight_layout(rect=[0,0.03,1,0.95])
     plt.savefig(os.path.join(outdir, prefix+"_diagnostic_cool_lincomb.png"))
+    plt.close(fig)
+
+    fig = plt.figure(figsize=(15,12))
+    plots.diagnostic_plots(lib, query='Teff > 4500', clipping=None, suffix='_sm', trend=polycoeffs)
+    fig.suptitle(r"SpecMatch-Emp Results, $T_{eff} > 4500$ K, Method: Linear Combination"+"\n"+title, fontsize=18)
+    plt.tight_layout(rect=[0,0.03,1,0.95])
+    plt.savefig(os.path.join(outdir, prefix+"_diagnostic_hot_lincomb.png"))
+    plt.close(fig)
+
+    # Diagnostic plots with linear trend removed
+    fig = plt.figure(figsize=(15,12))
+    plots.diagnostic_plots(lib, clipping=None, suffix='_sm_detrend')
+    fig.suptitle("SpecMatch-Emp Results, Method: Linear Combination, Detrended\n"+title, fontsize=18)
+    plt.tight_layout(rect=[0,0.03,1,0.95])
+    plt.savefig(os.path.join(outdir, prefix+"_diagnostic_lincomb_detrend.png"))
+    plt.close(fig)
+
+    fig = plt.figure(figsize=(15,12))
+    plots.diagnostic_plots(lib, query='Teff < 4500', clipping=None, suffix='_sm_detrend')
+    fig.suptitle(r"SpecMatch-Emp Results, $T_{eff} < 4500$ K, Method: Linear Combination, Detrended"+"\n"+title, fontsize=18)
+    plt.tight_layout(rect=[0,0.03,1,0.95])
+    plt.savefig(os.path.join(outdir, prefix+"_diagnostic_cool_lincomb_detrend.png"))
+    plt.close(fig)
+
+    fig = plt.figure(figsize=(15,12))
+    plots.diagnostic_plots(lib, query='Teff > 4500', clipping=None, suffix='_sm_detrend')
+    fig.suptitle(r"SpecMatch-Emp Results, $T_{eff} > 4500$ K, Method: Linear Combination, Detrended"+"\n"+title, fontsize=18)
+    plt.tight_layout(rect=[0,0.03,1,0.95])
+    plt.savefig(os.path.join(outdir, prefix+"_diagnostic_hot_lincomb_detrend.png"))
     plt.close(fig)
 
 

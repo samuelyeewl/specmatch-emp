@@ -9,11 +9,11 @@ import pandas as pd
 
 from specmatchemp import library
 
-def generate_sm_values(lib, results, method='lincomb', suffix='_sm'):
+def generate_sm_values(params, results, method='lincomb', suffix='_sm'):
     """Generate the derived values and add it to the parameters table
 
     Args:
-        lib (library.Library): Library object
+        params (pd.DataFrame): Paramter table
         results (pd.DataFrame): results table 
         method ('lincomb', 'best_match', 'average'): Specify the method used
             - lincomb uses the weighted average of the parameters of a list of spectra
@@ -28,43 +28,42 @@ def generate_sm_values(lib, results, method='lincomb', suffix='_sm'):
     Returns:
         params (pd.DataFrame): parameter table
     """
-    params = lib.library_params
 
     # Use linear combination results as sm values
     if method == 'lincomb':
-        results.set_index('targ_idx', inplace=True)
+        results = results.set_index('targ_idx')
         for p in library.STAR_PROPS:
             psm = p+suffix
-            params[psm] = params.lib_index.apply(lambda i: \
-                lincomb_props(lib.library_params, p, results.loc[i].ref_idxs, results.loc[i].coeffs))
+            params.loc[:,psm] = params.lib_index.apply(lambda i: \
+                lincomb_props(params, p, results.loc[i].ref_idxs, results.loc[i].coeffs))
 
     elif method == 'best_match':
         grouped_results = results.groupby('targ_idx')
-        params['best_match'] = params.lib_index.apply(\
+        params.loc[:,'best_match'] = params.lib_index.apply(\
             lambda i: grouped_results.get_group(i).sort_values(by='chi_squared').iloc[0].ref_idx)
         for p in library.STAR_PROPS:
             psm = p+suffix
-            params[psm] = params.best_match.apply(lambda i: params.loc[i, p])
+            params.loc[:,psm] = params.best_match.apply(lambda i: params.loc[i, p])
         
-        params['best_chi_squared'] = params.lib_index.apply(\
+        params.loc[:,'best_chi_squared'] = params.lib_index.apply(\
             lambda i: grouped_results.get_group(i).sort_values(by='chi_squared').iloc[0].chi_squared)
 
     elif method == 'average':
         grouped_results = results.groupby('targ_idx')
-        params['best_n'] = params.lib_index.apply(lambda i: \
+        params.loc[:,'best_n'] = params.lib_index.apply(lambda i: \
             np.array(grouped_results.get_group(i).sort_values(by='chi_squared').iloc[0:num_mean].ref_idx))
         for p in library.STAR_PROPS:
             psm = p+suffix
-            params[psm] = params.best_n.apply(lambda i: params.loc[i, p].mean())
+            params.loc[:,psm] = params.best_n.apply(lambda i: params.loc[i, p].mean())
     
     return params
 
 
-def lincomb_props(library_params, prop, idxs, coeffs):
+def lincomb_props(params, prop, idxs, coeffs):
     """Generates the weighted average of a given property
 
     Args:
-        library_params (pd.DataFrame): Parameter table
+        params (pd.DataFrame): Parameter table
         prop (str): Name of property column
         idxs (np.array): List of indices of reference spectra
         coeffs (np.array): Coefficients for weighted average
@@ -73,36 +72,86 @@ def lincomb_props(library_params, prop, idxs, coeffs):
     """
     assert np.isclose(np.sum(coeffs), 1, rtol = 1e-3, atol=1e-3), 'Coefficients must sum to 1'
     assert np.all(np.isfinite(coeffs)), 'Coefficients must be finite'
-    assert np.all(np.isfinite(library_params.loc[idxs, prop])), 'Parameters must be finite'
+    # assert np.all(np.isfinite(library_params.loc[idxs, prop])), 'Parameters must be finite'
 
     sm_prop = 0
     for i in range(len(idxs)):
-        lib_prop = library_params.loc[idxs[i], prop]
+        lib_prop = params.loc[idxs[i], prop]
         sm_prop += lib_prop*coeffs[i]
     return sm_prop
 
-def generate_residuals(lib, suffix='_sm'):
+def generate_residuals(params, suffix='_sm', props=library.STAR_PROPS):
     """Calculates the residuals between the derived and true values
 
     Args:
-        lib (library.Library): Library object
-        suffix (str): suffix to append to column name to obtain derived value
+        params (pd.Dataframe): parameter table
+        suffix (str): suffix of derived values
 
     Returns:
         params (pd.DataFrame): parameter table
     """
-    params = lib.library_params
-
-    for p in library.STAR_PROPS:
+    for p in props:
         presid = p+suffix+'_resid'
         psm = p+suffix
-        lib.library_params[presid] = lib.library_params[psm] - lib.library_params[p]
+        params.loc[:,presid] = params[psm] - params[p]
+
+    # calculate delta r/r
+    presid = 'dr_r'+suffix+'_resid'
+    params.loc[:,presid] = (params['radius'+suffix]-params['radius'])/params['radius']
 
     return params
 
+def detrend_params(params, suffix='_sm'):
+    """Detrend the parameters
+
+    Args:
+        params (pd.Dataframe): parameter table
+        suffix (str): suffix of derived values
+
+    Returns:
+        params (pd.DataFrame): parameter table
+        polycoeffs (dict of ndarrays): Fit coeffs
+            - 'Teff_cool': Teff fit for cool stars (Teff < 4500)
+            - 'Teff_hot': Teff fit for hot stars (Teff > 4500)
+            - 'feh': feh fit
+    """
+    polycoeffs = {}
+
+    # Fit a linear trend to cool stars
+    cool = params.query('Teff < 4500')
+    p = np.polyfit(cool['Teff'], cool['Teff'+suffix+'_resid'], 1)
+    T_derived = 'Teff'+suffix
+    T_detrend = 'Teff'+suffix+'_detrend'
+    params[T_detrend] = params[T_derived]
+    params.loc[:,T_detrend] = params.apply(lambda row: \
+        row[T_derived] - p[0]*row[T_derived] - p[1] if row[T_derived] < 4500 else \
+        row[T_detrend], axis=1)
+    polycoeffs['Teff_cool'] = p
+
+    # Fit a separate linear trend to hot stars
+    hot = params.query('Teff >= 4500')
+    p = np.polyfit(hot['Teff'], hot['Teff'+suffix+'_resid'], 1)
+    params.loc[:,T_detrend] = params.apply(lambda row: \
+        row[T_derived] - p[0]*row[T_derived] - p[1] if row[T_derived] > 4500 else \
+        row[T_detrend], axis=1)
+    polycoeffs['Teff_hot'] = p
+
+    # No trend in radius (yet)
+    params.loc[:,'radius'+suffix+'_detrend'] = params['radius'+suffix]
+
+    # Fit a linear trend to feh
+    p = np.polyfit(params['feh'], params['feh'+suffix+'_resid'], 1)
+    params.loc[:,'feh'+suffix+'_detrend'] = params['feh'+suffix] - p[0]*params['feh'+suffix] - p[1]
+    polycoeffs['feh'] = p
+
+    params = generate_residuals(params, suffix+'_detrend', props=['Teff', 'radius', 'feh'])
+
+    return (params, polycoeffs)
+
+
 def dist(star1, star2):
     """Distance between two stars in parameter space
-    Normalized by Teff/100K, logg/0.1 dex, feh/0.1 dex
+    Normalized by Teff/100K, DeltaR/R/0.2 dex, feh/0.1 dex
     
     Args:
         star1 (pd.DataFrame): Row of star 1
@@ -111,9 +160,10 @@ def dist(star1, star2):
         dist**2: Square of distance between the two stars
     """
     diff_teff = ((star1.Teff - star2.Teff)/100)**2
-    diff_logg = ((star1.logg - star2.logg)/0.1)**2
+    # diff_logg = ((star1.logg - star2.logg)/0.1)**2
+    diff_radius = ((star1.radius - star2.radius)/(np.average([star1.radius,star2.radius]))/0.2)**2
     diff_feh = ((star1.feh - star2.feh)/0.1)**2
-    return diff_teff + diff_logg + diff_feh
+    return diff_teff + diff_radius + diff_feh
 
 
 def find_closest_star(row, lib):

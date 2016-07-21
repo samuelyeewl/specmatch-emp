@@ -301,16 +301,14 @@ def library_comparison_plot(lib, param_x, param_y, xlabel=None, ylabel=None, ptl
         lib.library_params.apply(lambda x : plt.text(x[param_x],x[param_y],x['lib_index'], size='x-small', zorder=0),  axis=1)
 
 def library_difference_plot(lib, param, label=None, clipping=None, suffix='_sm'):
-    if param == 'dr_r':
-        resid = (lib.library_params['radius'+suffix] - lib.library_params['radius'])/lib.library_params['radius']
-    else:
-        resid = lib.library_params[param+suffix] - lib.library_params[param]
+    resid = lib.library_params[param+suffix+'_resid']
+
+    # sigma clipping
     sig = np.std(resid)
     if clipping is None:
         mask = np.full_like(resid, True, dtype=bool)
     else:
         mask = (resid < clipping*sig) & (resid > -clipping*sig)
-    
     
     if param == 'dr_r':
         plt.plot(lib.library_params['radius'][mask], resid[mask], 'bo')
@@ -319,6 +317,7 @@ def library_difference_plot(lib, param, label=None, clipping=None, suffix='_sm')
 
 
     mean = np.mean(resid[mask])
+    mean = 0 if np.isclose(mean, 0) else mean
     rms = np.sqrt(np.mean(resid[mask]**2))
     
     ax = plt.gca()
@@ -330,32 +329,68 @@ def library_difference_plot(lib, param, label=None, clipping=None, suffix='_sm')
             +r'$\sigma$',transform=ax.transAxes)
     plt.axhline(y=0, color='k', linestyle='dashed')
 
-    if label is not None:
+    if param == 'dr_r':
+        plt.xlabel(label)
+        plt.ylabel(r'$\Delta R/R$')
+    elif label is not None:
         plt.xlabel(label)
         plt.ylabel(r'$\Delta\ $'+label)
 
-def diagnostic_plots(lib, query=None, clipping=2, suffix='_sm'):
+def diagnostic_plots(lib, query=None, clipping=None, suffix='_sm', trend=None):
     temp_params = lib.library_params
     if query is not None:
         lib.library_params = lib.library_params.query(query)
 
     gs = gridspec.GridSpec(6,2)
+    ## HR diagram
     ax = plt.subplot(gs[0:3,0])
     library_comparison_plot(lib, 'Teff', 'radius', r'$T_{eff}$ (K)', r'$R\ (R_\odot)$', suffix=suffix)
     reverse_x()
     ax.set_yscale('log')
+
     ax = plt.subplot(gs[3:6,0])
     library_comparison_plot(lib, 'feh', 'radius', r'$[Fe/H]$ (dex)', r'$R\ (R_\odot)$', suffix=suffix)
     ax.set_yscale('log')
+    
+    ## Difference plots
     plt.subplot(gs[0:2,1])
     library_difference_plot(lib, 'Teff', r'$T_{eff}$ (K)', clipping=clipping, suffix=suffix)
-    plt.ylim(-500,500)
+    # Plot trend
+    if trend is not None:
+        # piecewise linear trend in Teff
+        # hot stars
+        hot = lib.library_params.query('Teff > 4500')
+        if len(hot) >= 2:
+            p = trend['Teff_hot']
+            xpts = np.array([7500, 4500])
+            plt.plot(xpts, p[0]*xpts+p[1], 'r-')
+            ax = plt.gca()
+            plt.text(0.05, 0.9, '{0:.3g}x + {1:.3g}'.format(p[0], p[1]), transform=ax.transAxes)
+        
+        # cool stars
+        cool = lib.library_params.query('Teff < 4500')
+        if len(cool) >= 2:
+            p = trend['Teff_cool']
+            xpts = np.array([4500, 3050])
+            plt.plot(xpts, p[0]*xpts+p[1], 'r-')
+            ax = plt.gca()
+            plt.text(0.75, 0.9, '{0:.3g}x + {1:.3g}'.format(p[0], p[1]), transform=ax.transAxes)
+
     reverse_x()
+    
     ax = plt.subplot(gs[2:4,1])
     library_difference_plot(lib, 'dr_r', r'$R (R_\odot)$', clipping=clipping, suffix=suffix)
-    # ax.set_yscale('log')
+    ax.set_xscale('log')
+    
     plt.subplot(gs[4:6,1])
     library_difference_plot(lib, 'feh', r'$[Fe/H]$ (dex)', clipping=clipping, suffix=suffix)
+    if trend is not None:
+        # linear trend in feh
+        p = trend['feh']
+        xpts = np.array([-0.5,0.5])
+        plt.plot(xpts, p[0]*xpts+p[1], 'r-')
+        ax = plt.gca()
+        plt.text(0.05, 0.9, '{0:.3g}x + {1:.3g}'.format(p[0], p[1]), transform=ax.transAxes)
 
     lib.library_params = temp_params
 
