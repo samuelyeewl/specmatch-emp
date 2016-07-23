@@ -118,30 +118,44 @@ def detrend_params(params, suffix='_sm'):
     polycoeffs = {}
 
     # Fit a linear trend to cool stars
-    cool = params.query('Teff < 4500')
-    p = np.polyfit(cool['Teff'], cool['Teff'+suffix+'_resid'], 1)
     T_derived = 'Teff'+suffix
     T_detrend = 'Teff'+suffix+'_detrend'
+
+    cool = params.query('Teff < 4500')
+    p = np.polyfit(cool['Teff'], cool['Teff'+suffix+'_resid'], 1)
+    # correction in coefficients for derived values
+    p0 = p[0]/(p[0]+1)
+    p1 = p[1]/(p[0]+1)
     params[T_detrend] = params[T_derived]
     params.loc[:,T_detrend] = params.apply(lambda row: \
-        row[T_derived] - p[0]*row[T_derived] - p[1] if row[T_derived] < 4500 else \
-        row[T_detrend], axis=1)
+        row[T_derived] - p0*row[T_derived] - p1 \
+        if row[T_derived] < 4500*(p[0]+1) + p[1] else row[T_detrend], axis=1)
     polycoeffs['Teff_cool'] = p
 
     # Fit a separate linear trend to hot stars
     hot = params.query('Teff >= 4500')
     p = np.polyfit(hot['Teff'], hot['Teff'+suffix+'_resid'], 1)
+    p0 = p[0]/(p[0]+1)
+    p1 = p[1]/(p[0]+1)
     params.loc[:,T_detrend] = params.apply(lambda row: \
-        row[T_derived] - p[0]*row[T_derived] - p[1] if row[T_derived] > 4500 else \
-        row[T_detrend], axis=1)
+        row[T_derived] - p0*row[T_derived] - p1 \
+        if row[T_derived] >= 4500*(p[0]+1) + p[1] else row[T_detrend], axis=1)
     polycoeffs['Teff_hot'] = p
 
-    # No trend in radius (yet)
-    params.loc[:,'radius'+suffix+'_detrend'] = params['radius'+suffix]
+    # Fit a trend to giant stars (R > 1.2 Rsun)
+    giants = params.query('1.1 < radius < 2.5')
+    giants = giants[np.logical_not(np.isnan(giants['radius'+suffix]))]
+    p = np.polyfit(np.log(giants['radius']), giants['radius'+suffix+'_resid']/giants['radius'], 1)
+    params.loc[:,'radius'+suffix+'_detrend'] = params.apply(lambda row:\
+        row['radius'+suffix] - row['radius'+suffix]*(p[0]*np.log(row['radius'+suffix]) + p[1]) \
+        if row['radius'+suffix] > 1.1 and row['radius'+suffix] < 2.5 else row['radius'+suffix], axis=1)
+    polycoeffs['radius_giants'] = p
 
     # Fit a linear trend to feh
     p = np.polyfit(params['feh'], params['feh'+suffix+'_resid'], 1)
-    params.loc[:,'feh'+suffix+'_detrend'] = params['feh'+suffix] - p[0]*params['feh'+suffix] - p[1]
+    p0 = p[0]/(p[0]+1)
+    p1 = p[1]/(p[0]+1)
+    params.loc[:,'feh'+suffix+'_detrend'] = params['feh'+suffix] - p0*params['feh'+suffix] - p1
     polycoeffs['feh'] = p
 
     params = generate_residuals(params, suffix+'_detrend', props=['Teff', 'radius', 'feh'])

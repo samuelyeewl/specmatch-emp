@@ -317,7 +317,7 @@ def library_difference_plot(lib, param, label=None, clipping=None, suffix='_sm')
 
 
     mean = np.mean(resid[mask])
-    mean = 0 if np.isclose(mean, 0) else mean
+    mean = 0 if np.isclose(mean, 0, atol=1e-4) else mean
     rms = np.sqrt(np.mean(resid[mask]**2))
     
     ax = plt.gca()
@@ -359,7 +359,7 @@ def diagnostic_plots(lib, query=None, clipping=None, suffix='_sm', trend=None):
     if trend is not None:
         # piecewise linear trend in Teff
         # hot stars
-        hot = lib.library_params.query('Teff > 4500')
+        hot = lib.library_params.query('Teff >= 4500')
         if len(hot) >= 2:
             p = trend['Teff_hot']
             xpts = np.array([7500, 4500])
@@ -368,7 +368,7 @@ def diagnostic_plots(lib, query=None, clipping=None, suffix='_sm', trend=None):
             plt.text(0.05, 0.9, '{0:.3g}x + {1:.3g}'.format(p[0], p[1]), transform=ax.transAxes)
         
         # cool stars
-        cool = lib.library_params.query('Teff < 4500')
+        cool = lib.library_params.query('Teff <4500')
         if len(cool) >= 2:
             p = trend['Teff_cool']
             xpts = np.array([4500, 3050])
@@ -380,6 +380,16 @@ def diagnostic_plots(lib, query=None, clipping=None, suffix='_sm', trend=None):
     
     ax = plt.subplot(gs[2:4,1])
     library_difference_plot(lib, 'dr_r', r'$R (R_\odot)$', clipping=clipping, suffix=suffix)
+    if trend is not None:
+        # linear trend in radius for giants
+        giants = lib.library_params.query('1. < radius < 2.5')
+        if len(giants) >= 2:
+            p = trend['radius_giants']
+            xpts = np.array([1.1, 2.5])
+            plt.plot(xpts, p[0]*np.log(xpts)+p[1], 'r-')
+            ax = plt.gca()
+            plt.text(0.05, 0.9, '{0:.3g}x + {1:3g}'.format(p[0], p[1]), transform=ax.transAxes)
+
     ax.set_xscale('log')
     
     plt.subplot(gs[4:6,1])
