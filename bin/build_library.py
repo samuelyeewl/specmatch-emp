@@ -391,7 +391,7 @@ def get_isochrone_params(stars, diagnostic=False, outdir='./'):
         lib_props['V'] = 1.
 
         # create the model and perform the fit
-        model = StarModel(dar, use_emcee=True, **lib_props)
+        model = StarModel(dar, **lib_props)
         model.fit_mcmc()
 
         # fill out unknown parameters
