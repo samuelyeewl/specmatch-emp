@@ -13,16 +13,31 @@ import os
 import sys
 from argparse import ArgumentParser
 
-def main(library_path, results_path, outdir, prefix, title):
-    lib = library.read_hdf(library_path)
-    results = pd.DataFrame.from_csv(results_path, index_col=0)
+def main(library_path, results_path, outdir, prefix, title, wavelengths):
+    lib = library.read_hdf(library_path, 'none')
+    num_wls = len(wavelengths)
 
-    results['ref_idxs'] = results.ref_idxs.apply(lambda s: \
-        np.array(s.strip('[]').split()).astype(int))
-    results['coeffs'] = results.coeffs.apply(lambda s: \
-        np.array(s.strip('[]').split()).astype(float))
+    for p in library.STAR_PROPS:
+        pavg = p+'_sm'
+        lib.library_params[pavg] = 0
 
-    lib.library_params = analysis.generate_sm_values(lib.library_params, results, method='lincomb', suffix='_sm')
+    for wl in wavelengths:
+        results = pd.DataFrame.from_csv(results_path.format(wl), index_col=0)
+
+        results['ref_idxs'] = results.ref_idxs.apply(lambda s: \
+            np.array(s.strip('[]').split()).astype(int))
+        results['coeffs'] = results.coeffs.apply(lambda s: \
+            np.array(s.strip('[]').split()).astype(float))
+
+        suffix = '_{0:d}_sm'.format(wl)
+
+        lib.library_params = analysis.generate_sm_values(lib.library_params, results, method='lincomb', suffix='_{0:d}_sm'.format(wl))
+
+        for p in library.STAR_PROPS:
+            pavg = p+'_sm'
+            pwl = p+'_{0:d}_sm'.format(wl)
+            lib.library_params.loc[:,pavg] += lib.library_params[pwl]/num_wls
+
     lib.library_params = analysis.generate_residuals(lib.library_params, '_sm')
     lib.library_params, polycoeffs = analysis.detrend_params(lib.library_params, '_sm')
 
@@ -76,10 +91,11 @@ if __name__ == '__main__':
     # Argument parser
     psr = ArgumentParser(description="Produce plots for analysis of match results")
     psr.add_argument('library', type=str, help="Path to library h5 file")
-    psr.add_argument('results', type=str, help="Path to results csv file")
+    psr.add_argument('results', type=str, help="Format string for path to results csv files")
     psr.add_argument('outdir', type=str, help="Path to output directory")
     psr.add_argument('prefix', type=str, help="String to prefix to output files")
     psr.add_argument('title', type=str, help="String to add to title")
+    psr.add_argument('wavelengths', type=int, nargs='*', help="Wavelength regions to average")
     args = psr.parse_args()
 
     mpl.rcParams['figure.dpi'] = 200
@@ -88,8 +104,5 @@ if __name__ == '__main__':
     if not os.path.isfile(args.library):
         print("Could not find {0}".format(args.library))
         sys.exit()
-    if not os.path.isfile(args.results):
-        print("Could not find {0}".format(args.results))
-        sys.exit()
 
-    main(args.library, args.results, args.outdir, args.prefix, args.title)
+    main(args.library, args.results, args.outdir, args.prefix, args.title, args.wavelengths)

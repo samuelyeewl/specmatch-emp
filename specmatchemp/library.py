@@ -48,8 +48,8 @@ class Library():
         """
         Creates a fully-formed library from a given set of spectra.
         """
-        # If no spectra or params included, create empty library
-        if library_spectra is None or library_params is None:
+        # If no params included, create empty library
+        if library_params is None:
             self.library_params = pd.DataFrame(columns=LIB_COLS)
             self.wav = wav
             self.library_spectra = np.empty((0, 2, len(wav)))
@@ -62,6 +62,15 @@ class Library():
         for col in library_params:
             assert col in LIB_COLS, \
                 "{0} is not an allowed column".format(col)
+
+        # If no spectra included but params are included, we have a spectrumless library
+        if library_spectra is None:
+            self.library_params = library_params
+            self.wav = wav
+            self.library_spectra = np.empty((0, 2, len(wav)))
+            self.header = {'date_created': str(datetime.date.today())}
+            self.wavlim = wavlim
+            return
 
         # ensure that parameter table, library spectra have same length.
         num_spec = len(library_spectra)
@@ -98,6 +107,8 @@ class Library():
                 the same wavelength scale as the library.
             u_spectrum (np.ndarray): Array containing uncertainty in spectrum.
         """
+        assert self.library_spectra is not None, \
+            "Error: Cannot append to library with no spectra"
         # ensure that parameter table, library spectra have same length.
         assert len(self.library_params) == len(self.library_spectra),    \
             "Error: Length of parameter table and library spectra are not equal."
@@ -127,7 +138,8 @@ class Library():
         if not self.__contains__(index):
             raise KeyError
 
-        self.library_spectra = np.delete(self.library_spectra, [index], axis=0)
+        if self.library_spectra is not None:
+            self.library_spectra = np.delete(self.library_spectra, [index], axis=0)
         self.library_params = self.library_params[self.library_params.lib_index != index]
 
         # reset index
@@ -231,12 +243,16 @@ class Library():
             params (pd.Series): Stellar parameters for the next star.
             spectrum (np.ndarray): Spectrum for the next star
         """
-        if self.__it_counter >= len(self.library_spectra):
+        if self.__it_counter >= len(self.library_params):
             raise StopIteration
 
         idx = self.__it_counter
         self.__it_counter += 1
-        return self.library_params.loc[idx], self.library_spectra[idx]
+
+        if self.library_spectra is None:
+            return self.library_params.loc[idx]
+        else:
+            return self.library_params.loc[idx], self.library_spectra[idx]
 
     def __len__(self):
         """
@@ -258,7 +274,10 @@ class Library():
         if not self.__contains__(index):
             raise KeyError
 
-        return self.library_params.loc[index], self.library_spectra[index]
+        if self.library_spectra is None:
+            return self.library_params.loc[index]
+        else:
+            return self.library_params.loc[index], self.library_spectra[index]
 
     def __delitem__(self, index):
         """
@@ -278,7 +297,7 @@ class Library():
         """
         return index in self.library_params.lib_index
 
-def read_hdf(path, wavlim=None):
+def read_hdf(path, wavlim='all'):
     """
     Reads in a library from a HDF file
 
@@ -286,7 +305,7 @@ def read_hdf(path, wavlim=None):
         paramfile (str): path to h5 file containing star parameters.
         specfile (str): path to h5 file containing spectra.
         wavlim (2-element iterable): (optional) The upper and lower wavelength
-            limits to be read.
+            limits to be read. If 'none', reads in library without spectra.
 
     Returns:
         lib (library.Library) object
@@ -300,8 +319,10 @@ def read_hdf(path, wavlim=None):
             if dt == 'object':
                 library_params[col_name] = library_params[col_name].str.decode('utf-8')
 
-        if wavlim is None:
+        if wavlim == 'all':
             library_spectra = f['library_spectra'][:]
+        elif wavlim == 'none':
+            library_spectra = None
         else:
             idxwav, = np.where( (wav > wavlim[0]) & (wav < wavlim[1]))
             idxmin = idxwav[0]
