@@ -38,6 +38,7 @@ HUBER_README = "Huber2013/ReadMe"
 VONBRAUN_FILENAME = "VonBraun-Figure6.txt"
 # BREWER_FILENAME = "spocsii_stars.csv"
 BREWER_FILENAME = "brewer_cut.csv"
+RAMIREZ_FILENAME = "ramirez_2005_cut.csv"
 CPS_INDEX = "cps_templates.csv"
 CPS_SPECTRA_DIR = "iodfitsdb/"
 
@@ -179,6 +180,11 @@ def read_brewer(catalogdir, cps_list):
                 new_row['source'] = 'Brewer'
                 new_row['source_name'] = row['NAME']
                 stars = stars.append(pd.Series(new_row), ignore_index=True)
+            else:
+                new_row = {}
+                new_row['name'] = row['NAME']
+                new_row['source'] = 'Brewer'
+                nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
         except:
             new_row = {}
             new_row['name'] = row['NAME']
@@ -221,6 +227,11 @@ def read_mann(catalogdir, cps_list):
                 new_row['source'] = 'Mann'
                 new_row['source_name'] = row['CNS3']
                 stars = stars.append(pd.Series(new_row), ignore_index=True)
+            else:
+                new_row = {}
+                new_row['name'] = row['CNS3']
+                new_row['source'] = 'Mann'
+                nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
         except:
             new_row = {}
             new_row['name'] = row['CNS3']
@@ -261,6 +272,11 @@ def read_vonbraun(catalogdir, cps_list):
                 new_row['source'] = 'Von Braun'
                 new_row['source_name'] = row['Star']
                 stars = stars.append(pd.Series(new_row), ignore_index=True)
+            else:
+                new_row = {}
+            new_row['name'] = row['Star']
+            new_row['source'] = 'Von Braun'
+            nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
         except:
             new_row = {}
             new_row['name'] = row['Star']
@@ -304,6 +320,11 @@ def read_huber(catalogdir, cps_list):
                 new_row['source'] = 'Huber'
                 new_row['source_name'] = 'KOI'+str(row['KOI'])
                 stars = stars.append(pd.Series(new_row), ignore_index=True)
+            else:
+                new_row = {}
+                new_row['name'] = 'KOI'+str(row['KOI'])
+                new_row['source'] = 'Huber'
+                nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
         except:
             new_row = {}
             new_row['name'] = 'KOI'+str(row['KOI'])
@@ -311,6 +332,52 @@ def read_huber(catalogdir, cps_list):
             nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
 
     return stars, nospectra
+
+def read_ramirez(catalogdir, cps_list):
+    """Read in Huber (2013) catalog
+
+    Args:
+        catalogdir (str): Path of catalog directory.
+        cps_list (pd.DataFrame): Dataframe containing list of CPS spectra.
+
+    Returns:
+        stars (pd.DataFrame): Stars in source which have CPS spectra
+        nospec (pd.DataFrame): Stars in source which don't have CPS spectra
+    """
+    ramirez_data = pd.read_csv(os.path.join(catalogdir, RAMIREZ_FILENAME))
+
+    stars = pd.DataFrame(columns=library.LIB_COLS)
+    nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
+
+    for idx, row in ramirez_data.iterrows():
+        try:
+            query_result = find_spectra(row['name'], cps_list)
+            if not query_result.empty:
+                new_row = {}
+                new_row['cps_name'] = str(query_result.iloc[0]['name'])
+                new_row['obs'] = query_result.obs.values
+                new_row['Teff'] = row['Teff']
+                new_row['u_Teff'] = row['u_Teff']
+                new_row['logg'] = row['logg']
+                new_row['u_logg'] = row['u_logg']
+                new_row['feh'] = row['feh']
+                new_row['u_feh'] = row['u_feh']
+                new_row['source'] = 'Ramirez'
+                new_row['source_name'] = row['name']
+                stars = stars.append(pd.Series(new_row), ignore_index=True)
+            else:
+                new_row = {}
+                new_row['name'] = row['name']
+                new_row['source'] = 'Ramirez'
+                nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
+        except:
+            new_row = {}
+            new_row['name'] = row['name']
+            new_row['source'] = 'Ramirez'
+            nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
+
+    return stars, nospectra
+
 
 def read_catalogs(catalogdir, cpsdir):
     """Reads in the Brewer, Mann, Von Braun and Huber catalogs
@@ -339,21 +406,40 @@ def read_catalogs(catalogdir, cpsdir):
     brewer_stars, brewer_nospec = read_brewer(catalogdir, cps_list)
     stars = pd.concat((stars, brewer_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(brewer_nospec)
+    print("\t{0:d} stars with spectra from Brewer catalog".format(len(brewer_stars)))
 
     print("\tReading Mann catalog")
     mann_stars, mann_nospec = read_mann(catalogdir, cps_list)
     stars = pd.concat((stars, mann_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(mann_nospec)
+    print("\t{0:d} stars with spectra from Mann catalog".format(len(mann_stars)))
 
     print("\tReading von Braun catalog")
     vonbraun_stars, vonbraun_nospec = read_vonbraun(catalogdir, cps_list)
     stars = pd.concat((stars, vonbraun_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(vonbraun_nospec)
+    print("\t{0:d} stars with spectra from von Braun catalog".format(len(vonbraun_stars)))
 
     print("\tReading Huber catalog")
     huber_stars, huber_nospec = read_huber(catalogdir, cps_list)
     stars = pd.concat((stars, huber_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(huber_nospec)
+    print("\t{0:d} stars with spectra from Huber catalog".format(len(huber_stars)))
+
+    print("\tReading Ramirez catalog")
+    ramirez_stars, ramirez_nospec = read_ramirez(catalogdir, cps_list)
+    stars = pd.concat((stars, ramirez_stars), ignore_index=True)
+    stars_nospectra = stars_nospectra.append(ramirez_nospec)
+    print("\t{0:d} stars with spectra from Ramirez catalog".format(len(ramirez_stars)))
+
+    dups = stars[stars.duplicated(subset='cps_name', keep=False)].sort_values(by='cps_name')
+    dups_vb = dups[~dups.source.str.contains('Von Braun')]
+    idxs = dups_vb.index
+    print("\tRemoving {0:d} duplicates, favoring von Braun data".format(len(idxs)))
+    stars.drop(idxs, inplace=True)
+
+    print("Total of {0:d} stars read".format(len(stars)))
+
 
     return stars, stars_nospectra
 
@@ -548,12 +634,15 @@ def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/')
 
 def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
     ### 1. Read in the stars with known stellar parameters and check for those with CPS spectra
-    # print("Step 1: Reading catalogs...")
-    # stars, stars_nospectra = read_catalogs(catalogdir, cpsdir)
-    # # convert numeric columns
-    # for col in STAR_PROPS:
-    #     stars[col] = pd.to_numeric(stars[col], errors='coerce')
-    #     stars['u_'+col] = pd.to_numeric(stars['u_'+col], errors='coerce')
+    print("Step 1: Reading catalogs...")
+    stars, stars_nospectra = read_catalogs(catalogdir, cpsdir)
+    # convert numeric columns
+    for col in STAR_PROPS:
+        stars[col] = pd.to_numeric(stars[col], errors='coerce')
+        stars['u_'+col] = pd.to_numeric(stars['u_'+col], errors='coerce')
+
+    stars.to_csv(os.path.join(outdir, "libstars_new.csv"))
+    stars_nospectra.to_csv(os.path.join(outdir, "stars_nospectra.csv"))
 
     # ### 2. Use isochrones package to obtain the remaining, unknown stellar parameters
     # print("Step 2: Obtaining isochrone parameters...")
@@ -564,26 +653,26 @@ def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
 
     # stars['obs'] = stars['obs'].astype(str)
 
-    ################################################################
-    stars = pd.read_csv("./lib/libstars.csv", index_col=0)
-    stars['lib_obs'] = stars['lib_obs'].astype(str)
-    ################################################################
+    # ################################################################
+    # stars = pd.read_csv("./lib/libstars.csv", index_col=0)
+    # stars['lib_obs'] = stars['lib_obs'].astype(str)
+    # ################################################################
 
-    stars.reset_index(drop=True,inplace=True)
-    stars = stars.loc[[234,]]
+    # stars.reset_index(drop=True,inplace=True)
+    # stars = stars.loc[[234,]]
 
-    ### 3. Shift library spectra onto a constant log-lambda scale
-    print("Step 3: Shifting library spectra...")
-    shift_ref = pd.read_csv(shift_reference_path, index_col=0)
-    stars, wav, spectra = shift_library(stars, cpsdir, shift_ref, diagnostic=diagnostic, outdir=outdir)
+    # ### 3. Shift library spectra onto a constant log-lambda scale
+    # print("Step 3: Shifting library spectra...")
+    # shift_ref = pd.read_csv(shift_reference_path, index_col=0)
+    # stars, wav, spectra = shift_library(stars, cpsdir, shift_ref, diagnostic=diagnostic, outdir=outdir)
 
-    stars.to_csv(os.path.join(outdir, "libstars_shifted.csv"))
+    # stars.to_csv(os.path.join(outdir, "libstars_shifted.csv"))
 
-    ### 4. Create and save the library
-    print("Step 4: Saving library...")
-    stars = stars.drop('obs', axis=1)
-    lib = library.Library(wav, spectra, stars, wavlim=WAVLIM)
-    lib.to_hdf('./lib/library.h5')
+    # ### 4. Create and save the library
+    # print("Step 4: Saving library...")
+    # stars = stars.drop('obs', axis=1)
+    # lib = library.Library(wav, spectra, stars, wavlim=WAVLIM)
+    # lib.to_hdf('./lib/library.h5')
 
 
 if __name__ == '__main__':

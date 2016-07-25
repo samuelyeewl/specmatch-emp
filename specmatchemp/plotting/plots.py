@@ -25,7 +25,7 @@ def reverse_y():
     plt.ylim(plt.ylim()[::-1])
 
 ######################### Library and Spectrum plots ###########################
-def plot_library_params(lib, param_x, param_y, grouped=False, plt_kw={}):
+def plot_library_params(lib, param_x, param_y, grouped=False, ptlabels=False, plt_kw={}):
     """Plot a H-R diagram from the library
 
     Args:
@@ -54,6 +54,9 @@ def plot_library_params(lib, param_x, param_y, grouped=False, plt_kw={}):
             plt.plot(cut[x], cut[y], '.', label=source)
     else:
         plt.plot(params[x], params[y], '.', **plt_kw)
+
+    if ptlabels is not False:
+        params.apply(lambda x : plt.text(x[param_x],x[param_y],x[ptlabels], size='x-small', zorder=0),  axis=1)
 
 def plot_hires_spectrum(filename, wavlim=None, label=None, offset=0):
     """Plot a HIRES spectrum within a given wavelength range
