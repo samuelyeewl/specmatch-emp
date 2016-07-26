@@ -1,34 +1,27 @@
 #!/usr/bin/env python
 """
-@filename build_library.py
+@filename read_catalogs.py
 
-Builds the SpecMatch-Emp library from the Huber, Mann, Von Braun and Brewer catalogs.
-1.  Reads in the stars with known stellar parameters and checks for spectra in the CPS
-    spectrum database.
-2.  Uses isochrones package to obtain a full set of stellar parameters (radius, mass, logg)
-    from those which are known.
-3.  Shifts library spectra onto a constant log-lambda scale.
-4.  Saves library table and spectra as a Library object in a hdf file.
+Builds the parameter table of the SpecMatch-Emp library by reading in the various catalogs, checking
+for spectra in the CPS database.
+Uses the isochrones package to obtain a full set of stellar parameters from those which are known.
+Saves the stars and parameters as a Pandas Dataframe.
 """
 
-import sys, os
+import os
 from argparse import ArgumentParser
-import re
-import warnings
 
 import numpy as np
 import pandas as pd
 
-from astroquery.simbad import Simbad
 from astropy.io import ascii
 from isochrones.dartmouth import Dartmouth_Isochrone
 from isochrones import StarModel
 
-from specmatchemp import library
-from specmatchemp import shift_spectra
-from specmatchemp.io import specmatchio
-
-import time
+from specmatchemp.library import LIB_COLS
+from specmatchemp.library import STAR_PROPS
+from specmatchemp.utils import cpsutils
+from specmatchemp.utils import utils
 
 # relative catalog locations
 MANN_FILENAME = "Mann2015/stars.dat"
@@ -36,116 +29,18 @@ MANN_README = "Mann2015/ReadMe"
 HUBER_FILENAME = "Huber2013/table2.dat"
 HUBER_README = "Huber2013/ReadMe"
 VONBRAUN_FILENAME = "VonBraun-Figure6.txt"
-# BREWER_FILENAME = "spocsii_stars.csv"
 BREWER_FILENAME = "brewer_cut.csv"
 RAMIREZ_FILENAME = "ramirez_2005_cut.csv"
+CASAGRANDE_FILENAME = "Casagrande2006/table1_cut.csv"
+BRUNTT_FILENAME = "Bruntt2012/table3.dat"
+BRUNTT_README = "Bruntt2012/ReadMe.txt"
 CPS_INDEX = "cps_templates.csv"
 CPS_SPECTRA_DIR = "iodfitsdb/"
 
-STAR_PROPS = ['Teff', 'radius', 'logg', 'feh', 'mass', 'age']
 NOSPECTRA_COLS = ['name', 'source']
 
-MIN_PERCENTILE = 0.16
-MAX_PERCENTILE = 0.84
-
-WAVLIM = (5000, 6400)
-
-def check_cps_database(starname, cps_list):
-    """Checks the CPS databse if a spectrum is available for the given identifier.
-
-    Parses the provided identifier and converts it to the format used in the CPS library.
-
-    Args:
-        starname (str): an identifier for the star
-        cps_list (pd.DataFrame): Pandas dataframe with list of stars with spectra
-    
-    Returns:
-        Subset of cps_list corresponding to the observations for the given star.
-    """
-    starname = re.sub('\s', '', starname)
-    cps_search_str = ''
-    
-    # HD identifiers appear as just the number in the CPS database
-    if starname.startswith('HD'):
-        cps_search_str = '^'+starname.split('HD')[1]+'$'
-    
-    # Gliese database identifiers may appear as GJ or GL
-    elif starname.startswith('GJ'):
-        num = starname.split('GJ')[1]
-        cps_search_str = 'GJ'+str(num)+'|GL'+str(num)
-    elif starname.startswith('Gj'):
-        num = starname.split('Gj')[1]
-        cps_search_str = 'GJ'+str(num)+'|GL'+str(num)
-    elif starname.startswith('GL'):
-        num = starname.split('GL')[1]
-        cps_search_str = 'GJ'+str(num)+'|GL'+str(num)
-    elif starname.startswith('Gl'):
-        num = starname.split('Gl')[1]
-        cps_search_str = 'GJ'+str(num)+'|GL'+str(num)
-    
-    # KIC identifiers should not have dashes and may be have leading zeroes
-    elif starname.startswith('KIC'):
-        num = re.sub('[^0-9]', '', starname).lstrip('0')
-        cps_search_str = 'KIC'+'0*'+str(num)
-    
-    # KOI identifiers may be prefixed by K or CK and have 5 digits padded by leading zeros
-    elif starname.startswith('KOI'):
-        num = int(starname.split('KOI')[1].strip('-'))
-        cps_search_str = 'K'+'{0:05d}'.format(num)+'|CK'+'{0:05d}'.format(num)
-        
-    # WASP identifiers may be either WASP-x or WASPx, x is the idnum
-    elif starname.startswith('WASP'):
-        num = re.sub('[^0-9]', '', starname)
-        cps_search_str = 'WASP'+'[\-]*'+str(num)
-
-    # COROT identifiers may be either COROT-x or COROTx
-    elif starname.upper().startswith('COROT'):
-        num = re.sub('[^0-9]', '', starname)
-        cps_search_str = 'COROT'+'[\-]*'+str(num)
-    
-    # TRES identifiers may be either TRES-x or TRESx
-    elif starname.upper().startswith('TRES'):
-        num = re.sub('[^0-9]', '', starname)
-        cps_search_str = 'TRES'+'[\-]*'+str(num)
-    
-    # else the search string is simply the name
-    # e.g. BD+, EPIC, HTR, HATS, HIP, HII
-    elif starname.upper().startswith(('BD+', 'EPIC', 'HTR', 'HATS', 'HIP', 'HII')):
-        starname = starname.strip('*')
-        cps_search_str = starname
-    # don't match any other identifiers
-    else:
-        cps_search_str = 'NOSTARFOUND'
-
-    cps_search_str = '^' + cps_search_str + '$'
-    return cps_list[cps_list['name'].str.match(cps_search_str)]
-
-def find_spectra(starname, cps_list):
-    """Checks the CPS database for the star with the provided identifier.
-    If not found, queries SIMBAD database for alternative idenitifiers to
-    check.
-
-    Args:
-        starname (str): an identifier for the star
-        cps_list (pd.DataFrame): Pandas dataframe with list of stars with spectra
-    
-    Returns:
-        Subset of cps_list corresponding to the observations for the given star.
-    """
-    result = check_cps_database(starname, cps_list)
-    
-    if result.empty:
-        # ignore warnings from Simbad query - we check if there are any results
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            s_query_result = Simbad.query_objectids(starname)
-            if s_query_result is not None:
-                for r in s_query_result:
-                    result = check_cps_database(r['ID'].decode('ascii'), cps_list)
-                    if not result.empty:
-                        break
-                    
-    return result
+MIN_PERCENTILE = 0.05
+MAX_PERCENTILE = 0.95
 
 def read_brewer(catalogdir, cps_list):
     """Read in Brewer (2016) catalog
@@ -160,12 +55,12 @@ def read_brewer(catalogdir, cps_list):
     """
     brewer_data = ascii.read(os.path.join(catalogdir, BREWER_FILENAME))
 
-    stars = pd.DataFrame(columns=library.LIB_COLS)
+    stars = pd.DataFrame(columns=LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for row in brewer_data:
         try:
-            query_result = find_spectra(row['NAME'], cps_list)
+            query_result = cpsutils.find_spectra(row['NAME'], cps_list)
             if not query_result.empty:
                 new_row = {}
                 new_row['cps_name'] = str(query_result.iloc[0]['name'])
@@ -179,6 +74,7 @@ def read_brewer(catalogdir, cps_list):
                 new_row['vsini'] = row['VSINI']
                 new_row['source'] = 'Brewer'
                 new_row['source_name'] = row['NAME']
+
                 stars = stars.append(pd.Series(new_row), ignore_index=True)
             else:
                 new_row = {}
@@ -206,12 +102,12 @@ def read_mann(catalogdir, cps_list):
     """
     mann_data = ascii.read(os.path.join(catalogdir, MANN_FILENAME), readme=os.path.join(catalogdir, MANN_README))
 
-    stars = pd.DataFrame(columns=library.LIB_COLS)
+    stars = pd.DataFrame(columns=LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for row in mann_data:
         try:
-            query_result = find_spectra(row['CNS3'], cps_list)
+            query_result = cpsutils.find_spectra(row['CNS3'], cps_list)
             if not query_result.empty:
                 new_row = {}
                 new_row['cps_name'] = str(query_result.iloc[0]['name'])
@@ -226,6 +122,11 @@ def read_mann(catalogdir, cps_list):
                 new_row['u_mass'] = row['e_M']
                 new_row['source'] = 'Mann'
                 new_row['source_name'] = row['CNS3']
+                # Calculate logg from radius and mass
+                logg, u_logg = utils.calc_logg(row['R'], row['e_R'], row['M'], row['e_M'])
+                new_row['logg'] = logg
+                new_row['u_logg'] = u_logg
+
                 stars = stars.append(pd.Series(new_row), ignore_index=True)
             else:
                 new_row = {}
@@ -253,12 +154,12 @@ def read_vonbraun(catalogdir, cps_list):
     """
     vb_data = ascii.read(os.path.join(catalogdir, VONBRAUN_FILENAME))
 
-    stars = pd.DataFrame(columns=library.LIB_COLS)
+    stars = pd.DataFrame(columns=LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for row in vb_data:
         try:
-            query_result = find_spectra(row['Star'], cps_list)
+            query_result = cpsutils.find_spectra(row['Star'], cps_list)
             if not query_result.empty:
                 new_row = {}
                 new_row['cps_name'] = str(query_result.iloc[0]['name'])
@@ -271,6 +172,7 @@ def read_vonbraun(catalogdir, cps_list):
                 new_row['u_feh'] = 0.10
                 new_row['source'] = 'Von Braun'
                 new_row['source_name'] = row['Star']
+
                 stars = stars.append(pd.Series(new_row), ignore_index=True)
             else:
                 new_row = {}
@@ -299,12 +201,12 @@ def read_huber(catalogdir, cps_list):
     huber_data = ascii.read(os.path.join(catalogdir, HUBER_FILENAME), readme=os.path.join(catalogdir, HUBER_README))
     huber_data = huber_data[huber_data['f_KOI'] != '*']
 
-    stars = pd.DataFrame(columns=library.LIB_COLS)
+    stars = pd.DataFrame(columns=LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for row in huber_data:
         try:
-            query_result = find_spectra('KOI'+str(row['KOI']), cps_list)
+            query_result = cpsutils.find_spectra('KOI'+str(row['KOI']), cps_list)
             if not query_result.empty:
                 new_row = {}
                 new_row['cps_name'] = str(query_result.iloc[0]['name'])
@@ -319,6 +221,11 @@ def read_huber(catalogdir, cps_list):
                 new_row['u_mass'] = row['e_Mass']
                 new_row['source'] = 'Huber'
                 new_row['source_name'] = 'KOI'+str(row['KOI'])
+                # Calculate logg from radius and mass
+                logg, u_logg = utils.calc_logg(row['Rad'], row['e_Rad'], row['Mass'], row['e_Mass'])
+                new_row['logg'] = logg
+                new_row['u_logg'] = u_logg
+
                 stars = stars.append(pd.Series(new_row), ignore_index=True)
             else:
                 new_row = {}
@@ -334,7 +241,7 @@ def read_huber(catalogdir, cps_list):
     return stars, nospectra
 
 def read_ramirez(catalogdir, cps_list):
-    """Read in Huber (2013) catalog
+    """Read in Ramirez (2005) catalog
 
     Args:
         catalogdir (str): Path of catalog directory.
@@ -346,12 +253,12 @@ def read_ramirez(catalogdir, cps_list):
     """
     ramirez_data = pd.read_csv(os.path.join(catalogdir, RAMIREZ_FILENAME))
 
-    stars = pd.DataFrame(columns=library.LIB_COLS)
+    stars = pd.DataFrame(columns=LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for idx, row in ramirez_data.iterrows():
         try:
-            query_result = find_spectra(row['name'], cps_list)
+            query_result = cpsutils.find_spectra(row['name'], cps_list)
             if not query_result.empty:
                 new_row = {}
                 new_row['cps_name'] = str(query_result.iloc[0]['name'])
@@ -364,6 +271,7 @@ def read_ramirez(catalogdir, cps_list):
                 new_row['u_feh'] = row['u_feh']
                 new_row['source'] = 'Ramirez'
                 new_row['source_name'] = row['name']
+
                 stars = stars.append(pd.Series(new_row), ignore_index=True)
             else:
                 new_row = {}
@@ -378,9 +286,106 @@ def read_ramirez(catalogdir, cps_list):
 
     return stars, nospectra
 
+def read_casagrande(catalogdir, cps_list):
+    """Read in Casagrande (2006) catalog
+
+    Args:
+        catalogdir (str): Path of catalog directory.
+        cps_list (pd.DataFrame): Dataframe containing list of CPS spectra.
+
+    Returns:
+        stars (pd.DataFrame): Stars in source which have CPS spectra
+        nospec (pd.DataFrame): Stars in source which don't have CPS spectra
+    """
+    c_data = pd.read_csv(os.path.join(catalogdir, CASAGRANDE_FILENAME))
+
+    stars = pd.DataFrame(columns=LIB_COLS)
+    nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
+
+    for idx, row in c_data.iterrows():
+        try:
+            query_result = cpsutils.find_spectra(row['Name'], cps_list)
+            if not query_result.empty:
+                # Calculate stellar radius from angular diameter and parallax
+                radius, u_radius = utils.calc_radius(row['Plx'], row['e_Plx'], row['Diam'], row['e_Diam'])
+                # Exclude stars with u_Teff > 100 or u_R/R > 0.07
+                if row['e_Teff'] > 100 or u_radius/radius > 0.07:
+                    continue
+                new_row = {}
+                new_row['cps_name'] = str(query_result.iloc[0]['name'])
+                new_row['obs'] = query_result.obs.values
+                new_row['Teff'] = row['Teff']
+                new_row['u_Teff'] = row['e_Teff']
+                new_row['feh'] = row['[Fe/H]']
+                new_row['u_feh'] = 0.15
+                new_row['radius'] = radius
+                new_row['u_radius'] = u_radius
+                new_row['source'] = 'Casagrande'
+                new_row['source_name'] = row['Name']
+                stars = stars.append(pd.Series(new_row), ignore_index=True)
+            else:
+                new_row = {}
+                new_row['name'] = row['Name']
+                new_row['source'] = 'Casagrande'
+                nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
+        except:
+            new_row = {}
+            new_row['name'] = row['name']
+            new_row['source'] = 'Casagrande'
+            nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
+
+    return stars, nospectra
+
+def read_bruntt(catalogdir, cps_list):
+    """Read in Bruntt (2012) catalog
+
+    Args:
+        catalogdir (str): Path of catalog directory.
+        cps_list (pd.DataFrame): Dataframe containing list of CPS spectra.
+
+    Returns:
+        stars (pd.DataFrame): Stars in source which have CPS spectra
+        nospec (pd.DataFrame): Stars in source which don't have CPS spectra
+    """
+    b_data = ascii.read(os.path.join(catalogdir, BRUNTT_FILENAME), readme=os.path.join(catalogdir, BRUNTT_README))
+
+    stars = pd.DataFrame(columns=LIB_COLS)
+    nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
+
+    for row in b_data:
+        try:
+            query_result = cpsutils.find_spectra('KIC'+str(row['KIC']), cps_list)
+            if not query_result.empty:
+                new_row = {}
+                new_row['cps_name'] = str(query_result.iloc[0]['name'])
+                new_row['obs'] = query_result.obs.values
+                new_row['Teff'] = row['Teff']
+                new_row['u_Teff'] = 60
+                new_row['feh'] = row['[Fe/H]']
+                new_row['u_feh'] = 0.06
+                new_row['logg'] = row['logg']
+                new_row['u_logg'] = 0.03
+                new_row['vsini'] = row['vsini']
+                new_row['source'] = 'Bruntt'
+                new_row['source_name'] = 'KIC'+str(row['KIC'])
+
+                stars = stars.append(pd.Series(new_row), ignore_index=True)
+            else:
+                new_row = {}
+                new_row['name'] = 'KIC'+str(row['KIC'])
+                new_row['source'] = 'Bruntt'
+                nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
+        except:
+            new_row = {}
+            new_row['name'] = 'KIC'+str(row['KIC'])
+            new_row['source'] = 'Bruntt'
+            nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
+
+
+    return stars, nospectra
 
 def read_catalogs(catalogdir, cpsdir):
-    """Reads in the Brewer, Mann, Von Braun and Huber catalogs
+    """Reads in the catalogs
 
     Args:
         catalogdir (str): Path to catalog directory
@@ -396,46 +401,58 @@ def read_catalogs(catalogdir, cpsdir):
     cps_list = pd.read_csv(cps_index_path)
 
     # Create dataframe to store found stars
-    stars = pd.DataFrame(columns=library.LIB_COLS)
+    stars = pd.DataFrame(columns=LIB_COLS)
 
     # Create dataframe to store stars which have no spectra
     stars_nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     # Read catalogs
-    print("\tReading Brewer catalog")
+    print("Reading Brewer catalog")
     brewer_stars, brewer_nospec = read_brewer(catalogdir, cps_list)
     stars = pd.concat((stars, brewer_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(brewer_nospec)
     print("\t{0:d} stars with spectra from Brewer catalog".format(len(brewer_stars)))
 
-    print("\tReading Mann catalog")
+    print("Reading Mann catalog")
     mann_stars, mann_nospec = read_mann(catalogdir, cps_list)
     stars = pd.concat((stars, mann_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(mann_nospec)
     print("\t{0:d} stars with spectra from Mann catalog".format(len(mann_stars)))
 
-    print("\tReading von Braun catalog")
+    print("Reading von Braun catalog")
     vonbraun_stars, vonbraun_nospec = read_vonbraun(catalogdir, cps_list)
     stars = pd.concat((stars, vonbraun_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(vonbraun_nospec)
     print("\t{0:d} stars with spectra from von Braun catalog".format(len(vonbraun_stars)))
 
-    print("\tReading Huber catalog")
-    huber_stars, huber_nospec = read_huber(catalogdir, cps_list)
-    stars = pd.concat((stars, huber_stars), ignore_index=True)
-    stars_nospectra = stars_nospectra.append(huber_nospec)
-    print("\t{0:d} stars with spectra from Huber catalog".format(len(huber_stars)))
+    # print("Reading Huber catalog")
+    # huber_stars, huber_nospec = read_huber(catalogdir, cps_list)
+    # stars = pd.concat((stars, huber_stars), ignore_index=True)
+    # stars_nospectra = stars_nospectra.append(huber_nospec)
+    # print("\t{0:d} stars with spectra from Huber catalog".format(len(huber_stars)))
 
-    print("\tReading Ramirez catalog")
+    print("Reading Ramirez catalog")
     ramirez_stars, ramirez_nospec = read_ramirez(catalogdir, cps_list)
     stars = pd.concat((stars, ramirez_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(ramirez_nospec)
     print("\t{0:d} stars with spectra from Ramirez catalog".format(len(ramirez_stars)))
 
+    print("Reading Casagrande catalog")
+    c_stars, c_nospec = read_casagrande(catalogdir, cps_list)
+    stars = pd.concat((stars, c_stars), ignore_index=True)
+    stars_nospectra = stars_nospectra.append(c_nospec)
+    print("\t{0:d} stars with spectra from Casagrande catalog".format(len(c_stars)))
+
+    print("Reading Bruntt catalog")
+    b_stars, b_nospec = read_bruntt(catalogdir, cps_list)
+    stars = pd.concat((stars, b_stars), ignore_index=True)
+    stars_nospectra = stars_nospectra.append(b_nospec)
+    print("\t{0:d} stars with spectra from Bruntt catalog".format(len(b_stars)))
+
     dups = stars[stars.duplicated(subset='cps_name', keep=False)].sort_values(by='cps_name')
     dups_vb = dups[~dups.source.str.contains('Von Braun')]
     idxs = dups_vb.index
-    print("\tRemoving {0:d} duplicates, favoring von Braun data".format(len(idxs)))
+    print("Removing {0:d} duplicates, favoring von Braun data".format(len(idxs)))
     stars.drop(idxs, inplace=True)
 
     print("Total of {0:d} stars read".format(len(stars)))
@@ -488,7 +505,7 @@ def get_isochrone_params(stars, diagnostic=False, outdir='./'):
             if p in lib_props:
                 print(p)
                 print("\tLibrary values: {0:.2f} +/- {1:.2f}".format(row[p], row['u_'+p]))
-                print("\tModel values: {0:.2f}, 1-sigma = ({1:.2f}, {2:.2f})\n".format(
+                print("\tModel values: {0:.2f}, 2-sigma = ({1:.2f}, {2:.2f})\n".format(
                     value, lower_bound, upper_bound))
                 # check for model consistency with known library values
                 if (row[p]+row['u_'+p]) < lower_bound or (row[p]-row['u_'+p]) > upper_bound:
@@ -515,177 +532,43 @@ def get_isochrone_params(stars, diagnostic=False, outdir='./'):
 
     return stars
 
-def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/'):
-    """Reads in spectra and shifts them to a reference spectrum and interpolates onto
-    a constant log-lambda scale.
 
-    Args:
-        stars (pd.DataFrame) : star library
-        shift_reference (pd.DataFrame) : DataFrame containing a list of reference spectra.
-            This allows bootstrapping in order to shift spectra in different regions of the
-            parameter space. 
-            The DataFrame should have the following columns:
-                index: Determines order of spectra to shift
-                min_t, max_t: Teff range for this reference spectrum.
-                ref_spectrum: A path to a FITS file, or the obs value of a spectrum that
-                    is in the library and has previously been shifted.
-        diagnostic (bool)   : whether to save the diagnostic data
-        outdir (str)        : directory to save diagnostic data
-
-    Returns:
-        stars (pd.DataFrame) : Updated star library with filled lib_obs, lib_index columns
-        wav (np.ndarray)     : 1-dimensional array containing the common wavelength scale.
-        spectra(np.ndarray)  : 3-dimensional array containing the spectra, u_spectra,
-            indexed by the star library index.
-    """
-    # obey the specified shifting order
-    wav = None
-    spectra = None
-    shift_reference = shift_reference.sort_index()
-
-    stars.is_copy=False
-
-    num_spec = len(stars)
-    current_spec = 1
-
-    for i in range(len(shift_reference)):
-        min_t = shift_reference.iloc[i].min_t
-        max_t = shift_reference.iloc[i].max_t
-        ref_spectrum = shift_reference.iloc[i].ref_spectrum
-
-        # for the first round, we must specify a file (or previous library spectrum)
-        if i == 0:
-            if not os.path.isfile(ref_spectrum):
-                print("Error: Unable to find {0} as reference.".format(ref_spectrum))
-                return stars, None, None
-            w_ref, s_ref, serr_ref, hdr_ref = specmatchio.read_standard_spectrum(ref_spectrum, (4900,6500))
-            # use this reference wavelength scale for the library
-            wav, s, serr = specmatchio.truncate_spectrum(WAVLIM, w_ref, s_ref, serr_ref)
-            spectra = np.empty((0,2,len(wav)))
-        # in other rounds, we can look for a file or a previously-shifted spectrum for bootstrapping
-        else:
-            # search for file
-            if os.path.isfile(ref_spectrum):
-                w_ref, s_ref, serr_ref, hdr_ref = specmatchio.read_standard_spectrum(ref_spectrum, (4900,6500))
-            # search in previously-shifted spectra
-            else:
-                pattern = '^' + ref_spectrum + '$'
-                # search previously-shifted stars
-                if not stars[stars.lib_obs.str.match(pattern)].empty:
-                    ref_idx = int(stars[stars.lib_obs.str.match(pattern)].iloc[0].lib_index)
-                    s_ref = spectra[ref_idx,0]
-                    serr_ref = spectra[ref_idx, 1]
-                    w_ref = wav
-                else:
-                    print("Error: Unable to find {0} as reference.".format(ref_spectrum))
-                    continue
-
-        # now shift spectra in each group
-        query = '{0:.0f} <= Teff < {1:.0f}'.format(min_t, max_t)
-        stars_grouped = stars.query(query)
-        for targ_idx, targ_params in stars_grouped.iterrows():
-            print("Shifting star {0:d} of {1:d}".format(current_spec, num_spec))
-            current_spec+=1
-            # find spectrum for the star
-            obs_list = re.sub("[\[\]\'']", '', targ_params.obs).split()
-            specpath = None
-            ## loop through list of observations
-            for obs in obs_list:
-                specpath = os.path.join(cpsdir, CPS_SPECTRA_DIR, obs+'.fits')
-                if os.path.isfile(specpath):
-                    # record which observation was used
-                    stars.loc[targ_idx, 'lib_obs'] = obs
-                    break
-                else:
-                    specpath=None
-            if specpath is None:
-                print("Could not find any spectra for star {0}".format(targ_params.cps_name))
-                continue
-
-            try:
-                ## read in spectrum
-                w_targ, s_targ, serr_targ, hdr_targ = specmatchio.read_hires_spectrum(specpath)
-
-                # shift spectrum
-                outfile = os.path.join(outdir,'/shift_data/{0}.txt'.format(stars.loc[targ_idx].lib_obs))
-                diag_hdr = '# Star: {0}\n# Reference: {1}\n'.format(targ_params.cps_name, ref_spectrum)
-
-                s_adj, serr_adj, w_adj = shift_spectra.adjust_spectra(s_targ, serr_targ, w_targ,\
-                    s_ref, serr_ref, w_ref, diagnostic=diagnostic, outfile=outfile, diagnostic_hdr=diag_hdr)
-
-                # flatten spectrum within limits
-                w_flat, s_flat, serr_flat = shift_spectra.flatten(w_adj, s_adj, serr_adj, w_ref=wav, wavlim=WAVLIM)
-
-            except Exception as e:
-                print("Error: Failed to shift star {0}, spectrum {1}".format(targ_params.cps_name, targ_params.lib_obs))
-                print("{0}".format(e))
-                continue
-
-
-            # append spectrum to spectra table
-            stars.loc[targ_idx, 'lib_index'] = len(spectra)
-            spectra = np.vstack((spectra, [[s_flat, serr_flat]]))
-
-            # calculate the signal-to-noise-ratio
-            stars.loc[targ_idx, 'snr'] = np.nanpercentile(1/serr_flat, 90)
-
-    # eliminate stars with no spectra
-    stars = stars[np.logical_not(np.isnan(stars.lib_index))]
-    return stars, wav, spectra
-
-def main(catalogdir, cpsdir, shift_reference_path, outdir, diagnostic, append):
-    ### 1. Read in the stars with known stellar parameters and check for those with CPS spectra
-    # print("Step 1: Reading catalogs...")
+def main(catalogdir, cpsdir, outdir, iso, diagnostic, append):
+    ### Read in the stars with known stellar parameters and check for those with CPS spectra
+    # print("Reading catalogs...")
     # stars, stars_nospectra = read_catalogs(catalogdir, cpsdir)
+    # mask = pd.DataFrame()
+
     # # convert numeric columns
     # for col in STAR_PROPS:
     #     stars[col] = pd.to_numeric(stars[col], errors='coerce')
     #     stars['u_'+col] = pd.to_numeric(stars['u_'+col], errors='coerce')
+    #     # Create mask to indicate parameters obtained directly from literature
+    #     mask[col] = np.isfinite(stars[col])
+    #     mask['u_'+col] = np.isfinite(stars['u_'+col])
 
-    # stars.to_csv(os.path.join(outdir, "libstars_new.csv"))
-    # stars_nospectra.to_csv(os.path.join(outdir, "stars_nospectra.csv"))
+    # stars.to_csv(os.path.join(outdir, "libstars_c.csv"))
+    # stars_nospectra.to_csv(os.path.join(outdir, "nospectra_c.csv"))
+    # mask.to_csv(os.path.join(outdir, "libstars_mask.csv"))
 
-    stars = pd.read_csv("./lib/libstars_new.csv", index_col=0)
+    stars = pd.read_csv(os.path.join(outdir, "libstars_c.csv"), index_col=0)
 
-    # ### 2. Use isochrones package to obtain the remaining, unknown stellar parameters
-    print("Step 2: Obtaining isochrone parameters...")
-    stars = get_isochrone_params(stars, diagnostic=diagnostic, outdir=outdir)
+    ### Fill in remaining parameters with isochrone models
+    if iso:
+        print("Obtaining isochrone parameters")
+        stars = get_isochrone_params(stars, diagnostic=diagnostic, outdir=outdir)
 
-    stars.to_csv(os.path.join(outdir, "libstars_new.csv"))
-    # stars_nospectra.to_csv(os.path.join(outdir, "stars_nospectra.csv"))
-
-    # stars['obs'] = stars['obs'].astype(str)
-
-    # ################################################################
-    # stars = pd.read_csv("./lib/libstars.csv", index_col=0)
-    # stars['lib_obs'] = stars['lib_obs'].astype(str)
-    # ################################################################
-
-    # stars.reset_index(drop=True,inplace=True)
-    # stars = stars.loc[[234,]]
-
-    # ### 3. Shift library spectra onto a constant log-lambda scale
-    # print("Step 3: Shifting library spectra...")
-    # shift_ref = pd.read_csv(shift_reference_path, index_col=0)
-    # stars, wav, spectra = shift_library(stars, cpsdir, shift_ref, diagnostic=diagnostic, outdir=outdir)
-
-    # stars.to_csv(os.path.join(outdir, "libstars_shifted.csv"))
-
-    # ### 4. Create and save the library
-    # print("Step 4: Saving library...")
-    # stars = stars.drop('obs', axis=1)
-    # lib = library.Library(wav, spectra, stars, wavlim=WAVLIM)
-    # lib.to_hdf('./lib/library.h5')
+    stars.to_csv(os.path.join(outdir, "libstars_c.csv"))
 
 
 if __name__ == '__main__':
     psr = ArgumentParser(description="Build the SpecMatch-Emp library from the various catalogs")
     psr.add_argument('catalogdir', type=str, help="Path to catalogs")
     psr.add_argument('cpsdir', type=str, help="Path to CPS spectrum database")
-    psr.add_argument('shift_reference', type=str, help="Path to spectrum shifting reference list")
     psr.add_argument('outdir', type=str, help="Path to output directory")
+    psr.add_argument('-i', '--isochrones', action='store_true', help="Use isochrones to compute additional parameters")
     psr.add_argument('-d', '--diagnostic', action='store_true', help="Output all intermediate data for diagnostics")
     psr.add_argument('-a', '--append', action='store_true', help="Append to existing library in outdir")
     args = psr.parse_args()
 
-    main(args.catalogdir, args.cpsdir, args.shift_reference, args.outdir, args.diagnostic, args.append)
+    main(args.catalogdir, args.cpsdir, args.outdir, args.isochrones, args.diagnostic, args.append)

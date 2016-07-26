@@ -48,6 +48,7 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile
         f = open(outfile, 'ab')
         list_lags=np.empty((len(s),3,num_sections))
 
+    plot = True
     # for every order in the spectrum
     for i in range(len(s)):
         ww = w[i]
@@ -83,6 +84,11 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile
                 s_ref_c[j*l_sect:(j+1)*l_sect])
             lags[j] = lag
             center_pix[j] = (j+1/2)*l_sect
+            if plot:
+                print(l_sect)
+                print(len(lag_arr), len(xcorr))
+                plt.plot(lag_arr, xcorr)
+                plot = False
 
         # we expect that the shifts across every order are close together
         # so we should remove outliers
@@ -228,18 +234,17 @@ def solve_for_shifts(s, s_ref):
         The pixel shift, the lag and correlation data
     """
     # correlate the two spectra
-    xcorr = np.correlate(s-1, s_ref-1, mode='same')
+    xcorr = np.correlate(s-1, s_ref-1, mode='full')
     xcorr = np.nan_to_num(xcorr)
     max_corr = np.argmax(xcorr)
 
     # number of pixels
     npix = xcorr.shape[0]
-    lag_arr = np.arange(-npix/2+1, npix/2+1, 1)
-    
+    lag_arr = np.arange(-(npix-1)/2, (npix+1)/2, 1)
 
     # select points around the peak and fit a quadratic
-    lag_peaks = lag_arr[max_corr-5:max_corr+5]
-    xcorr_peaks = xcorr[max_corr-5:max_corr+5]
+    lag_peaks = lag_arr[max_corr-5:max_corr+6]
+    xcorr_peaks = xcorr[max_corr-5:max_corr+6]
 
     p = np.polyfit(lag_peaks, xcorr_peaks, 2)
     # peak is simply -p[1]/2p[0]
