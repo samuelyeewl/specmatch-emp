@@ -15,7 +15,7 @@ import pandas as pd
 from specmatchemp import library
 from specmatchemp.io import specmatchio
 
-WAVLIM = (4980, 6420)
+WAVLIM = (4990, 6410)
 
 def main(parampath, specdir, outpath, maskpath):
     libparams = pd.read_csv(parampath, index_col=0)
@@ -48,6 +48,8 @@ def main(parampath, specdir, outpath, maskpath):
     mask = None
     if maskpath is not None:
         mask = pd.read_csv(maskpath, index_col=0)
+
+    libparams.drop('obs', axis=1, inplace=True)
 
     # save as library object
     lib = library.Library(wav, spectra, libparams, wavlim=WAVLIM, param_mask=mask)
