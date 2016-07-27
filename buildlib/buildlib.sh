@@ -14,3 +14,7 @@ python buildlib/shift_spectrum.py 216899 "/users/samuel/Dropbox/SpecMatch-Emp/sp
 # extract_spectrum.py
 
 # generate script
+python buildlib/generate_shift_script.py
+
+# run script
+parallel --slf $PBS_NODEFILE -a shift_script.txt

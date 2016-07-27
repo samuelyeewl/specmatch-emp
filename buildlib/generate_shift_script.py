@@ -25,7 +25,7 @@ if __name__ == '__main__':
     f = open(SCRIPTPATH, 'w')
 
     for i in range(len(shiftinst)):
-        refpath = os.path.join(REFDIR, shiftinst.iloc[i].ref_spectrum)
+        refpath = os.path.join(REFDIR, shiftinst.iloc[i].ref_spectrum + '.fits')
         min_t = shiftinst.iloc[i].min_t
         max_t = shiftinst.iloc[i].max_t
         query = '{0:.0f} <= Teff < {1:.0f}'.format(min_t, max_t)
