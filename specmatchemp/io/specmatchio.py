@@ -118,8 +118,8 @@ def save_standard_spectrum(path, w, s, serr=None, header=None):
     Saves the given spectrum
     Args:
         path: The path to save the spectrum
-        s: Spectrum
         w: Wavelength scale
+        s: Spectrum
         serr: Spectrum error
         header: File header (optional)
     """

@@ -44,7 +44,7 @@ class Library():
     """
     target_chunk_bytes = 100e3  # Target number of bytes per chunk
 
-    def __init__(self, wav, library_spectra=None, library_params=None, header={}, wavlim=None):
+    def __init__(self, wav, library_spectra=None, library_params=None, header={}, wavlim=None, param_mask=None):
         """
         Creates a fully-formed library from a given set of spectra.
         """
@@ -95,6 +95,7 @@ class Library():
         self.header = header
         header['date_created'] = str(datetime.date.today())
         self.wavlim = wavlim
+        self.param_mask = param_mask
 
     def append(self, params, spectrum, u_spectrum):
         """Adds spectrum and associated stellar parameters into library.
@@ -203,6 +204,8 @@ class Library():
                     dt[i] = (dt[i][0], 'S100')
             r = np.array(r, dtype=dt)
             f['params'] = r
+
+            f['param_mask'] = self.param_mask
 
             # Compute chunk size - group wavelenth regions together
             chunk_row = len(self.library_spectra)
@@ -313,6 +316,7 @@ def read_hdf(path, wavlim='all'):
     with h5py.File(path, 'r') as f:
         header = dict(f.attrs)
         wav = f['wav'][:]
+        param_mask = f['param_mask'][:]
         library_params = pd.DataFrame.from_records(f['params'][:], index='idx')
         # decode strings
         for (col_name, dt) in library_params.dtypes.iteritems():
@@ -330,6 +334,6 @@ def read_hdf(path, wavlim='all'):
             library_spectra = f['library_spectra'][:,:,idxmin:idxmax]
             wav = wav[idxmin:idxmax]
 
-    lib = Library(wav, library_spectra, library_params, header=header, wavlim=wavlim)
+    lib = Library(wav, library_spectra, library_params, header=header, wavlim=wavlim, param_mask=param_mask)
     return lib
 

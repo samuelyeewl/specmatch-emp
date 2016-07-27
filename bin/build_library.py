@@ -603,7 +603,7 @@ def shift_library(stars, cpsdir, shift_reference, diagnostic=False, outdir='~/')
                 continue
 
             try:
-                ## read in spectrum
+                ## read in spectra
                 w_targ, s_targ, serr_targ, hdr_targ = specmatchio.read_hires_spectrum(specpath)
 
                 # shift spectrum
