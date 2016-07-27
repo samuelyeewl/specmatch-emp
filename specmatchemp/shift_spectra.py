@@ -4,15 +4,13 @@
 
 Shift a target spectrum onto a reference spectrum.
 """
-import argparse
-
 import numpy as np
-import h5py
+import matplotlib.pyplot as plt
 from scipy.interpolate import UnivariateSpline
-
+import argparse
 from specmatchemp.io import specmatchio
 
-def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
+def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile='./diag.csv', diagnostic_hdr=None):
     """
     Adjusts the given spectrum by first placing it on the same wavelength scale as
     the specified reference spectrum, then solves for shifts between the two
@@ -23,8 +21,8 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
             Target spectrum, error and wavelength scale
         s_ref, serr_ref, w_ref:
             Reference spectrum, error, and wavelength scale
-        outfile:
-            h5 file to store diagnostic data in
+        diagnostic:
+            Set to true if diagnostic plots of lags are required
 
     Returns: 
         s_adj, serr_adj, w_adj:
