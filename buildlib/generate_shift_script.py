@@ -56,6 +56,8 @@ if __name__ == '__main__':
 
             f.write(s)
 
+    libstars.to_csv(LIBPATH)
+
     f.close()
 
 
