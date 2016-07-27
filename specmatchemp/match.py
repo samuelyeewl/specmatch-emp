@@ -193,11 +193,10 @@ class MatchLincomb(Match):
         self.serr_mod = np.zeros_like(self.w)
 
         # create the model from a linear combination of the reference spectra
+        coeffs = self.get_lincomb_coeffs(params)
         for i in range(self.num_refs):
-            p = 'coeff_{0:d}'.format(i)
-            self.s_mod += self.s_refs[i,0] * params[p].value
-            self.serr_mod += self.s_refs[i,1] * params[p].value
-
+            self.s_mod += self.s_refs[i,0] * coeffs[i]
+            self.serr_mod += self.s_refs[i,1] * coeffs[i]
         # Use linear least squares to fit a spline
         s = LSQUnivariateSpline(self.w, self.s_targ/self.s_mod, self.knot_x)
         self.spl = s(self.w)
@@ -219,10 +218,7 @@ class MatchLincomb(Match):
         chi_square = super().objective(params)
 
         # Add a Gaussian prior
-        sum_coeff = 0
-        for i in range(self.num_refs):
-            p = 'coeff_{0:d}'.format(i)
-            sum_coeff += params[p].value
+        sum_coeff = np.sum(get_lincomb_coeffs(params))
 
         WIDTH = 1e-2
         chi_square += (sum_coeff-1)**2/(2*WIDTH**2)
