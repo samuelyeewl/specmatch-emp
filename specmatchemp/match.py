@@ -13,7 +13,7 @@ from scipy.ndimage.filters import convolve1d
 import specmatchemp.kernels
 
 class Match:
-    def __init__(self, wav, s_targ, s_ref, mode='default', opt='lm'):
+    def __init__(self, wav, s_targ, s_ref, mode='default', opt='nelder'):
         """
         The Match class used for matching two spectra
 
@@ -29,6 +29,12 @@ class Match:
         self.serr_targ = np.copy(s_targ[1])
         self.s_ref = np.copy(s_ref[0])
         self.serr_ref = np.copy(s_ref[1])
+        # replace nans with continuum
+        self.s_targ[np.isnan(self.s_targ)] = 1
+        self.serr_targ[np.isnan(self.serr_targ)] = 1
+        self.s_ref[np.isnan(self.s_ref)] = 1
+        self.serr_ref[np.isnan(self.serr_ref)] = 1
+
         self.best_params = lmfit.Parameters()
         self.best_chisq = np.NaN
         self.mode = mode
@@ -49,8 +55,8 @@ class Match:
         based on the reference spectrum.
         Stores the tweaked model in spectra.s_mod and serr_mod.
         """
-        self.s_mod = np.copy(self.s_ref)
-        self.serr_mod = np.copy(self.serr_ref)
+        self.s_mod = np.nan_to_num(self.s_ref)
+        self.serr_mod = np.nan_to_num(self.serr_ref)
 
         # Apply broadening kernel
         vsini = params['vsini'].value
