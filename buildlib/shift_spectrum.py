@@ -59,4 +59,6 @@ if __name__ == '__main__':
         print("Could not find "+args.refpath)
         sys.exit(1)
 
+    print("Shifting star {0}, obs {1} ref {2}".format(args.name, args.specpath, args.refpath))
+
     main(args.name, args.specpath, args.refpath, args.outdir, args.suffix)

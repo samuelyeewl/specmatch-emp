@@ -18,3 +18,5 @@ python buildlib/generate_shift_script.py
 
 # run script
 parallel --slf $PBS_NODEFILE -a shift_script.txt
+
+# combine library
