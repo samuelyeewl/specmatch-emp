@@ -34,7 +34,7 @@ def main(parampath, specdir, outpath, maskpath):
         w, s, serr = specmatchio.truncate_spectrum(WAVLIM, w, s, serr)
         if wav is None:
             wav = w
-            spectra = np.empty(0,2,len(wav))
+            spectra = np.empty((0,2,len(wav)))
         else:
             assert np.allclose(wav, w), "Library spectra not on same wavelength scale"
 
