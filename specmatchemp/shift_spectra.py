@@ -4,13 +4,15 @@
 
 Shift a target spectrum onto a reference spectrum.
 """
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.interpolate import UnivariateSpline
 import argparse
+
+import numpy as np
+import h5py
+from scipy.interpolate import UnivariateSpline
+
 from specmatchemp.io import specmatchio
 
-def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile='./diag.csv', diagnostic_hdr=None):
+def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
     """
     Adjusts the given spectrum by first placing it on the same wavelength scale as
     the specified reference spectrum, then solves for shifts between the two
@@ -21,14 +23,14 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile
             Target spectrum, error and wavelength scale
         s_ref, serr_ref, w_ref:
             Reference spectrum, error, and wavelength scale
-        diagnostic:
-            Set to true if diagnostic plots of lags are required
+        outfile:
+            h5 file to store diagnostic data in
 
     Returns: 
         s_adj, serr_adj, w_adj:
             The adjusted spectrum and wavelength scale.
     """
-    # normalize each order of the target spectrum by fitting a spline
+    # normalize each order of the target spectrum by dividing by the 95th percentile
     percen_order = np.percentile(s, 95, axis=1)
     s /= percen_order.reshape(-1,1)
 
@@ -43,7 +45,8 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile
         f = open(outfile, 'w')
         if diagnostic_hdr is not None:
             f.write(diagnostic_hdr)
-            f.write('# tol = {0:d}, num_sections = {1:d}\n'.format(tol, num_sections))
+            f.write('# list_lags shape = ({0:d}, {1:d}, {2:d})'.format(len(s),3,num_sections))
+            f.write('# tol = {0:d}\n'.format(tol))
         f.close()
         f = open(outfile, 'ab')
         list_lags=np.empty((len(s),3,num_sections))

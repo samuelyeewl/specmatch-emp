@@ -1,5 +1,5 @@
 """
-@filename buildlib/utils.py
+@filename utils/utils.py
 
 Various utility functions
 """
@@ -24,7 +24,7 @@ def calc_logg(radius, u_radius, mass, u_mass):
     rstar = radius * c.R_sun
     mstar = mass * c.M_sun
     logg = np.log10((c.G * mstar/(rstar**2)).cgs.value)
-    u_logg = (row['e_M']/row['M'] + 2*row['e_R']/row['R'])*logg
+    u_logg = (u_mass/mass + 2*u_radius/radius)*logg
 
     return logg, u_logg
 
