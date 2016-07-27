@@ -23,7 +23,7 @@ def main(name, specpath, refpath, outdir, suffix):
     outdir = os.path.join(outdir, name)
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    filepath = os.path.join(outdir, name+'.h5')
+    filepath = os.path.join(outdir, name+suffix+'.h5')
     f = h5py.File(filepath, 'w')
 
     s, serr, w = shift_spectra.shift(s_targ, serr_targ, w_targ, s_ref, serr_ref, w_ref, outfile=f)

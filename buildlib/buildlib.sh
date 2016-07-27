@@ -20,3 +20,4 @@ python buildlib/generate_shift_script.py
 parallel --slf $PBS_NODEFILE -a shift_script.txt
 
 # combine library
+python buildlib/combine_library.py lib/libstars.csv results/ lib/library.h5 -m lib/libstars_mask.csv
