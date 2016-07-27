@@ -26,4 +26,4 @@ echo `cat $PBS_NODEFILE`
 echo ” “
 
 
-parallel --slf $PBS_NODEFILE -a script.txt
+parallel --slf $PBS_NODEFILE -a script_lincomb.txt

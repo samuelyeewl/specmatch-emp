@@ -37,6 +37,8 @@ if __name__ == '__main__':
         sys.exit()
     # read in matches
     matches = pd.DataFrame.from_csv(args.match_results, index_col=0)
+    matches['targ_idx'] = matches.targ_idx.astype(int)
+    matches['ref_idx'] = matches.ref_idx.astype(int)
     grouped_matches = matches.groupby('targ_idx')
 
     num_best = args.num_best

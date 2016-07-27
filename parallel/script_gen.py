@@ -21,7 +21,7 @@ if __name__ == '__main__':
 #     f.close()
     
     for i in range(WAV_MIN, WAV_MAX, 100):
-        for j in range(2, 6):
+        for j in range(6, 9):
             f.write("source ~/.bash_profile; python /home/syee/specmatchemp-working/specmatchemp/tests/library_match_lincomb.py " + \
                 "'/home/syee/specmatchemp-working/specmatchemp/lib/library_reduced.h5' "+\
                 "'/home/syee/specmatchemp-working/specmatchemp/results/{0:d}_results.csv' ".format(i)+\
