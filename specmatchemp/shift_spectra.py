@@ -4,67 +4,66 @@
 
 Shift a target spectrum onto a reference spectrum.
 """
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.interpolate import UnivariateSpline
 import argparse
+
+import h5py
+import numpy as np
+from scipy.interpolate import UnivariateSpline
+
 from specmatchemp.io import specmatchio
 
-def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile='./diag.csv', diagnostic_hdr=None):
-    """
-    Adjusts the given spectrum by first placing it on the same wavelength scale as
-    the specified reference spectrum, then solves for shifts between the two
-    spectra.
+def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
+    """Shifts the given spectrum by placing it on the same wavelength
+    scale as the specified reference spectrum, then solves for shifts
+    between the two spectra through cross-correlation.
 
     Args:
-        s, serr, w: 
-            Target spectrum, error and wavelength scale
-        s_ref, serr_ref, w_ref:
-            Reference spectrum, error, and wavelength scale
-        diagnostic:
-            Set to true if diagnostic plots of lags are required
+        s, serr, w : Target spectrum, error and wavelength scale
+        s_ref, serr_ref, w_ref : Reference spectrum, error and wavelength scale
+        outfile : (optional) h5 file to store diagnostic data in
 
-    Returns: 
-        s_adj, serr_adj, w_adj:
-            The adjusted spectrum and wavelength scale.
+    Returns:
+        s_adj, serr_adj, w_adj: Adjusted and flattened spectrum
     """
     # normalize each order of the target spectrum by dividing by the 95th percentile
     percen_order = np.percentile(s, 95, axis=1)
     s /= percen_order.reshape(-1,1)
 
+    # create empty 2d arrays to store each order
     s_shifted = np.asarray([[]])
     serr_shifted = np.asarray([[]])
     ws = np.asarray([[]])
 
-    tol = 5     # permitted deviation from median
-    num_sections = 7    # number of sections of each order
+    # create lists to store diagnostic data
+    lag_data = []
+    center_pix_data = []
+    fit_data = []
 
-    if diagnostic:
-        f = open(outfile, 'w')
-        if diagnostic_hdr is not None:
-            f.write(diagnostic_hdr)
-            f.write('# list_lags shape = ({0:d}, {1:d}, {2:d})'.format(len(s),3,num_sections))
-            f.write('# tol = {0:d}\n'.format(tol))
-        f.close()
-        f = open(outfile, 'ab')
-        list_lags=np.empty((len(s),3,num_sections))
+    tol = 5
+    num_sections = 7
 
-    plot = True
-    # for every order in the spectrum
-    for i in range(len(s)):
+    # shift each order
+    for i in range(s.shape[0]):
         ww = w[i]
         ss = s[i]
         sserr = serr[i]
-        # get the target spectrum wavelength range
-        w_min = ww[0]
-        w_max = ww[-1]
-        # remove obvious noise
+
+        # clip ends off each order
+        cliplen = 15
+        ww = ww[cliplen:-cliplen]
+        ss = ss[cliplen:-cliplen]
+        sserr = sserr[cliplen:-cliplen]
+
+        # clip obvious noise
         mask = np.asarray([True if sp < 1.2 else False for sp in ss])
         ss = ss[mask]
         sserr = sserr[mask]
         ww = ww[mask]
 
-        # get the reference spectrum in the same range
+        # get the reference spectrum in the same range as the target range
+        w_min = ww[0]
+        w_max = ww[-1]
+
         in_range = np.asarray([True if wr > w_min and wr < w_max else False
             for wr in w_ref])
         start_idx = np.argmax(in_range)
@@ -78,6 +77,8 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile
         l_sect = int(len(w_ref_c)/num_sections)
         lags = np.empty(num_sections)
         center_pix = np.empty(num_sections)
+        lag_arrs = []
+        xcorrs = []
 
         for j in range(num_sections):
             # get the shifts in pixel number
@@ -85,11 +86,9 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile
                 s_ref_c[j*l_sect:(j+1)*l_sect])
             lags[j] = lag
             center_pix[j] = (j+1/2)*l_sect
-            if plot:
-                print(l_sect)
-                print(len(lag_arr), len(xcorr))
-                plt.plot(lag_arr, xcorr)
-                plot = False
+
+        lag_data.append(lags)
+        center_pix_data.append(center_pix)
 
         # we expect that the shifts across every order are close together
         # so we should remove outliers
@@ -104,46 +103,43 @@ def adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic=False, outfile
         pix_arr = np.arange(0, len(w_ref_c))
         pix_shifted = pix_arr - fit[1] - pix_arr*fit[0]
 
-        # if(diagnostic):
-        #     plt.plot(center_pix, lags)
-        #     plt.plot(pix_arr, fit[0]*pix_arr+fit[1])
+        fitted = fit[0]*center_pix+fit[1]
+        fit_data.append(fitted)
 
-        if diagnostic:
-            fitted = fit[0]*center_pix+fit[1]
-            list_lags[i] = [center_pix, lags, fitted]
-
-        # plt.plot(pixs, pix_shifted)
-        # plt.show()
-
-        # now shift the spectrum
-        # ww_shifted = w_ref_c - fit[1] - w_ref_c*fit[0]
-        # plt.plot(ww_shifted, w_ref_c)
-        # plt.show()
-
-        pix_min = max(int(pix_shifted[0]) + 1, 0)
-        pix_max = min(int(pix_shifted[-1]), len(w_ref_c))
+        # don't read past the wavelength array
+        pix_min = max(int(pix_shifted[0]), 0)
+        pix_max = min(int(pix_shifted[-1]), len(w_ref)-start_idx)
 
         # new pixel array
         new_pix = np.arange(pix_min, pix_max)
         # new wavelength array
         w_ref_c = w_ref[start_idx+pix_min:start_idx+pix_max]
-        
+
         # interpolate the spectrum back onto the reference spectrum
         ss_shifted = np.interp(new_pix, pix_shifted, ss)
         sserr_shifted = np.interp(new_pix, pix_shifted, sserr)
 
-        # append to array, discarding leading and trailing 20 pixels
-        s_shifted = np.append(s_shifted, ss_shifted[20:-20])
-        serr_shifted = np.append(serr_shifted, sserr_shifted[20:-20])
-        ws = np.append(ws, w_ref_c[20:-20])
+        # append to array
+        s_shifted = np.append(s_shifted, ss_shifted)
+        serr_shifted = np.append(serr_shifted, sserr_shifted)
+        ws = np.append(ws, w_ref_c)
 
-    if diagnostic:
-        # reshape into 2d array for storage
-        list_lags = list_lags.reshape((len(s),3*num_sections))
-        np.savetxt(f, list_lags)
-        f.close()
+    # save diagnostic data
+    if outfile is not None:
+        outfile.create_dataset('lag', data=np.asarray(lag_data))
+        outfile.create_dataset('center_pix', data=np.asarray(center_pix_data))
+        outfile.create_dataset('fit', data=np.asarray(fit_data))
 
-    return s_shifted, serr_shifted, ws
+    # flatten spectrum
+    w_min = ws[0]
+    w_max = ws[-1]
+    in_range = np.asarray([True if wr > w_min and wr < w_max else False for wr in w_ref])
+    w_ref_trunc = w_ref[in_range]
+
+    w_flat, s_flat, serr_flat = flatten(ws, s_shifted, serr_shifted, w_ref=w_ref_trunc)
+
+    return s_flat, serr_flat, w_flat
+
 
 def _isclose(a, b, abs_tol=1e-6):
     """Small helper function to determine if two floats are close.
@@ -268,37 +264,6 @@ def rescale_w(s, serr, w, w_ref):
     serrnew = np.interp(w_ref, w, serr)
 
     return snew, serrnew
-
-def shift(target_path, target_type, reference_path, output_path, diagnostic=False, diagnosticfile='img.img'):
-    if target_type =='hires':
-        try:
-            s, w, serr, header = specmatch_io.read_hires_spectrum(target_path)
-        except:
-            raise
-    elif target_type =='standard':
-        try:
-            s, w, serr, header = specmatch_io.read_standard_spectrum(target_path)
-        except:
-            raise
-
-        s = np.asarray([s])
-        w = np.asarray([w])
-        serr = np.asarray([serr])
-
-    try:
-        s_ref, w_ref, serr_ref, header_ref = specmatch_io.read_standard_spectrum(reference_path)
-    except:
-        raise
-
-    s_adj, serr_adj, w_adj = adjust_spectra(s, serr, w, s_ref, serr_ref, w_ref, diagnostic, diagnosticfile)
-
-    try:
-        specmatch_io.save_standard_spectrum(output_path, s_adj, w_adj, serr_adj, header)
-    except:
-        print('Could not save to '+output_path)
-        raise
-
-    return s_adj, w_adj, serr_adj
 
 
 if __name__ == '__main__':

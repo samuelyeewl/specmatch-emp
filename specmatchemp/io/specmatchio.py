@@ -104,7 +104,7 @@ def truncate_spectrum(wavlim, w, s, serr=None):
     Returns:
         w_truncated, s_truncated, serr_truncated
     """
-    wavidx, = np.where((w > wavlim[0]) & (w < wavlim[1]))
+    wavidx, = np.where((w >= wavlim[0]) & (w <= wavlim[1]))
     idxmin = wavidx[0]
     idxmax = wavidx[-1]+1
     w = w[idxmin:idxmax]
@@ -113,7 +113,7 @@ def truncate_spectrum(wavlim, w, s, serr=None):
         serr = serr[idxmin:idxmax]
     return w, s, serr
 
-def save_standard_spectrum(path, s, w, serr=None, header=None):
+def save_standard_spectrum(path, w, s, serr=None, header=None):
     """
     Saves the given spectrum
     Args:
