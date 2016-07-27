@@ -38,7 +38,7 @@ if __name__ == '__main__':
             for obs in obs_list:
                 specpath = os.path.join(SPECDIR, obs+'.fits')
                 if os.path.isfile(specpath):
-                    stars.loc[idx, 'lib_obs'] = obs
+                    libstars.loc[idx, 'lib_obs'] = obs
                 else:
                     specpath = None
             if specpath is None:
