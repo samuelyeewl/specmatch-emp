@@ -23,6 +23,7 @@ if __name__ == '__main__':
     psr = ArgumentParser(description="Generate script for shifting")
     psr.add_argument('shiftinstructions', type=str, help="Path to csv file contianing shift instructions")
     psr.add_argument('scriptpath', type=str, help="Path to save script")
+    psr.add_argument('-s', '--suffix', type=str, default="", help="Suffix to append to result filename")
     args = psr.parse_args()
 
     libstars = pd.read_csv(LIBPATH, index_col=0)
@@ -58,6 +59,8 @@ if __name__ == '__main__':
             s+= specpath+" "
             s+= refpath+" "
             s+= OUTDIR
+            if len(args.suffix) > 0:
+                s+= "-s "+args.suffix
             s+= "\n"
 
             f.write(s)
