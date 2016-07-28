@@ -1,5 +1,5 @@
 """
-@filename plotting.py
+@filename plots.py
 
 Helper functions to plot various data from SpecMatch-Emp
 """
@@ -117,6 +117,30 @@ def plot_library_spectrum(lib, lib_index, wavlim=None, offset=0, plt_kw={}):
 
 
 ################################# Shift plots ##################################
+def plot_shifts(s, w, s_un, w_un, s_ref, w_ref, s_nso=None, w_nso=None, wavlim=None):
+    """Plot the shifted and unshifted spectra against the reference.
+
+    Args:
+        s, w: Shifted spectrum
+        s_un, w_un: Unshifted spectrum
+        s_ref, w_ref: Reference (bootstrapped) spectrum
+        s_nso, w_nso: (optional) nso spectrum
+    """
+    if wavlim is not None:
+        w, s = specmatchio.truncate_spectrum(wavlim, w, s)
+        w_un, s_un = specmatchio.truncate_spectrum(wavlim, w_un, s_un)
+        w_ref, s_ref = specmatchio.truncate_spectrum(wavlim, w_ref, s_ref)
+        if s_nso is not None and w_nso is not None:
+            w_nso, s_nso = specmatchio.truncate_spectrum(wavlim, w_nso, s_nso)
+
+    plt.plot(w, s, '-', label="Target (shifted)")
+    plt.plot(w_un, s_un-0.8, '-', label="Target (unshifted)")
+    plt.plot(w_ref, s_ref+0.3, '-', label="Reference")
+    if s_nso is not None and w_nso is not None:
+        plt.plot(w_nso, s_nso+0.6, '-', label="NSO")
+    plt.ylim(-0.8,1.8)
+
+
 def shifted_spectrum_plot(lib, lib_index, ref, wavlim=None, offset=True):
     """Plot the shifted and unshifted spectra against the reference
 

@@ -8,21 +8,27 @@ Generate script lines for shifting spectra
 import os
 import re
 import pandas as pd
+from argparse import ArgumentParser
 
 EXECPATH = '/home/syee/specmatchemp-working/specmatchemp/buildlib/shift_spectrum.py'
 LIBPATH = '/home/syee/specmatchemp-working/specmatchemp/lib/libstars.csv'
 SPECDIR = '/home/syee/specmatchemp-working/specmatchemp/spectra/iodfitsdb/'
 REFDIR = '/home/syee/specmatchemp-working/specmatchemp/spectra/refs/'
-SHIFTINSTRUCTIONS = '/home/syee/specmatchemp-working/specmatchemp/spectra/shift_reference.csv'
+# SHIFTINSTRUCTIONS = '/home/syee/specmatchemp-working/specmatchemp/spectra/shift_reference.csv'
 OUTDIR = '/home/syee/specmatchemp-working/specmatchemp/results/'
-SCRIPTPATH = '/home/syee/specmatchemp-working/specmatchemp/buildlib/shift_script.txt'
+# SCRIPTPATH = '/home/syee/specmatchemp-working/specmatchemp/buildlib/shift_script.txt'
 
 
 if __name__ == '__main__':
-    libstars = pd.read_csv(LIBPATH, index_col=0)
-    shiftinst = pd.read_csv(SHIFTINSTRUCTIONS)
+    psr = ArgumentParser(description="Generate script for shifting")
+    psr.add_argument('shiftinstructions', type=str, help="Path to csv file contianing shift instructions")
+    psr.add_argument('scriptpath', type=str, help="Path to save script")
+    args = psr.parse_args()
 
-    f = open(SCRIPTPATH, 'w')
+    libstars = pd.read_csv(LIBPATH, index_col=0)
+    shiftinst = pd.read_csv(args.shiftinstructions)
+    
+    f = open(args.scriptpath, 'w')
 
     for i in range(len(shiftinst)):
         refpath = os.path.join(REFDIR, shiftinst.iloc[i].ref_spectrum)

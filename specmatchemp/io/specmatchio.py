@@ -111,7 +111,9 @@ def truncate_spectrum(wavlim, w, s, serr=None):
     s = s[idxmin:idxmax]
     if serr is not None:
         serr = serr[idxmin:idxmax]
-    return w, s, serr
+        return w, s, serr
+    else:
+        return w, s
 
 def save_standard_spectrum(path, w, s, serr=None, header=None):
     """

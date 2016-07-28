@@ -41,6 +41,11 @@ def main(name, specpath, refpath, outdir, suffix):
     f.create_dataset('serr_unshifted', data=serr_targ)
     f.create_dataset('w_unshifted', data=w_targ)
 
+    # store metadata
+    f.attrs['cps_name'] = name
+    f.attrs['obs'] = os.path.basename(specpath)
+    f.attrs['ref'] = os.path.basename(refpath)
+
     f.close()
 
 if __name__ == '__main__':
