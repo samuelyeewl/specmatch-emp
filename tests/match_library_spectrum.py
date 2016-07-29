@@ -15,17 +15,17 @@ from specmatchemp import library
 
 from argparse import ArgumentParser
 
-def main(libpath, targ_name, outdir, wl, length_w):
-    lib = library.read_hdf(libpath, wavlim=(wl, wl+length_w))
+def main(libpath, targ_name, outpath, wavlim):
+    lib = library.read_hdf(libpath, wavlim=wavlim)
     params = lib.library_params
 
     targ_idx = lib.get_index(targ_name)
     param_targ, spec_targ = lib[targ_idx]
 
     # create columns 
-    cs_col = 'chi_squared_{0:d}'.format(wl)
+    cs_col = 'chi_squared_{0:d}'.format(wavlim[0])
     params.loc[:,cs_col] = np.nan
-    fit_col = 'fit_params_{0:d}'.format(wl)
+    fit_col = 'fit_params_{0:d}'.format(wavlim[0])
     params.loc[:,fit_col] = ""
 
     for param_ref, spec_ref in lib:
@@ -42,11 +42,6 @@ def main(libpath, targ_name, outdir, wl, length_w):
         params.loc[ref_idx,cs_col] = mt.best_chisq
         params.loc[ref_idx,fit_col] = mt.best_params.dumps()
 
-    outdir = os.path.join(outdir, targ_name)
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
-    outpath = os.path.join(outdir, targ_name+'_{0:d}_match.csv'.format(wl))
-
     params.to_csv(outpath)
 
 
@@ -58,6 +53,13 @@ if __name__ == '__main__':
     psr.add_argument('outdir', type=str, help="Path to output directory")
     psr.add_argument('minw', type=int, help="Minimum wavelength (A)")
     psr.add_argument('lengthw', type=int, help="Length of wavlength region (A)")
+    psr.add_argument('-s', '--suffix', type=str, default="", help="Suffix to append to results files")
     args = psr.parse_args()
 
-    main(args.library, args.cps_name, args.outdir, args.minw, args.lengthw)
+    outdir = os.path.join(args.outdir, args.cps_name)
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+    outpath = os.path.join(outdir, targ_name+'_{0:d}{1}_match.csv'.format(args.minw, args.suffix))
+    wavlim = (args.minw, args.minw+args.lengthw)
+
+    main(args.library, args.cps_name, aoutpath, wavlim)
