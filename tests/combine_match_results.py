@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
         # get wavelengths used
         files = glob.glob(os.path.join(sdir, name+'_*_match.csv'))
-        files = [f if re.search(str(name)+r'_\d+_match.csv', f) for f in files]
+        files = [f for f in files if re.search(str(name)+r'_\d+_match.csv', f)]
         wls = [re.search(name+'_(.+?)_match.csv', f).group(1) for f in files]
 
         for wl, f in zip(wls, files):

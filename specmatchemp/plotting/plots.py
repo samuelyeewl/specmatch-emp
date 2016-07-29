@@ -224,7 +224,7 @@ def bestmatch_comparison_plot(res, paramx, paramy, num_best, cscol, distcol='dis
     plt.plot(res.iloc[1:num_best+1][paramx], res.iloc[1:num_best+1][paramy], 's', label='Closest stars')
     res = res.sort_values(by=cscol)
     plt.plot(res.iloc[0:num_best][paramx], res.iloc[0:num_best][paramy], '^', label='Best matches')
-    plt.legend(numpoints=1, fontsize='small')
+    plt.legend(numpoints=1, fontsize='small', loc='upper left')
 
 
 ############################# Library test plots ###############################
