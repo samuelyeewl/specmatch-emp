@@ -32,7 +32,7 @@ if __name__ == '__main__':
         files = glob.glob(os.path.join(sdir, name+'_*_match.csv'))
         wls = [re.search(name+'_(.+?)_match.csv', f).group(1) for f in files]
 
-        for wl, f in (wls, files):
+        for wl, f in zip(wls, files):
             if res_star.empty:
                 res_star = pd.read_csv(f, index_col=0)
             else:
