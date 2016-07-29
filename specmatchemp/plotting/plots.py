@@ -117,7 +117,7 @@ def plot_library_spectrum(lib, lib_index, wavlim=None, offset=0, plt_kw={}):
 
 
 ################################# Shift plots ##################################
-def plot_shifts(s, w, s_un, w_un, s_ref, w_ref, s_nso=None, w_nso=None, wavlim=None):
+def plot_shifts(s, w, s_un, w_un, s_ref, w_ref, s_nso=None, w_nso=None, wavlim=None, legend=False,):
     """Plot the shifted and unshifted spectra against the reference.
 
     Args:
@@ -125,6 +125,8 @@ def plot_shifts(s, w, s_un, w_un, s_ref, w_ref, s_nso=None, w_nso=None, wavlim=N
         s_un, w_un: Unshifted spectrum
         s_ref, w_ref: Reference (bootstrapped) spectrum
         s_nso, w_nso: (optional) nso spectrum
+        wavlim: (optional) Wavelength limits
+        legend: (optional) Set to true if 
     """
     if wavlim is not None:
         w, s = specmatchio.truncate_spectrum(wavlim, w, s)
@@ -134,11 +136,16 @@ def plot_shifts(s, w, s_un, w_un, s_ref, w_ref, s_nso=None, w_nso=None, wavlim=N
             w_nso, s_nso = specmatchio.truncate_spectrum(wavlim, w_nso, s_nso)
 
     plt.plot(w, s, '-', label="Target (shifted)")
-    plt.plot(w_un, s_un-0.8, '-', label="Target (unshifted)")
+    plt.plot(w_un, s_un-0.6, '-', label="Target (unshifted)")
     plt.plot(w_ref, s_ref+0.3, '-', label="Reference")
     if s_nso is not None and w_nso is not None:
         plt.plot(w_nso, s_nso+0.6, '-', label="NSO")
     plt.ylim(-0.8,1.8)
+    ax = plt.gca()
+    ax.axes.get_yaxis().set_ticks([])
+    if legend:
+        plt.legend(loc='lower left')
+    plt.xlabel('Wavelength (Angstroms)')
 
 
 def shifted_spectrum_plot(lib, lib_index, ref, wavlim=None, offset=True):
