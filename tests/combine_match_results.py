@@ -37,8 +37,8 @@ if __name__ == '__main__':
                 res_star = pd.read_csv(f, index_col=0)
             else:
                 # merge on columns
-                with pd.read_csv(f) as df:
-                    res_star = res_star.join(df['chi_squared_{0} fit_params_{0}'.format(wl).split()])
+                df = pd.read_csv(f):
+                res_star = res_star.join(df['chi_squared_{0} fit_params_{0}'.format(wl).split()])
 
         # save each star's result
         outpath_star = os.path.join(sdir, name+'_match.csv')
