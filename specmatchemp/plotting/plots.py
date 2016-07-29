@@ -6,7 +6,6 @@ Helper functions to plot various data from SpecMatch-Emp
 
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import pandas as pd

@@ -4,7 +4,7 @@
 
 Matches a spectrum against the rest of the library, across
 all wavelengths in 100 A segments.
-Saves results in a h5 file.
+Saves results in a csv file.
 """
 
 import os
