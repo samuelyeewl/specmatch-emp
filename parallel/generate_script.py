@@ -16,7 +16,6 @@ if __name__ == '__main__':
     psr.add_argument('libpath', type=str, help="Path to library file")
     psr.add_argument('formatstring', type=str, help="Format string")
     psr.add_argument('cols', nargs='*', type=str, help="Columns to use")
-    psr.add_argument('-s', '--suffix', type=str, default="", help="Suffix to append to result filename")
     psr.add_argument('-a', '--append', action='store_const', const='a', default="w", help="Append to existing script")
     args = psr.parse_args()
 

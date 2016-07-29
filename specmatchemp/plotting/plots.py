@@ -117,7 +117,7 @@ def plot_library_spectrum(lib, lib_index, wavlim=None, offset=0, plt_kw={}):
 
 
 ################################# Shift plots ##################################
-def plot_shifts(s, w, s_un, w_un, s_ref, w_ref, s_nso=None, w_nso=None, wavlim=None, legend=False,):
+def plot_shifts(s, w, s_un, w_un, s_ref, w_ref, s_nso=None, w_nso=None, wavlim=None, legend=False, labels={}):
     """Plot the shifted and unshifted spectra against the reference.
 
     Args:
@@ -140,13 +140,37 @@ def plot_shifts(s, w, s_un, w_un, s_ref, w_ref, s_nso=None, w_nso=None, wavlim=N
     plt.plot(w_ref, s_ref+0.3, '-', label="Reference")
     if s_nso is not None and w_nso is not None:
         plt.plot(w_nso, s_nso+0.6, '-', label="NSO")
-    plt.ylim(-0.8,1.8)
+
+    xlim = plt.xlim()
+    if 'targ_label' in labels:
+        plt.text(xlim[0]+0.1, 1.05, 'Target (shifted): {0}'.format(labels['targ_label']))
+        plt.text(xlim[0]+0.1, 0.45, 'Target (unshifted): {0}'.format(labels['targ_label']))
+    if 'ref_label' in labels:
+        plt.text(xlim[0]+0.1, 1.35, 'Reference: {0}'.format(labels['ref_label']))
+    if 'nso_label' in labels:
+        plt.text(xlim[0]+0.1, 1.65, 'NSO')
+
+    plt.ylim(-0.5,1.9)
     ax = plt.gca()
     ax.axes.get_yaxis().set_ticks([])
+
+
     if legend:
         plt.legend(loc='lower left')
     plt.xlabel('Wavelength (Angstroms)')
 
+def plot_lags(lags, center_pix, fits, legend=True):
+    num_orders = lags.shape[0]
+    # set different colors for each set
+    colormap = plt.cm.nipy_spectral
+
+    for i in range(num_orders):
+        plt.plot(center_pix[i], lags[i], 'o', color=colormap(0.9*i/num_orders))
+        plt.plot(center_pix[i], fits[i], '-', color=colormap(0.9*i/num_orders), label='{0:d}'.format(i+1))
+
+    plt.xlabel('Pixel number')
+    plt.ylabel('Shift (pixels)')
+    plt.legend(loc='upper left', ncol=2, fontsize='small')
 
 def shifted_spectrum_plot(lib, lib_index, ref, wavlim=None, offset=True):
     """Plot the shifted and unshifted spectra against the reference
