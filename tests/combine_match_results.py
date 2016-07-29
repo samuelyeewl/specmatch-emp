@@ -24,13 +24,13 @@ if __name__ == '__main__':
 
     # global dataframe to store 
     res_global = pd.DataFrame()
-    i = 0
     for name, sdir in zip(names, dirs):
         # individual dataframe for each star
         res_star = pd.DataFrame()
 
         # get wavelengths used
         files = glob.glob(os.path.join(sdir, name+'_*_match.csv'))
+        files = [f if re.search(str(name)+r'_\d+_match.csv', f) for f in files]
         wls = [re.search(name+'_(.+?)_match.csv', f).group(1) for f in files]
 
         for wl, f in zip(wls, files):

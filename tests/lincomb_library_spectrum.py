@@ -60,7 +60,6 @@ def main(libpath, targ_name, respath, outpath, num_best, wavlim):
     res_lincomb.to_csv(outpath)
 
 
-
 if __name__ == '__main__':
     psr = ArgumentParser(description="Cross-match the SpecMatch-Emp library with itself")
     psr.add_argument('library', type=str, help="Path to library")

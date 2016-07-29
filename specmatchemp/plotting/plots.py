@@ -172,7 +172,7 @@ def plot_lags(lags, center_pix, fits, legend=True):
     plt.xlabel('Pixel number')
     plt.ylabel('Shift (pixels)')
     plt.legend(loc='upper left', ncol=2, fontsize='small')
-    
+
 
 ################################# Shift plots ##################################
 
@@ -217,58 +217,91 @@ def plot_library_match(lib, targ_idx, ref_idx, plot_targ=True, plot_resid=True, 
 
 ################################# Match plots ##################################
 
+def bestmatch_comparison_plot(res, paramx, paramy, num_best, cscol, distcol='dist'):
+    res = res.sort_values(by=distcol)
+    plt.plot(res[paramx], res[paramy], '.', label='_nolegend_')
+    plt.plot(res.iloc[0][paramx], res.iloc[0][paramy], '*', label='Target')
+    plt.plot(res.iloc[1:num_best+1][paramx], res.iloc[1:num_best+1][paramy], 's', label='Closest stars')
+    res = res.sort_values(by=cscol)
+    plt.plot(res.iloc[0:num_best][paramx], res.iloc[0:num_best][paramy], '^', label='Best matches')
+    plt.legend(numpoints=1, fontsize='small')
+
+
 ############################# Library test plots ###############################
-def plot_param_chi_squared(targ_idx, values, lib, param):
-    """Plots chi-squared as a function of a given parameter
+# def plot_param_chi_squared(targ_idx, values, lib, param):
+#     """Plots chi-squared as a function of a given parameter
 
-    Args:
-        targ_idx (int): The library index of the target star
-        values (pd.DataFrame): Dataframe containing param column and chi_squared column,
-            sorted by chi_squared
-        lib (library.Library): library object
-        param (str): Parameter to be plotted
-    """
-    # sort matches by chi_squared
-    values = values.sort_values(by='chi_squared')
+#     Args:
+#         targ_idx (int): The library index of the target star
+#         values (pd.DataFrame): Dataframe containing param column and chi_squared column,
+#             sorted by chi_squared
+#         lib (library.Library): library object
+#         param (str): Parameter to be plotted
+#     """
+#     # sort matches by chi_squared
+#     values = values.sort_values(by='chi_squared_5100')
 
-    plt.plot(values[param], values.chi_squared,'.')
-    plt.plot(values.head(10)[param], values.head(10).chi_squared, 'r.')
-    plt.axvline(x=lib.library_params.loc[targ_idx][param], color='k')
-    
-def chi_squared_plot(targ_idx, df_match, lib, exclude_snr=0):
-    """Creates a composite plot of chi-squared as a function of Teff, logg, [Fe/H]
+#     plt.plot(values[param], values.chi_squared,'.')
+#     plt.plot(values.head(10)[param], values.head(10).chi_squared, 'r.')
+#     plt.axvline(x=lib.library_params.loc[targ_idx][param], color='k')
 
-    Args:
-        targ_idx (int): The library index of the target star
-        df_match (pd.DataFrame): Dataframe containing match results
-        lib (library.Library): library object
-        exclude_snr (float): (optional) Signal-to-noise ratio cutoff
-    """
-    star = lib.library_params.loc[targ_idx].cps_name
-    grouped_match = df_match.groupby('targ_idx')
-    cut = df_match.ix[grouped_match.groups[targ_idx]]
-    cut.rename(columns={'ref_idx': 'lib_index'}, inplace=True)
-    values = pd.merge(cut, lib.library_params, how='left', on='lib_index')
-    
-    # remove matches with poor snr
-    snr_query = "snr > {0}".format(exclude_snr)
-    values = values.query(snr_query)
-    
-    plt.suptitle('Star: {0}'.format(star))
+def plot_param_chi_squared(res, param, targ_idx, suffix):
+    cs_col = 'chi_squared'+suffix
+    res = res.sort_values(by=cs_col)
+
+    plt.plot(res[param], res[cs_col], '.')
+    plt.plot(res.head(10)[param], res.head(10)[cs_col], 'r.')
+    plt.axvline(x=res.loc[targ_idx, param], color='k')
+
+def chi_squared_plot(res, targ_idx, suffix):
     plt.subplot(131)
     plt.semilogy()
-    plot_param_chi_squared(targ_idx, values, lib, 'Teff')
+    plot_param_chi_squared(res, 'Teff', targ_idx, suffix)
     plt.ylabel(r'$\chi^2$')
     plt.xlabel(r'$T_{eff}$ (K)')
     plt.subplot(132)
     plt.semilogy()
-    plot_param_chi_squared(targ_idx, values, lib, 'logg')
+    plot_param_chi_squared(res, 'logg', targ_idx, suffix)
     plt.xlabel(r'$\log\ g$ (dex)')
     plt.subplot(133)
     plt.semilogy()
-    plot_param_chi_squared(targ_idx, values, lib, 'feh')
+    plot_param_chi_squared(res, 'feh', targ_idx, suffix)
     plt.xlabel(r'$[Fe/H]$ (dex)')
-    plt.tight_layout()
+    
+# def chi_squared_plot(targ_idx, df_match, lib, exclude_snr=0):
+#     """Creates a composite plot of chi-squared as a function of Teff, logg, [Fe/H]
+
+#     Args:
+#         targ_idx (int): The library index of the target star
+#         df_match (pd.DataFrame): Dataframe containing match results
+#         lib (library.Library): library object
+#         exclude_snr (float): (optional) Signal-to-noise ratio cutoff
+#     """
+#     star = lib.library_params.loc[targ_idx].cps_name
+#     grouped_match = df_match.groupby('targ_idx')
+#     cut = df_match.ix[grouped_match.groups[targ_idx]]
+#     cut.rename(columns={'ref_idx': 'lib_index'}, inplace=True)
+#     values = pd.merge(cut, lib.library_params, how='left', on='lib_index')
+    
+#     # remove matches with poor snr
+#     # snr_query = "snr > {0}".format(exclude_snr)
+#     # values = values.query(snr_query)
+    
+#     plt.suptitle('Star: {0}'.format(star))
+#     plt.subplot(131)
+#     plt.semilogy()
+#     plot_param_chi_squared(targ_idx, values, lib, 'Teff')
+#     plt.ylabel(r'$\chi^2$')
+#     plt.xlabel(r'$T_{eff}$ (K)')
+#     plt.subplot(132)
+#     plt.semilogy()
+#     plot_param_chi_squared(targ_idx, values, lib, 'logg')
+#     plt.xlabel(r'$\log\ g$ (dex)')
+#     plt.subplot(133)
+#     plt.semilogy()
+#     plot_param_chi_squared(targ_idx, values, lib, 'feh')
+#     plt.xlabel(r'$[Fe/H]$ (dex)')
+#     plt.tight_layout()
 
 def library_comparison_plot(lib, param_x, param_y, xlabel=None, ylabel=None, ptlabels=False, suffix='_sm'):
     """Plots comparison between library and matched values.

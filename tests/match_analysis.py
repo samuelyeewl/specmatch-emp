@@ -13,24 +13,24 @@ import sys
 from argparse import ArgumentParser
 
 
-def generate_sm_values(lib, results, method='best_match', num_mean=3, suffix='_sm'):
+def generate_sm_values(lib, results, method='best_match', cscol='chi_squared', num_mean=3, suffix='_sm'):
     params = lib.library_params
     grouped_results = results.groupby('targ_idx')
 
     # Use closest matched spectra as sm values
     if method == 'best_match':
         params['best_match'] = params.lib_index.apply(\
-            lambda i: grouped_results.get_group(i).sort_values(by='chi_squared').iloc[0].ref_idx)
+            lambda i: grouped_results.get_group(i).sort_values(by=cscol).iloc[0].ref_idx)
         for p in library.STAR_PROPS:
             psm = p+suffix
             params[psm] = params.best_match.apply(lambda i: params.loc[i, p])
         
         params['best_chi_squared'] = params.lib_index.apply(\
-            lambda i: grouped_results.get_group(i).sort_values(by='chi_squared').iloc[0].chi_squared)
+            lambda i: grouped_results.get_group(i).sort_values(by=cscol).iloc[0].chi_squared)
 
     elif method == 'average':
         params['best_n'] = params.lib_index.apply(lambda i: \
-            np.array(grouped_results.get_group(i).sort_values(by='chi_squared').iloc[0:num_mean].ref_idx))
+            np.array(grouped_results.get_group(i).sort_values(by=cscol).iloc[0:num_mean].ref_idx))
         for p in library.STAR_PROPS:
             psm = p+suffix
             params[psm] = params.best_n.apply(lambda i: params.loc[i, p].mean())
@@ -47,9 +47,9 @@ def find_closest_star(row, lib):
     return lib.library_params.apply(dist, args=(row,), axis=1).sort_values().index[1]
 
 
-def main(library_path, results_path, outdir, prefix, title):
-    lib = library.read_hdf(library_path)
-    results = pd.DataFrame.from_csv(results_path)
+def main(library_path, results_path, outdir, prefix, title, minw):
+    lib = library.read_hdf(library_path, wavlim='none')
+    results = pd.DataFrame.from_csv(results_path, index_col=0)
 
     # # Plot library
     # fig = plt.figure(figsize=(12,8))
@@ -68,7 +68,7 @@ def main(library_path, results_path, outdir, prefix, title):
     # plt.close(fig)
 
     # Diagnostic plot for best match
-    lib.library_params = generate_sm_values(lib, results, method='best_match', suffix='_bm')
+    lib.library_params = generate_sm_values(lib, results, method='best_match', cscol='chi_squared_{0:d}'.format(minw), suffix='_bm')
 
     fig = plt.figure(figsize=(15,12))
     plots.diagnostic_plots(lib, clipping=None, suffix='_bm')
@@ -136,6 +136,7 @@ if __name__ == '__main__':
     psr.add_argument('outdir', type=str, help="Path to output directory")
     psr.add_argument('prefix', type=str, help="String to prefix to output files")
     psr.add_argument('title', type=str, help="String to add to title")
+    psr.add_argument('minw', type=int, help="Minimum wavelength")
     args = psr.parse_args()
 
     mpl.rcParams['figure.dpi'] = 200
@@ -148,4 +149,4 @@ if __name__ == '__main__':
         print("Could not find {0}".format(args.results))
         sys.exit()
 
-    main(args.library, args.results, args.outdir, args.prefix, args.title)
+    main(args.library, args.results, args.outdir, args.prefix, args.title, args.minw)
