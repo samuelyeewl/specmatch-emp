@@ -24,6 +24,7 @@ if __name__ == '__main__':
 
     # global dataframe to store 
     res_global = pd.DataFrame()
+    i = 0
     for name, sdir in zip(names, dirs):
         # individual dataframe for each star
         res_star = pd.DataFrame()
@@ -35,9 +36,10 @@ if __name__ == '__main__':
         for wl, f in zip(wls, files):
             if res_star.empty:
                 res_star = pd.read_csv(f, index_col=0)
+                res_star.rename(columns={'lib_index.1':'lib_index'}, inplace=True)
             else:
                 # merge on columns
-                df = pd.read_csv(f):
+                df = pd.read_csv(f, index_col=0)
                 res_star = res_star.join(df['chi_squared_{0} fit_params_{0}'.format(wl).split()])
 
         # save each star's result
@@ -52,9 +54,9 @@ if __name__ == '__main__':
         if res_global.empty:
             res_global = res_star
         else:
-            res_global = pd.concat((res_global, res_star))
+            res_global = pd.concat((res_global, res_star), ignore_index=True)
 
     # save global results
     res_global.reset_index(inplace=True)
-    outpath_global = os.path.join(resdir, 'match_results.csv')
-    res_global.to_csv(args.outfile)
+    outpath_global = os.path.join(args.resdir, 'match_results.csv')
+    res_global.to_csv(outpath_global)
