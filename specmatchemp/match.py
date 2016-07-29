@@ -224,7 +224,7 @@ class MatchLincomb(Match):
         chi_square = super().objective(params)
 
         # Add a Gaussian prior
-        sum_coeff = np.sum(get_lincomb_coeffs(params))
+        sum_coeff = np.sum(self.get_lincomb_coeffs(params))
 
         WIDTH = 1e-2
         chi_square += (sum_coeff-1)**2/(2*WIDTH**2)
@@ -261,7 +261,7 @@ class MatchLincomb(Match):
         return params
 
     def get_lincomb_coeffs(self, params):
-        num_refs = params['num_refs']
+        num_refs = params['num_refs'].value
 
         coeffs = []
         for i in range(num_refs):

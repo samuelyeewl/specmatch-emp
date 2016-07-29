@@ -172,73 +172,7 @@ def plot_lags(lags, center_pix, fits, legend=True):
     plt.xlabel('Pixel number')
     plt.ylabel('Shift (pixels)')
     plt.legend(loc='upper left', ncol=2, fontsize='small')
-
-def shifted_spectrum_plot(lib, lib_index, ref, wavlim=None, offset=True):
-    """Plot the shifted and unshifted spectra against the reference
-
-    Args:
-        lib (library.Library): The library object
-        lib_index (int): Index of spectrum in library
-        ref: Either path to a FITS file containing a standard spectrum, or
-            a library index to the spectrum used as a reference.
-        wavlim (2-element iterable): (optional) Wavelength range
-        offset (bool): Whether to plot the spectra offset from each other.
-    """
-    # find reference spectrum
-    if os.path.isfile(ref):
-        w_ref, s_ref, serr_ref, hdr_ref = specmatchio.read_standard_spectrum(ref, wavlim)
-    else:
-        pattern = '^'+ref+'$'
-        row = lib.library_params[lib.library_params.lib_obs.str.match(pattern)]
-        if row.empty:
-            print("Could not find observation {0} in library".format(ref))
-            return
-        ref_idx = row.iloc[0].lib_index
-        s_ref = lib.library_spectra[ref_idx,0]
-        serr_ref = lib.library_spectra[ref_idx,1]
-        w_ref = lib.wav
-    if wavlim is not None:
-        w_ref, s_ref, serr_ref = specmatchio.truncate_spectrum(wavlim, w_ref, s_ref, serr_ref)
     
-    # find unshifted spectrum
-    param, spectrum = lib[lib_index]
-    unshifted_file = UNSHIFTED_PATH.format(param.lib_obs)
-    
-    if offset:
-        plt.plot(w_ref, s_ref, label="Reference")
-        plot_hires_spectrum(unshifted_file, wavlim, label="Unshifted", offset=1)
-        plot_library_spectrum(lib, param.lib_obs, wavlim, label="Shifted", offset=-1)
-    else:
-        plt.plot(w_ref, s_ref, label="Reference")
-        plot_hires_spectrum(unshifted_file, wavlim, label="Unshifted")
-        plot_library_spectrum(lib, param.lib_obs, wavlim, label="Shifted")
-    
-    plt.title('Star: {0}, Spectrum: {1}\nReference: {2}'.format(param.cps_name, param.lib_obs, ref))
-    plt.xlabel('Wavelength (Angstroms)')
-    plt.legend(loc='best')
-
-def shift_data_plot(lib, lib_index):    
-    """Plots lags for each order of the spectrum
-    """
-    param, spectrum = lib[lib_index]
-    shift_datafile = '/Users/samuel/SpecMatch-Emp/lib/shift_data/{0}.txt'.format(param.lib_obs)
-    list_lags = np.loadtxt(shift_datafile)
-    shape = np.shape(list_lags)
-    list_lags = list_lags.reshape(shape[0], 3, int(shape[1]/3))
-    for i in range(len(list_lags)):
-        plt.plot(list_lags[i,0], list_lags[i,1], '.')
-        plt.plot(list_lags[i,0], list_lags[i,2], 'r-')
-    # plt.title('Star: {0}, Spectrum: {1}'.format(param.cps_name, param.lib_obs))
-    plt.xlabel('Pixel value')
-    plt.ylabel('Lag')
-
-def shift_plot(lib, lib_index, wavlim=(5160,5190)):
-    gs = gridspec.GridSpec(3,1)
-    plt.subplot(gs[0])
-    ref_path = '/Users/samuel/Dropbox/SpecMatch-Emp/nso/nso_std.fits'
-    shifted_spectrum_plot(lib, lib_index, wavlim, ref_path)
-    plt.subplot(gs[1:2])
-    shift_data_plot(lib, lib_index)
 
 ################################# Shift plots ##################################
 

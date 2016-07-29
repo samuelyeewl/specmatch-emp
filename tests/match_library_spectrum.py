@@ -59,7 +59,7 @@ if __name__ == '__main__':
     outdir = os.path.join(args.outdir, args.cps_name)
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    outpath = os.path.join(outdir, targ_name+'_{0:d}{1}_match.csv'.format(args.minw, args.suffix))
+    outpath = os.path.join(outdir, args.cps_name+'_{0:d}_match{1}.csv'.format(args.minw, args.suffix))
     wavlim = (args.minw, args.minw+args.lengthw)
 
-    main(args.library, args.cps_name, aoutpath, wavlim)
+    main(args.library, args.cps_name, outpath, wavlim)
