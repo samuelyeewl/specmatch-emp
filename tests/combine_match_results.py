@@ -47,7 +47,7 @@ if __name__ == '__main__':
         res_star.to_csv(outpath_star)
 
         # concatenate rows to global dataframe
-        targ_idx = res_star[res_star.cps_name.str.contains(name)].index[0]
+        targ_idx = res_star[res_star.cps_name.str.contains('^'+str(name)+'$')].index[0]
         res_star['targ_idx'] = targ_idx
         res_star['ref_idx'] = res_star.index
 
