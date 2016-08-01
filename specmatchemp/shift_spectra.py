@@ -91,10 +91,9 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
             center_pix[j] = (j+1/2)*l_sect
 
             if outfile is not None:
-                subgrp = grp.create_group("/xcorr/sect_{0:d}".format(j))
+                subgrp = grp.create_group("sect_{0:d}".format(j))
                 subgrp["xcorr"] = xcorr
                 subgrp["lag_arr"] = lag_arr
-            
 
         lag_data.append(lags)
         center_pix_data.append(center_pix)
