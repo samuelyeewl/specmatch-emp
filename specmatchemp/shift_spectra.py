@@ -80,12 +80,21 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
         lag_arrs = []
         xcorrs = []
 
+        if outfile is not None:
+            grp = outfile.create_group("/xcorr/order_{0:d}".format(i))
+
         for j in range(num_sections):
             # get the shifts in pixel number
             lag, lag_arr, xcorr = solve_for_shifts(ss[j*l_sect:(j+1)*l_sect],
                 s_ref_c[j*l_sect:(j+1)*l_sect])
             lags[j] = lag
             center_pix[j] = (j+1/2)*l_sect
+
+            if outfile is not None:
+                subgrp = grp.create_group("/xcorr/sect_{0:d}".format(j))
+                subgrp["xcorr"] = xcorr
+                subgrp["lag_arr"] = lag_arr
+            
 
         lag_data.append(lags)
         center_pix_data.append(center_pix)
