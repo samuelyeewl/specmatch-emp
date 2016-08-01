@@ -21,6 +21,7 @@ from specmatchemp.io import specmatchio
 
 REGION1 = (5158,5172)
 REGION2 = (5846,5860)
+ORDER = 1
 
 def main(specpath, outpath, nso=None):
     f = h5py.File(specpath, 'r')
@@ -46,6 +47,15 @@ def main(specpath, outpath, nso=None):
         pdf.savefig()
         plt.close()
 
+        # Plot xcorr
+        fig = plt.figure(figsize=(8,6))
+        plt.title('Cross-correlation array for star {0}, order {1:d}'.format(f.attrs['cps_name'], ORDER), fontsize=16)
+        plot_xcorr(f, ORDER)
+        plt.tight_layout()
+        pdf.savefig()
+        plt.close()
+
+
 def plot_shifts(f, wavlim, nso):
     """Wrapper function to take in a file object
     """
@@ -69,6 +79,19 @@ def plot_shifts(f, wavlim, nso):
 
 def plot_lags(f):
     plots.plot_lags(f['lag'][:], f['center_pix'][:], f['fit'][:])
+
+def plot_xcorr(f, order):
+    """Plot the correlation array produced when shifting
+
+    Args:
+        f: h5py file containing xcorr data
+        order: Order on chip to plot
+    """
+    num_sects = len(f['xcorr/order_{0:d}'.format(order)])
+    for i in range(num_sects):
+        grp = f['xcorr/order_{0:d}/sect_{1:d}'.format(order, i)]
+        plt.plot(grp['lag_arr'][:], grp['xcorr'][:], label="{0:d}".format(i))
+    plt.legend(loc='upper left', fontsize='small')
 
 
 
