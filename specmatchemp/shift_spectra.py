@@ -239,7 +239,9 @@ def solve_for_shifts(s, s_ref):
         The pixel shift, the lag and correlation data
     """
     # correlate the two spectra
-    xcorr = np.correlate(s-1, s_ref-1, mode='full')
+    smean = np.mean(s)
+    srefmean = np.mean(s_ref)
+    xcorr = np.correlate(s-smean, s_ref-smean, mode='full')
     xcorr = np.nan_to_num(xcorr)
     max_corr = np.argmax(xcorr)
 

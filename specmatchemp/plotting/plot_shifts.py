@@ -21,7 +21,7 @@ from specmatchemp.io import specmatchio
 
 REGION1 = (5158,5172)
 REGION2 = (5846,5860)
-ORDER = 1
+ORDER = 15
 
 def main(specpath, outpath, nso=None):
     f = h5py.File(specpath, 'r')
@@ -91,6 +91,8 @@ def plot_xcorr(f, order):
     for i in range(num_sects):
         grp = f['xcorr/order_{0:d}/sect_{1:d}'.format(order, i)]
         plt.plot(grp['lag_arr'][:], grp['xcorr'][:], label="{0:d}".format(i))
+        max_corr = np.argmax(grp['xcorr'][:])
+        plt.plot(grp['lag_arr'][:][max_corr], grp['xcorr'][:][max_corr], 'ko')
     plt.legend(loc='upper left', fontsize='small')
 
 
