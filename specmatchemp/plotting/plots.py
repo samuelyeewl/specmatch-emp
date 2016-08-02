@@ -177,7 +177,7 @@ def plot_lags(lags, center_pix, fits, legend=True):
 ################################# Shift plots ##################################
 
 ################################# Match plots ##################################
-def plot_match(mt, plot_targ=True, plot_resid=True, offset=False):
+def plot_match(mt, plot_targ=True, plot_resid=True, offset=True, labels={}, plt_kw={}):
     """Plot a match object
 
     Args:
@@ -187,19 +187,48 @@ def plot_match(mt, plot_targ=True, plot_resid=True, offset=False):
             and library values.
         offset (bool): If true, offsets the target, reference and modified spectra
     """
+    ax = plt.gca()
+    xlim = ax.get_xlim()
     if plot_targ:
-        plt.plot(mt.w, mt.s_targ, label="Target")
+        plt.plot(mt.w, mt.s_targ, label="Target", **plt_kw)
+        if 'targ_label' in labels:
+            plt.text(xlim[0]+0.1, 1.05, 'Target: '+labels['targ_label'], fontsize='small')
+        else:
+            plt.text(xlim[0]+0.1, 1.05, 'Target', fontsize='small')
+    
     if mt.s_mod is None:
         off = 1 if offset else 0
-        plt.plot(mt.w, mt.s_ref+off, label="Library")
+        plt.plot(mt.w, mt.s_ref+off, label="Library", **plt_kw)
+        if 'ref_label' in labels:
+            plt.text(xlim[0]+0.1, 1.05, 'Reference: '.format(labels['ref_label']), fontsize='small')
+        else:
+            plt.text(xlim[0]+0.1, 1.05, 'Reference', fontsize='small')
+
     else:
         off = 1 if offset else 0
-        plt.plot(mt.w, mt.s_mod+off, label="Modified library")
+        plt.plot(mt.w, mt.s_mod+off, label="Modified library", **plt_kw)
+        if 'mod_label' in labels:
+            plt.text(xlim[0]+0.1, 2.05, 'Reference (Modified): '+labels['mod_label'], fontsize='small')
+        else:
+            plt.text(xlim[0]+0.1, 2.05, 'Reference (Modified)', fontsize='small')
+
         off = 2 if offset else 0
-        plt.plot(mt.w, mt.s_ref+off, label="Library")
+        plt.plot(mt.w, mt.s_ref+off, label="Library", **plt_kw)
+        if 'ref_label' in labels:
+            plt.text(xlim[0]+0.1, 3.05, 'Reference: '+labels['ref_label'], fontsize='small')
+        else:
+            plt.text(xlim[0]+0.1, 3.05, 'Reference', fontsize='small')
 
     if plot_resid:
         plt.plot(mt.w, mt.best_residuals(), label="Residuals")
+        if 'res_label' in labels:
+            plt.text(xlim[0]+0.1, 0.05, 'Residuals: '+labels['res_label'], fontsize='small')
+        else:
+            plt.text(xlim[0]+0.1, 0.05, 'Residuals', fontsize='small')
+
+    # Hide y label ticks
+    ax = plt.gca()
+    ax.axes.get_yaxis().set_ticks([])
 
 def plot_library_match(lib, targ_idx, ref_idx, plot_targ=True, plot_resid=True, offset=False):
     """Generate and plot the match object at the given indices
@@ -220,7 +249,7 @@ def plot_library_match(lib, targ_idx, ref_idx, plot_targ=True, plot_resid=True, 
 def bestmatch_comparison_plot(res, paramx, paramy, num_best, cscol, distcol='dist'):
     res = res.sort_values(by=distcol)
     plt.plot(res[paramx], res[paramy], '.', label='_nolegend_')
-    plt.plot(res.iloc[0][paramx], res.iloc[0][paramy], '*', label='Target')
+    plt.plot(res.iloc[0][paramx], res.iloc[0][paramy], '*', label='Target', ms=15)
     plt.plot(res.iloc[1:num_best+1][paramx], res.iloc[1:num_best+1][paramy], 's', label='Closest stars')
     res = res.sort_values(by=cscol)
     plt.plot(res.iloc[0:num_best][paramx], res.iloc[0:num_best][paramy], '^', label='Best matches')
@@ -252,6 +281,7 @@ def plot_param_chi_squared(res, param, targ_idx, suffix):
     plt.plot(res[param], res[cs_col], '.')
     plt.plot(res.head(10)[param], res.head(10)[cs_col], 'r.')
     plt.axvline(x=res.loc[targ_idx, param], color='k')
+    
 
 def chi_squared_plot(res, targ_idx, suffix):
     plt.subplot(131)
@@ -261,47 +291,15 @@ def chi_squared_plot(res, targ_idx, suffix):
     plt.xlabel(r'$T_{eff}$ (K)')
     plt.subplot(132)
     plt.semilogy()
-    plot_param_chi_squared(res, 'logg', targ_idx, suffix)
-    plt.xlabel(r'$\log\ g$ (dex)')
+    plot_param_chi_squared(res, 'radius', targ_idx, suffix)
+    ax = plt.gca()
+    ax.set_xscale('log')
+    plt.xlabel(r'$R\ (R_\odot)$')
     plt.subplot(133)
     plt.semilogy()
     plot_param_chi_squared(res, 'feh', targ_idx, suffix)
     plt.xlabel(r'$[Fe/H]$ (dex)')
     
-# def chi_squared_plot(targ_idx, df_match, lib, exclude_snr=0):
-#     """Creates a composite plot of chi-squared as a function of Teff, logg, [Fe/H]
-
-#     Args:
-#         targ_idx (int): The library index of the target star
-#         df_match (pd.DataFrame): Dataframe containing match results
-#         lib (library.Library): library object
-#         exclude_snr (float): (optional) Signal-to-noise ratio cutoff
-#     """
-#     star = lib.library_params.loc[targ_idx].cps_name
-#     grouped_match = df_match.groupby('targ_idx')
-#     cut = df_match.ix[grouped_match.groups[targ_idx]]
-#     cut.rename(columns={'ref_idx': 'lib_index'}, inplace=True)
-#     values = pd.merge(cut, lib.library_params, how='left', on='lib_index')
-    
-#     # remove matches with poor snr
-#     # snr_query = "snr > {0}".format(exclude_snr)
-#     # values = values.query(snr_query)
-    
-#     plt.suptitle('Star: {0}'.format(star))
-#     plt.subplot(131)
-#     plt.semilogy()
-#     plot_param_chi_squared(targ_idx, values, lib, 'Teff')
-#     plt.ylabel(r'$\chi^2$')
-#     plt.xlabel(r'$T_{eff}$ (K)')
-#     plt.subplot(132)
-#     plt.semilogy()
-#     plot_param_chi_squared(targ_idx, values, lib, 'logg')
-#     plt.xlabel(r'$\log\ g$ (dex)')
-#     plt.subplot(133)
-#     plt.semilogy()
-#     plot_param_chi_squared(targ_idx, values, lib, 'feh')
-#     plt.xlabel(r'$[Fe/H]$ (dex)')
-#     plt.tight_layout()
 
 def library_comparison_plot(lib, param_x, param_y, xlabel=None, ylabel=None, ptlabels=False, suffix='_sm'):
     """Plots comparison between library and matched values.

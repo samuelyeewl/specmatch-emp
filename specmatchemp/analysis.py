@@ -9,7 +9,7 @@ import pandas as pd
 
 from specmatchemp import library
 
-def generate_sm_values(params, results, method='lincomb', suffix='_sm'):
+def generate_sm_values(params, results, method='lincomb', suffix='_sm', cscol='chi_squared'):
     """Generate the derived values and add it to the parameters table
 
     Args:
@@ -39,22 +39,22 @@ def generate_sm_values(params, results, method='lincomb', suffix='_sm'):
 
     elif method == 'best_match':
         grouped_results = results.groupby('targ_idx')
-        params.loc[:,'best_match'] = params.lib_index.apply(\
-            lambda i: grouped_results.get_group(i).sort_values(by='chi_squared').iloc[0].ref_idx)
+        params.loc[:,'best_match'+suffix] = params.lib_index.apply(\
+            lambda i: grouped_results.get_group(i).sort_values(by=cscol).iloc[0].ref_idx)
         for p in library.STAR_PROPS:
             psm = p+suffix
-            params.loc[:,psm] = params.best_match.apply(lambda i: params.loc[i, p])
+            params.loc[:,psm] = params['best_match'+suffix].apply(lambda i: params.loc[i, p])
         
-        params.loc[:,'best_chi_squared'] = params.lib_index.apply(\
-            lambda i: grouped_results.get_group(i).sort_values(by='chi_squared').iloc[0].chi_squared)
+        params.loc[:,'best_chi_squared'+suffix] = params.lib_index.apply(\
+            lambda i: grouped_results.get_group(i).sort_values(by=cscol).iloc[0][cscol])
 
     elif method == 'average':
         grouped_results = results.groupby('targ_idx')
-        params.loc[:,'best_n'] = params.lib_index.apply(lambda i: \
-            np.array(grouped_results.get_group(i).sort_values(by='chi_squared').iloc[0:num_mean].ref_idx))
+        params.loc[:,'best_n'+suffix] = params.lib_index.apply(lambda i: \
+            np.array(grouped_results.get_group(i).sort_values(by=cscol).iloc[0:num_mean].ref_idx))
         for p in library.STAR_PROPS:
             psm = p+suffix
-            params.loc[:,psm] = params.best_n.apply(lambda i: params.loc[i, p].mean())
+            params.loc[:,psm] = params['best_n'+suffix].apply(lambda i: params.loc[i, p].mean())
     
     return params
 

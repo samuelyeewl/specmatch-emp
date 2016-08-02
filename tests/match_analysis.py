@@ -26,7 +26,7 @@ def generate_sm_values(lib, results, method='best_match', cscol='chi_squared', n
             params[psm] = params.best_match.apply(lambda i: params.loc[i, p])
         
         params['best_chi_squared'] = params.lib_index.apply(\
-            lambda i: grouped_results.get_group(i).sort_values(by=cscol).iloc[0].chi_squared)
+            lambda i: grouped_results.get_group(i).sort_values(by=cscol).iloc[0][cscol])
 
     elif method == 'average':
         params['best_n'] = params.lib_index.apply(lambda i: \
