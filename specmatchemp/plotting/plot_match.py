@@ -103,7 +103,7 @@ def plot_best_matches(res, targ_idx, lib, wl, cscol='chi_squared', fitcol='fit_p
             ax = plt.subplot(num_best, 1, i+1, sharex=shared_ax)
         
         ax.set_xlim((wl+50, wl+75))
-        ax.set_title('Best Match {0:d}'.format(i), fontsize=12)
+        ax.set_title('Best Match {0:d}'.format(i+1), fontsize=12)
         
         plots.plot_match(mt, labels=labels)
         

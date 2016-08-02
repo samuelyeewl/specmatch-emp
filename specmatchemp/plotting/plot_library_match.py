@@ -20,6 +20,21 @@ from specmatchemp import library
 from specmatchemp import analysis
 from specmatchemp.plotting import plots
 
+def five_pane_plots(lib, res, minw, query=None, ptlabels=False):
+    # generate best match values
+    suf = '_bm{0:d}'.format(minw)
+    cscol = 'chi_squared_{0:d}'.format(minw)
+    if 'Teff'+suf not in lib.library_params.columns:
+        lib.library_params = analysis.generate_sm_values(lib.library_params, res,\
+                method='best_match', suffix=suf, cscol=cscol)
+        lib.library_params = analysis.generate_residuals(lib.library_params, suffix=suf)
+
+    plots.diagnostic_plots(lib, suffix=suf, clipping=None, query=query, ptlabels=ptlabels)
+    plt.suptitle("SpecMatch-Emp Results, Method: Best Match"+\
+                "\nWavelength: {0:d} - {1:d} A".format(minw, minw+100), fontsize=16)
+    plt.tight_layout(rect=[0,0.03,1,0.95])
+
+
 def main(libpath, respath, outpath, suffix=""):
     lib = library.read_hdf(libpath, wavlim='none')
     lib.library_params.loc[:,'closest_star'] = lib.library_params.apply(analysis.find_closest_star, args=(lib,), axis=1)
@@ -34,41 +49,34 @@ def main(libpath, respath, outpath, suffix=""):
         for (wl, cs) in zip(wls, cscols):
             # generate best match values
             suf = '_bm{0:d}'.format(wl)
-            lib.library_params = analysis.generate_sm_values(lib.library_params, res_global,\
-                method='best_match', suffix=suf, cscol=cs)
-            lib.library_params = analysis.generate_residuals(lib.library_params, suffix=suf)
-            lib.library_params.loc[:,'found_closest_{0:d}'.format(wl)] = \
-                lib.library_params.closest_star == lib.library_params['best_match'+suf]
-            lib.library_params.loc[:,'found_closest'] |= lib.library_params.loc[:,'found_closest_{0:d}'.format(wl)]
+            # lib.library_params = analysis.generate_sm_values(lib.library_params, res_global,\
+            #     method='best_match', suffix=suf, cscol=cs)
+            # lib.library_params = analysis.generate_residuals(lib.library_params, suffix=suf)
+            
 
             # Plot entire library
             fig = plt.figure(figsize=(15,12))
-            plots.diagnostic_plots(lib, clipping=None, suffix=suf)
-            fig.suptitle("SpecMatch-Emp Results, Method: Best Match"+\
-                "\nWavelength: {0:d} - {1:d} A".format(wl, wl+100), fontsize=16)
-            plt.tight_layout(rect=[0,0.03,1,0.95])
+            five_pane_plots(lib, res_global, wl)
             pdf.savefig()
             plt.close()
 
             # Plot cool stars
             fig = plt.figure(figsize=(15,12))
-            plots.diagnostic_plots(lib, query='Teff < 4500', clipping=None, suffix=suf)
-            fig.suptitle(r"SpecMatch-Emp Results, $T_{eff} < 4500$ K, Method: Best Match"+\
-                "\nWavelength: {0:d} - {1:d} A".format(wl, wl+100), fontsize=16)
-            plt.tight_layout(rect=[0,0.03,1,0.95])
+            five_pane_plots(lib, res_global, wl, query='Teff < 4500')
             pdf.savefig()
             plt.close()
 
             # Plot hot stars
             fig = plt.figure(figsize=(15,12))
-            plots.diagnostic_plots(lib, query='7000 >= Teff >= 4500', clipping=None, suffix=suf)
-            fig.suptitle(r"SpecMatch-Emp Results, $7000 \geq T_{eff} \geq 4500$ K, Method: Best Match"+\
-                "\nWavelength: {0:d} - {1:d} A".format(wl, wl+100), fontsize=16)
-            plt.tight_layout(rect=[0,0.03,1,0.95])
+            five_pane_plots(lib, res_global, wl, query='7000 >= Teff >= 4500')
             pdf.savefig()
             plt.close()
 
-            # High stars for which closest match was found
+            # Highlight stars for which closest match was found
+            lib.library_params.loc[:,'found_closest_{0:d}'.format(wl)] = \
+                lib.library_params.closest_star == lib.library_params['best_match'+suf]
+            lib.library_params.loc[:,'found_closest'] |= lib.library_params.loc[:,'found_closest_{0:d}'.format(wl)]
+
             fig = plt.figure(figsize=(12,8))
             plots.library_comparison_plot(lib, 'Teff', 'radius', r'$T_{eff}$ (K)', r'$R\ (R_\odot)$', suffix=suf)
             mask = lib.library_params['found_closest_{0:d}'.format(wl)]

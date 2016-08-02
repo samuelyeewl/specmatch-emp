@@ -60,7 +60,7 @@ if __name__ == '__main__':
             s+= refpath+" "
             s+= OUTDIR
             if len(args.suffix) > 0:
-                s+= "-s "+args.suffix
+                s+= " -s "+args.suffix
             s+= "\n"
 
             f.write(s)

@@ -281,7 +281,7 @@ def plot_param_chi_squared(res, param, targ_idx, suffix):
     plt.plot(res[param], res[cs_col], '.')
     plt.plot(res.head(10)[param], res.head(10)[cs_col], 'r.')
     plt.axvline(x=res.loc[targ_idx, param], color='k')
-    
+
 
 def chi_squared_plot(res, targ_idx, suffix):
     plt.subplot(131)
@@ -322,7 +322,7 @@ def library_comparison_plot(lib, param_x, param_y, xlabel=None, ylabel=None, ptl
     plt.legend(loc='best')
 
     if ptlabels:
-        lib.library_params.apply(lambda x : plt.text(x[param_x],x[param_y],x['lib_index'], size='x-small', zorder=0),  axis=1)
+        lib.library_params.apply(lambda x : plt.text(x[param_x],x[param_y],' '+x['cps_name'], size='x-small', zorder=0),  axis=1)
 
 def library_difference_plot(lib, param, label=None, clipping=None, suffix='_sm'):
     resid = lib.library_params[param+suffix+'_resid']
@@ -360,7 +360,7 @@ def library_difference_plot(lib, param, label=None, clipping=None, suffix='_sm')
         plt.xlabel(label)
         plt.ylabel(r'$\Delta\ $'+label)
 
-def diagnostic_plots(lib, query=None, clipping=None, suffix='_sm', trend=None):
+def diagnostic_plots(lib, query=None, clipping=None, suffix='_sm', trend=None, ptlabels=False):
     temp_params = lib.library_params
     if query is not None:
         lib.library_params = lib.library_params.query(query)
@@ -368,12 +368,12 @@ def diagnostic_plots(lib, query=None, clipping=None, suffix='_sm', trend=None):
     gs = gridspec.GridSpec(6,2)
     ## HR diagram
     ax = plt.subplot(gs[0:3,0])
-    library_comparison_plot(lib, 'Teff', 'radius', r'$T_{eff}$ (K)', r'$R\ (R_\odot)$', suffix=suffix)
+    library_comparison_plot(lib, 'Teff', 'radius', r'$T_{eff}$ (K)', r'$R\ (R_\odot)$', suffix=suffix, ptlabels=ptlabels)
     reverse_x()
     ax.set_yscale('log')
 
     ax = plt.subplot(gs[3:6,0])
-    library_comparison_plot(lib, 'feh', 'radius', r'$[Fe/H]$ (dex)', r'$R\ (R_\odot)$', suffix=suffix)
+    library_comparison_plot(lib, 'feh', 'radius', r'$[Fe/H]$ (dex)', r'$R\ (R_\odot)$', suffix=suffix, ptlabels=ptlabels)
     ax.set_yscale('log')
     
     ## Difference plots

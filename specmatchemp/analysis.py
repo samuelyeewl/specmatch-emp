@@ -9,7 +9,7 @@ import pandas as pd
 
 from specmatchemp import library
 
-def generate_sm_values(params, results, method='lincomb', suffix='_sm', cscol='chi_squared'):
+def generate_sm_values(params, results, method='lincomb', suffix='_sm', cscol='chi_squared', refcol='ref_idxs', coeffcol='coeffs'):
     """Generate the derived values and add it to the parameters table
 
     Args:
@@ -35,7 +35,7 @@ def generate_sm_values(params, results, method='lincomb', suffix='_sm', cscol='c
         for p in library.STAR_PROPS:
             psm = p+suffix
             params.loc[:,psm] = params.lib_index.apply(lambda i: \
-                lincomb_props(params, p, results.loc[i].ref_idxs, results.loc[i].coeffs))
+                lincomb_props(params, p, results.loc[i, refcol], results.loc[i, coeffcol]))
 
     elif method == 'best_match':
         grouped_results = results.groupby('targ_idx')

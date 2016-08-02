@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
         # lincomb num
         min_num = 2
-        max_num = 3
+        max_num = 9
         for i in np.arange(min_num, max_num):
             # get wavelengths used
             files = glob.glob(os.path.join(sdir, name+'_lincomb{0:d}_*_match.csv'.format(i)))
