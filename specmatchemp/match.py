@@ -128,6 +128,9 @@ class Match:
         ### Rotational broadening parameters
         params.add('vsini', value=1.0, min=0.0, max=10.0)
 
+        ### Spline parameters
+        params = add_spline_positions(params, self.knot_x)
+
         # Perform fit
         if self.opt == 'lm':
             out = lmfit.minimize(self.objective, params)
@@ -169,11 +172,13 @@ class MatchLincomb(Match):
         self.serr_targ = np.copy(s_targ[1])
         self.num_refs = len(s_refs)
         self.s_refs = np.copy(s_refs)
+        self.vsini = vsini
 
         ## Broaden reference spectra
+        self.s_broad = np.empty_like(self.s_refs)
         for i in range(self.num_refs):
-            self.s_refs[i,0] = self.broaden(vsini[i], self.s_refs[i,0])
-            self.s_refs[i,1] = self.broaden(vsini[i], self.s_refs[i,1])
+            self.s_broad[i,0] = self.broaden(vsini[i], self.s_refs[i,0])
+            self.s_broad[i,1] = self.broaden(vsini[i], self.s_refs[i,1])
 
         self.best_params = lmfit.Parameters()
         self.best_chisq = np.NaN
@@ -199,10 +204,11 @@ class MatchLincomb(Match):
         self.serr_mod = np.zeros_like(self.w)
 
         # create the model from a linear combination of the reference spectra
-        coeffs = self.get_lincomb_coeffs(params)
+        coeffs = get_lincomb_coeffs(params)
         for i in range(self.num_refs):
-            self.s_mod += self.s_refs[i,0] * coeffs[i]
-            self.serr_mod += self.s_refs[i,1] * coeffs[i]
+            self.s_mod += self.s_broad[i,0] * coeffs[i]
+            self.serr_mod += self.s_broad[i,1] * coeffs[i]
+
         # Use linear least squares to fit a spline
         s = LSQUnivariateSpline(self.w, self.s_targ/self.s_mod, self.knot_x)
         self.spl = s(self.w)
@@ -224,7 +230,7 @@ class MatchLincomb(Match):
         chi_square = super().objective(params)
 
         # Add a Gaussian prior
-        sum_coeff = np.sum(self.get_lincomb_coeffs(params))
+        sum_coeff = np.sum(get_lincomb_coeffs(params))
 
         WIDTH = 1e-2
         chi_square += (sum_coeff-1)**2/(2*WIDTH**2)
@@ -240,7 +246,11 @@ class MatchLincomb(Match):
         """
         params = lmfit.Parameters()
         ### Linear combination parameters
-        params = self.add_lincomb_coeffs(params)
+        params = add_lincomb_coeffs(params, self.num_refs)
+        ### Spline parameters
+        params = add_spline_positions(params, self.knot_x)
+        ### vsini
+        params = add_vsini(params, self.vsini)
 
         # Minimize chi-squared
         out = lmfit.minimize(self.objective, params, method='nelder')
@@ -251,21 +261,110 @@ class MatchLincomb(Match):
 
         return self.best_chisq
 
-    def add_lincomb_coeffs(self, params):
-        params.add('num_refs', value=self.num_refs, vary=False)
 
-        for i in range(self.num_refs):
-            p = 'coeff_{0:d}'.format(i)
-            params.add(p, value=1/self.num_refs, min=0.0, max=1.0)
+def add_spline_positions(params, knotx):
+    """Adds spline positions to the parameter list.
 
-        return params
+    Args:
+        params (lmfit.Parameters): parameters
+        knotx (np.array): Array of knot positions
+    Returns:
+        params (lmfit.Parameters)
+    """
+    params.add('num_knots', value=len(knotx), vary=False)
 
-    def get_lincomb_coeffs(self, params):
-        num_refs = params['num_refs'].value
+    for i in range(len(knotx)):
+        p = 'knotx_{0:d}'.format(i)
+        params.add(p, value=knotx[i], vary=False)
 
-        coeffs = []
-        for i in range(num_refs):
-            p = 'coeff_{0:d}'.format(i)
-            coeffs.append(params[p].value)
+    return params
 
-        return coeffs
+def get_spline_positions(params):
+    """Gets the spline positions from an lmfit parameters object.
+
+    Args:
+        params (lmfit.Parameters): parameters
+    Returns:
+        knotx (np.ndarray)
+    """
+    num_knots = params['num_knots'].value
+
+    knotx = []
+    for i in range(num_knots):
+        p = 'knotx_{0:d}'.format(i)
+        knotx.append(params[p].value)
+
+    return np.array(knotx)
+
+def add_vsini(params, vsini):
+    """Adds vsini to an lmfit parameter list.
+    
+    Args:
+        params (lmfit.Parameters): parameters
+        vsini (np.ndarray): vsini values for each reference spectrum
+    Returns:
+        params (lmfit.Parameters)
+    """
+    if 'num_refs' not in params.valuesdict():
+        params.add('num_refs', value=len(vsini), vary=False)
+
+    for i in range(len(vsini)):
+        p = 'vsini_{0:d}'.format(i)
+        params.add(p, value=vsini[i], vary=False)
+
+    return params
+
+def get_vsini(params):
+    """Gets vsini list from a parameters object.
+
+    Args:
+        params (lmfit.Parameters): parameters
+    Returns:
+        vsini (np.ndarray)
+    """
+    num_refs = params['num_refs'].value
+
+    vsini = []
+    for i in range(num_refs):
+        p = 'vsini_{0:d}'.format(i)
+        vsini.append(params[p].value)
+
+    return np.array(vsini)
+
+
+
+def add_lincomb_coeffs(params, num_refs):
+    """Adds lincomb coefficients to an lmfit parameter list.
+
+    Args:
+        params (lmfit.Parameters): parameters
+        num_refs (int): Number of reference spectra
+    Returns:
+        params (lmfit.Parameters)
+    """
+    if 'num_refs' not in params.valuesdict():
+        params.add('num_refs', value=num_refs, vary=False)
+
+    for i in range(num_refs):
+        p = 'coeff_{0:d}'.format(i)
+        params.add(p, value=1/num_refs, min=0.0, max=1.0)
+
+    return params
+
+
+def get_lincomb_coeffs(params):
+    """Gets the lincomb coefficients form an lmfit parameter list.
+
+    Args:
+        params (lmfit.Paremters): parameters
+    Returns:
+        coeffs (np.ndarray)
+    """
+    num_refs = params['num_refs'].value
+
+    coeffs = []
+    for i in range(num_refs):
+        p = 'coeff_{0:d}'.format(i)
+        coeffs.append(params[p].value)
+
+    return np.array(coeffs)

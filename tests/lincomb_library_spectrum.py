@@ -52,7 +52,7 @@ def main(libpath, targ_name, respath, outpath, num_best, wavlim):
     mt.best_fit()
 
     # save result
-    coeffs = np.array(mt.get_lincomb_coeffs(mt.best_params))
+    coeffs = np.array(match.get_lincomb_coeffs(mt.best_params))
     res_lincomb[coeffs_col] = json.dumps(coeffs.tolist())
     res_lincomb[cs_col] = mt.best_chisq
     res_lincomb[fit_col] = mt.best_params.dumps()
