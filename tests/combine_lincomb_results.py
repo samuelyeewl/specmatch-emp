@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import numpy as np
 import pandas as pd
 import glob
 import os
@@ -30,16 +31,18 @@ if __name__ == '__main__':
 
         # lincomb num
         min_num = 2
-        max_num = 9
+        max_num = 3
         for i in np.arange(min_num, max_num):
             # get wavelengths used
             files = glob.glob(os.path.join(sdir, name+'_lincomb{0:d}_*_match.csv'.format(i)))
             files = [f for f in files if re.search(str(name)+r'_lincomb\d_\d+_match.csv', f)]
-            wls = [re.search(name+'_(.+?)_match.csv', f).group(1) for f in files]
+            wls = [re.search(name+r'_lincomb\d_(.+?)_match.csv', f).group(1) for f in files]
+            wls = map(int, wls)
             for wl, f in zip(wls, files):
                 if res_star.empty:
                     res_star = pd.read_csv(f, index_col=0)
                     res_star.rename(columns={'lib_index.1':'lib_index'}, inplace=True)
+                    res_star.cps_name = res_star.cps_name.astype(str)
                 else:
                     # merge on columns
                     df = pd.read_csv(f, index_col=0)
@@ -47,18 +50,22 @@ if __name__ == '__main__':
                     .format(i, wl).split()
                     res_star = res_star.join(df[cols])
 
+
         # save each star's result
         outpath_star = os.path.join(sdir, name+'_lincomb.csv')
         res_star.to_csv(outpath_star)
 
         # concatenate rows to global dataframe
-        targ_idx = res_star[res_star.cps_name.str.contains(name)].index[0]
-        res_star['targ_idx'] = targ_idx
+        try:
+            targ_idx = res_star[res_star.cps_name.str.contains(name)].index[0]
+            res_star['targ_idx'] = targ_idx
+            if res_global.empty:
+                res_global = res_star
+            else:
+                res_global = pd.concat((res_global, res_star), ignore_index=True)
+        except:
+            print(name)
 
-        if res_global.empty:
-            res_global = res_star
-        else:
-            res_global = pd.concat((res_global, res_star), ignore_index=True)
 
     # save global results
     res_global.reset_index(inplace=True)
