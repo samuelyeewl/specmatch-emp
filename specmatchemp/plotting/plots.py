@@ -151,7 +151,7 @@ def plot_shifts(s, w, s_un, w_un, s_ref, w_ref, s_nso=None, w_nso=None, wavlim=N
     if 'nso_label' in labels:
         plt.text(xlim[0]+0.1, 1.65, 'NSO')
 
-    plt.ylim(-0.5,1.9)
+    plt.ylim(-0.6,1.9)
     ax = plt.gca()
     ax.axes.get_yaxis().set_ticks([])
 
@@ -167,7 +167,7 @@ def plot_lags(lags, center_pix, fits, legend=True):
 
     for i in range(num_orders):
         plt.plot(center_pix[i], lags[i], 'o', color=colormap(0.9*i/num_orders))
-        plt.plot(center_pix[i], fits[i], '-', color=colormap(0.9*i/num_orders), label='{0:d}'.format(i+1))
+        plt.plot(center_pix[i], fits[i], '-', color=colormap(0.9*i/num_orders), label='{0:d}'.format(i))
 
     plt.xlabel('Pixel number')
     plt.ylabel('Shift (pixels)')

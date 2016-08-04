@@ -21,7 +21,7 @@ from specmatchemp.io import specmatchio
 
 REGION1 = (5158,5172)
 REGION2 = (5846,5860)
-ORDER = 15
+ORDER = 11
 
 def main(specpath, outpath, nso=None):
     f = h5py.File(specpath, 'r')
@@ -56,7 +56,7 @@ def main(specpath, outpath, nso=None):
         plt.close()
 
 
-def plot_shifts(f, wavlim, nso):
+def plot_shifts(f, wavlim, nso=None):
     """Wrapper function to take in a file object
     """
     s = f['s'][:]

@@ -9,6 +9,7 @@ import argparse
 import h5py
 import numpy as np
 from scipy.interpolate import UnivariateSpline
+from scipy.optimize import least_squares
 
 from specmatchemp.io import specmatchio
 
@@ -39,7 +40,6 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
     center_pix_data = []
     fit_data = []
 
-    tol = 5
     num_sections = 7
 
     # shift each order
@@ -84,9 +84,10 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
             grp = outfile.create_group("/xcorr/order_{0:d}".format(i))
 
         for j in range(num_sections):
+            ss_sect = ss[j*l_sect:(j+1)*l_sect]
+            s_ref_sect = s_ref_c[j*l_sect:(j+1)*l_sect]
             # get the shifts in pixel number
-            lag, lag_arr, xcorr = solve_for_shifts(ss[j*l_sect:(j+1)*l_sect],
-                s_ref_c[j*l_sect:(j+1)*l_sect])
+            lag, lag_arr, xcorr = solve_for_shifts(ss_sect, s_ref_sect)
             lags[j] = lag
             center_pix[j] = (j+1/2)*l_sect
 
@@ -95,24 +96,20 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
                 subgrp["xcorr"] = xcorr
                 subgrp["lag_arr"] = lag_arr
 
-        lag_data.append(lags)
-        center_pix_data.append(center_pix)
-
-        # we expect that the shifts across every order are close together
-        # so we should remove outliers
+        # remove clear outliers
         med = np.median(lags)
-        not_outlier = np.asarray([True if l > med-tol and l < med+tol else False 
-            for l in lags])
+        tol = 20
+        not_outlier = np.asarray([True if l > med-tol and l < med+tol else False for l in lags])
         lags_trunc = lags[not_outlier]
         center_pix_trunc = center_pix[not_outlier]
 
-        # fit a straight line to the shifts
-        fit = np.polyfit(center_pix_trunc, lags_trunc, 1)
+        # use robust least squares to fit a line to the shifts (Cauchy loss function)
+        p_guess = np.array([0,0])
+        fit_res = least_squares(_linear_fit_residuals, p_guess, \
+            args=(center_pix_trunc, lags_trunc), loss='cauchy')
+        fit = fit_res.x
         pix_arr = np.arange(0, len(w_ref_c))
         pix_shifted = pix_arr - fit[1] - pix_arr*fit[0]
-
-        fitted = fit[0]*center_pix+fit[1]
-        fit_data.append(fitted)
 
         # don't read past the wavelength array
         pix_min = max(int(pix_shifted[0]), 0)
@@ -131,6 +128,13 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
         s_shifted = np.append(s_shifted, ss_shifted)
         serr_shifted = np.append(serr_shifted, sserr_shifted)
         ws = np.append(ws, w_ref_c)
+
+        # save diagnostic data
+        lag_data.append(lags)
+        center_pix_data.append(center_pix)
+        fitted = fit[0]*center_pix+fit[1]
+        fit_data.append(fitted)
+
 
     # save diagnostic data
     if outfile is not None:
@@ -154,6 +158,19 @@ def _isclose(a, b, abs_tol=1e-6):
     Only accepts absolute tolerances.
     """
     return abs(a-b) <= abs_tol
+
+def _fill_nans(s, fill):
+    """Replaces nans with the provided fill value
+    """
+    s[np.isnan(s)] = fill
+
+    return s
+
+def _linear_fit_residuals(p, x, y):
+    """Calculates residuals for a linear fit
+    """
+    return p[0]*x + p[1] - y
+
 
 def flatten(w, s, serr, w_ref=None, wavlim=None):
     """Flattens a given 2-D spectrum into a 1-D array.
@@ -239,9 +256,13 @@ def solve_for_shifts(s, s_ref):
         The pixel shift, the lag and correlation data
     """
     # correlate the two spectra
-    smean = np.mean(s)
-    srefmean = np.mean(s_ref)
-    xcorr = np.correlate(s-smean, s_ref-smean, mode='full')
+    smean = np.nanmean(s)
+    srefmean = np.nanmean(s_ref)
+    # fill nans with mean value so they contribute nothing to correlation
+    s = _fill_nans(s, smean)
+    s_ref = _fill_nans(s_ref, srefmean)
+
+    xcorr = np.correlate(s-smean, s_ref-srefmean, mode='full')
     xcorr = np.nan_to_num(xcorr)
     max_corr = np.argmax(xcorr)
 
