@@ -13,7 +13,7 @@ from scipy.optimize import least_squares
 
 from specmatchemp.io import specmatchio
 
-def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
+def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None, mask=None):
     """Shifts the given spectrum by placing it on the same wavelength
     scale as the specified reference spectrum, then solves for shifts
     between the two spectra through cross-correlation.
@@ -22,6 +22,7 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
         s, serr, w : Target spectrum, error and wavelength scale
         s_ref, serr_ref, w_ref : Reference spectrum, error and wavelength scale
         outfile : (optional) h5 file to store diagnostic data in
+        mask (pd.DataFrame): (optional) Pixel limits of telluric lines to mask
 
     Returns:
         s_adj, serr_adj, w_adj: Adjusted and flattened spectrum
@@ -48,6 +49,8 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
         ss = s[i]
         sserr = serr[i]
 
+        # apply telluric mask
+
         # clip ends off each order
         cliplen = 15
         ww = ww[cliplen:-cliplen]
@@ -55,10 +58,10 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
         sserr = sserr[cliplen:-cliplen]
 
         # clip obvious noise
-        mask = np.asarray([True if sp < 1.2 else False for sp in ss])
-        ss = ss[mask]
-        sserr = sserr[mask]
-        ww = ww[mask]
+        clip = np.asarray([True if sp < 1.2 else False for sp in ss])
+        ss = ss[clip]
+        sserr = sserr[clip]
+        ww = ww[clip]
 
         # get the reference spectrum in the same range as the target range
         w_min = ww[0]

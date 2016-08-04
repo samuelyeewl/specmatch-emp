@@ -13,11 +13,17 @@ from specmatchemp.io import specmatchio
 
 import h5py
 import numpy as np
+import pandas as pd
 
 
-def main(name, specpath, refpath, outdir, suffix):
+def main(name, specpath, refpath, outdir, suffix, maskpath):
     w_targ, s_targ, serr_targ, hdr_targ = specmatchio.read_hires_spectrum(specpath)
     w_ref, s_ref, serr_ref, hdr_ref = specmatchio.read_standard_spectrum(refpath)
+
+    if maskpath is not None and os.path.exists(maskpath):
+        mask = pd.read_csv(maskpath)
+    else:
+        mask = None
 
     # create diagnostic file
     outdir = os.path.join(outdir, name)
@@ -26,7 +32,7 @@ def main(name, specpath, refpath, outdir, suffix):
     filepath = os.path.join(outdir, name+suffix+'_spec.h5')
     f = h5py.File(filepath, 'w')
 
-    s, serr, w = shift_spectra.shift(s_targ, serr_targ, w_targ, s_ref, serr_ref, w_ref, outfile=f)
+    s, serr, w = shift_spectra.shift(s_targ, serr_targ, w_targ, s_ref, serr_ref, w_ref, outfile=f, mask=mask)
     f.create_dataset('s', data=s)
     f.create_dataset('serr', data=serr)
     f.create_dataset('w', data=w)
@@ -55,6 +61,7 @@ if __name__ == '__main__':
     psr.add_argument('refpath', type=str, help="Path to reference spectrum")
     psr.add_argument('outdir', type=str, help="Directory to output result")
     psr.add_argument('-s', '--suffix', type=str, default="", help="Suffix to append to result filename")
+    psr.add_argument('-m', '--mask', type=str, default=None, help="Path to mask for telluric lines")
     args = psr.parse_args()
 
     if not os.path.isfile(args.specpath):
@@ -66,4 +73,4 @@ if __name__ == '__main__':
 
     print("Shifting star {0}, obs {1} ref {2}".format(args.name, args.specpath, args.refpath))
 
-    main(args.name, args.specpath, args.refpath, args.outdir, args.suffix)
+    main(args.name, args.specpath, args.refpath, args.outdir, args.suffix, args.mask)
