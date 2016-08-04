@@ -20,7 +20,9 @@ from argparse import ArgumentParser
 from specmatchemp import library
 from specmatchemp import analysis
 from specmatchemp.plotting import plots
-    
+
+AVG_PROPS = ['Teff', 'feh', 'radius'] 
+WL_AVG = [5000, 5800]
 
 def main(libpath, respath, outdir, num, suffix=""):
     lib = library.read_hdf(libpath, wavlim='none')
@@ -30,7 +32,16 @@ def main(libpath, respath, outdir, num, suffix=""):
     cscols = [c for c in list(res_global.columns) if re.search('chi_squared_lincomb{0:d}_\d+'.format(num), c)]
     wls = list(set([re.search('chi_squared_lincomb{0:d}_(\d+)$'.format(num), c).group(1) for c in cscols]))
     wls.sort()
-    wls = map(int, wls)
+    wls = list(map(int, wls))
+
+    # number of wavelength regions being averaged over
+    wls_avg = [wl for wl in wls if wl > WL_AVG[0] and wl < WL_AVG[1]]
+    num_wls = len(wls_avg)
+
+    suf_avg = '_lc{0:d}_avg'.format(num)
+    for p in AVG_PROPS:
+        pavg = p+suf_avg
+        lib.library_params[pavg] = 0
 
     outpath = os.path.join(outdir, "lincomb{0:d}_results.pdf".format(num))
     with PdfPages(outpath) as pdf:
@@ -46,6 +57,12 @@ def main(libpath, respath, outdir, num, suffix=""):
                 method='lincomb', suffix=suf, refcol=refcol, coeffcol=coeffcol)
             lib.library_params = analysis.generate_residuals(lib.library_params, suf)
             lib.library_params, polycoeffs = analysis.detrend_params(lib.library_params, suf)
+
+            if wl in wls_avg:
+                for p in AVG_PROPS:
+                    pavg = p+suf_avg
+                    pwl = p+suf+'_detrend'
+                    lib.library_params.loc[:,pavg] += lib.library_params[pwl]/num_wls
 
             # Plot entire library
             fig = plt.figure(figsize=(15,12))
@@ -106,7 +123,38 @@ def main(libpath, respath, outdir, num, suffix=""):
             pdf.savefig()
             plt.close()
     
+        # Same plots averaged over all wavelengths
+        lib.library_params = analysis.generate_residuals(lib.library_params, suf_avg)
 
+        # Plot entire library
+        fig = plt.figure(figsize=(15,12))
+        plots.diagnostic_plots(lib, clipping=None, suffix=suf_avg)
+        fig.suptitle("SpecMatch-Emp Results " + \
+            "Method: Linear Combination {0:d}".format(num) + \
+            "\nAveraged over wavlengths {0:d} to {1:d} A".format(WL_AVG[0], WL_AVG[1]), fontsize=16)
+        plt.tight_layout(rect=[0,0.03,1,0.95])
+        pdf.savefig()
+        plt.close()
+
+        # Plot cool stars
+        fig = plt.figure(figsize=(15,12))
+        plots.diagnostic_plots(lib, query='Teff < 4500', clipping=None, suffix=suf_avg)
+        fig.suptitle(r"SpecMatch-Emp Results, $T_{eff} < 4500$ K" + \
+            "Method: Linear Combination {0:d}".format(num) + \
+            "\nAveraged over wavlengths {0:d} to {1:d} A".format(WL_AVG[0], WL_AVG[1]), fontsize=16)
+        plt.tight_layout(rect=[0,0.03,1,0.95])
+        pdf.savefig()
+        plt.close()
+
+        # Plot hot stars
+        fig = plt.figure(figsize=(15,12))
+        plots.diagnostic_plots(lib, query='7000 >= Teff >= 4500', clipping=None, suffix=suf_avg)
+        fig.suptitle(r"SpecMatch-Emp Results, $7000 \geq T_{eff} \geq 4500$ K" + \
+            "Method: Linear Combination {0:d}".format(num) + \
+            "\nAveraged over wavlengths {0:d} to {1:d} A".format(WL_AVG[0], WL_AVG[1]), fontsize=16)
+        plt.tight_layout(rect=[0,0.03,1,0.95])
+        pdf.savefig()
+        plt.close()
 
 
 

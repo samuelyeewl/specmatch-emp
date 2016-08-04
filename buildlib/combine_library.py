@@ -24,7 +24,7 @@ def main(parampath, specdir, outpath, maskpath):
 
     for idx, row in libparams.iterrows():
         # get shifted spectrum
-        specpath = os.path.join(specdir,row.cps_name+"/"+row.cps_name+".h5")
+        specpath = os.path.join(specdir,row.cps_name+"/"+row.cps_name+"_spec.h5")
         f = h5py.File(specpath, 'r')
         s = f['s'][:]
         serr = f['serr'][:]

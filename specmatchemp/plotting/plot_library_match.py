@@ -43,6 +43,7 @@ def main(libpath, respath, outpath, suffix=""):
 
     cscols = [c for c in list(res_global.columns) if re.search('chi_squared_\d+', c)]
     wls = [re.search('chi_squared_(\d+)$', c).group(1) for c in cscols]
+    wls.sort()
     wls = map(int, wls)
 
     with PdfPages(outpath) as pdf:
