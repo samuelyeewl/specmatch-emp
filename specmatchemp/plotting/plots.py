@@ -15,6 +15,7 @@ import lmfit
 from specmatchemp import library
 from specmatchemp import match
 from specmatchemp.io import specmatchio
+from specmatchemp.utils import utils
 
 UNSHIFTED_PATH = '/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/{0}.fits'
 
@@ -137,21 +138,23 @@ def plot_shifts(s, w, s_un, w_un, s_ref, w_ref, s_nso=None, w_nso=None, wavlim=N
             w_nso, s_nso = specmatchio.truncate_spectrum(wavlim, w_nso, s_nso)
 
     plt.plot(w, s, '-', label="Target (shifted)")
-    plt.plot(w_un, s_un-0.6, '-', label="Target (unshifted)")
-    plt.plot(w_ref, s_ref+0.3, '-', label="Reference")
+    plt.plot(w_un, s_un-0.8, '-', label="Target (unshifted)")
+    plt.plot(w_ref, s_ref+0.5, '-', label="Reference")
     if s_nso is not None and w_nso is not None:
-        plt.plot(w_nso, s_nso+0.6, '-', label="NSO")
+        plt.plot(w_nso, s_nso+1.0, '-', label="NSO")
+    resid, residw = utils.calc_residuals(s, w, s_ref, w_ref)
+    plt.plot(residw, resid-1, '-', label="Residuals")
 
-    xlim = plt.xlim()
-    if 'targ_label' in labels:
-        plt.text(xlim[0]+0.1, 1.05, 'Target (shifted): {0}'.format(labels['targ_label']))
-        plt.text(xlim[0]+0.1, 0.45, 'Target (unshifted): {0}'.format(labels['targ_label']))
-    if 'ref_label' in labels:
-        plt.text(xlim[0]+0.1, 1.35, 'Reference: {0}'.format(labels['ref_label']))
-    if 'nso_label' in labels:
-        plt.text(xlim[0]+0.1, 1.65, 'NSO')
+    # xlim = plt.xlim()
+    # if 'targ_label' in labels:
+    #     plt.text(xlim[0]+0.1, 1.05, 'Target (shifted): {0}'.format(labels['targ_label']))
+    #     plt.text(xlim[0]+0.1, 0.45, 'Target (unshifted): {0}'.format(labels['targ_label']))
+    # if 'ref_label' in labels:
+    #     plt.text(xlim[0]+0.1, 1.35, 'Reference: {0}'.format(labels['ref_label']))
+    # if 'nso_label' in labels:
+    #     plt.text(xlim[0]+0.1, 1.65, 'NSO')
 
-    plt.ylim(-0.6,1.9)
+    plt.ylim(-1.2,2.2)
     ax = plt.gca()
     ax.axes.get_yaxis().set_ticks([])
 

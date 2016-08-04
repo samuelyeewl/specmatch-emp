@@ -77,6 +77,8 @@ def plot_shifts(f, wavlim, nso=None):
     plots.plot_shifts(s, w, s_un, w_un, s_ref, w_ref, s_nso, w_nso, \
         labels={'targ_label':f.attrs['obs'][:], 'ref_label':f.attrs['ref'], 'nso_label':''})
 
+    plt.legend(loc='lower left', fontsize='small')
+
 def plot_lags(f):
     plots.plot_lags(f['lag'][:], f['center_pix'][:], f['fit'][:])
 

@@ -50,3 +50,25 @@ def calc_radius(plx, u_plx, theta, u_theta):
 
     return radius, u_radius
     
+def calc_residuals(s1, w1, s2, w2):
+    """Find the residuals between two spectra (s1-s2) when they are on the same
+    wavelength scale but not necessarily within the same range
+
+    Args:
+        s1, w1: Spectrum 1
+        s2, w2: Spectrum 2
+    Returns:
+        res, resw: Residuals
+    """
+    wmin = max(w1[0], w2[0])
+    wmax = min(w1[-1], w2[-1])
+    mask1 = np.logical_and(w1 > wmin, w1 < wmax)
+    s1_masked = s1[mask1]
+    mask2 = np.logical_and(w2 > wmin, w2 < wmax)
+    s2_masked = s2[mask2]
+    w_masked = w2[mask2]
+
+    resid = s1_masked - s2_masked
+
+    return resid, w_masked
+
