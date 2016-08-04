@@ -136,13 +136,15 @@ def main(cps_name, respath, outpath, libpath, num_best):
     with PdfPages(outpath) as pdf:
         for (wl, cscol, fitcol) in zip(wls, cscols, fitcols):
             fig = plt.figure(figsize=(12,8))
-            plt.suptitle('Chi-squared surfaces for star {0}'.format(cps_name), fontsize=16)
+            plt.suptitle('Chi-squared surfaces for star {0}'.format(cps_name) \
+                +'\nWavelength Region: {0:d} - {1:d} A'.format(wl, wl+100), fontsize=16)
             plot_chi_squared(res, targ_idx, '_{0:d}'.format(wl))
             pdf.savefig()
             plt.close()
 
             fig = plt.figure(figsize=(12,10))
-            plt.suptitle('Comparison of best matches for star {0}'.format(cps_name), fontsize=16)
+            plt.suptitle('Comparison of best matches for star {0}'.format(cps_name) \
+                +'\nWavelength Region: {0:d} - {1:d} A'.format(wl, wl+100), fontsize=16)
             plot_bestmatch_comparison(res, targ_idx, num_best, cscol)
             pdf.savefig()
             plt.close()

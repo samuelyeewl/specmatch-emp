@@ -33,23 +33,38 @@ if __name__ == '__main__':
         min_num = 2
         max_num = 9
         for i in np.arange(min_num, max_num):
+            res_star_num = pd.DataFrame()
             # get wavelengths used
             files = glob.glob(os.path.join(sdir, name+'_lincomb{0:d}_*_match.csv'.format(i)))
             files = [f for f in files if re.search(str(name)+r'_lincomb\d_\d+_match.csv', f)]
             wls = [re.search(name+r'_lincomb\d_(.+?)_match.csv', f).group(1) for f in files]
             wls = map(int, wls)
+
             for wl, f in zip(wls, files):
                 if res_star.empty:
                     res_star = pd.read_csv(f, index_col=0)
                     res_star.rename(columns={'lib_index.1':'lib_index'}, inplace=True)
                     res_star.cps_name = res_star.cps_name.astype(str)
+                    res_star_num = res_star.copy()
                 else:
                     # merge on columns
                     df = pd.read_csv(f, index_col=0)
                     cols = 'best_cs_lincomb{0:d}_{1:d} ref_idxs_lincomb{0:d}_{1:d} coeffs_lincomb{0:d}_{1:d} chi_squared_lincomb{0:d}_{1:d} fit_params_lincomb{0:d}_{1:d}'\
                     .format(i, wl).split()
                     res_star = res_star.join(df[cols])
+                
+                    if res_star_num.empty:
+                        res_star_num = df.copy()
+                        res_star_num.rename(columns={'lib_index.1':'lib_index'}, inplace=True)
+                        res_star_num.cps_name = res_star_num.cps_name.astype(str)
+                    else:
+                        # merge on columns
+                        cols = 'best_cs_lincomb{0:d}_{1:d} ref_idxs_lincomb{0:d}_{1:d} coeffs_lincomb{0:d}_{1:d} chi_squared_lincomb{0:d}_{1:d} fit_params_lincomb{0:d}_{1:d}'\
+                        .format(i, wl).split()
+                        res_star_num = res_star_num.join(df[cols])
 
+            outpath_star_num = os.path.join(sdir, name+'_lincomb{0:d}.csv'.format(i))
+            res_star_num.to_csv(outpath_star_num)
 
         # save each star's result
         outpath_star = os.path.join(sdir, name+'_lincomb.csv')

@@ -292,6 +292,8 @@ def chi_squared_plot(res, targ_idx, suffix):
     plot_param_chi_squared(res, 'Teff', targ_idx, suffix)
     plt.ylabel(r'$\chi^2$')
     plt.xlabel(r'$T_{eff}$ (K)')
+    plt.xticks([3000,4000,5000,6000,7000])
+    reverse_x()
     plt.subplot(132)
     plt.semilogy()
     plot_param_chi_squared(res, 'radius', targ_idx, suffix)

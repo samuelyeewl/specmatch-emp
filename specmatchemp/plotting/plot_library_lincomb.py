@@ -124,7 +124,7 @@ def main(libpath, respath, outdir, num, suffix=""):
             plt.close()
     
         # Same plots averaged over all wavelengths
-        lib.library_params = analysis.generate_residuals(lib.library_params, suf_avg)
+        lib.library_params = analysis.generate_residuals(lib.library_params, suf_avg, props=AVG_PROPS)
 
         # Plot entire library
         fig = plt.figure(figsize=(15,12))
@@ -151,7 +151,7 @@ def main(libpath, respath, outdir, num, suffix=""):
         plots.diagnostic_plots(lib, query='7000 >= Teff >= 4500', clipping=None, suffix=suf_avg)
         fig.suptitle(r"SpecMatch-Emp Results, $7000 \geq T_{eff} \geq 4500$ K" + \
             "Method: Linear Combination {0:d}".format(num) + \
-            "\nAveraged over wavlengths {0:d} to {1:d} A".format(WL_AVG[0], WL_AVG[1]), fontsize=16)
+            "\nAveraged over wavelengths {0:d} to {1:d} A".format(WL_AVG[0], WL_AVG[1]), fontsize=16)
         plt.tight_layout(rect=[0,0.03,1,0.95])
         pdf.savefig()
         plt.close()
