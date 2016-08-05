@@ -11,11 +11,12 @@ setup(
         "numpy",
         "scipy",
         "matplotlib",
-        "pandas",
-        "json",
-        "lmfit",
-        "isochrones",
         "h5py",
+        "pandas",
+        "lmfit",
+        "astropy",
+        "astroquery",
+        "isochrones",
     ],
     include_package_data=True
 )

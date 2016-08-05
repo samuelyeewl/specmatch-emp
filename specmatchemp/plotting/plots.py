@@ -4,6 +4,8 @@
 Helper functions to plot various data from SpecMatch-Emp
 """
 
+from __future__ import print_function
+
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt

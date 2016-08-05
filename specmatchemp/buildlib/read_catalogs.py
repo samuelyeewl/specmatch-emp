@@ -7,6 +7,8 @@ for spectra in the CPS database.
 Saves the parameters as a DataFrame in 
 """
 
+from __future__ import print_function
+
 import os
 from argparse import ArgumentParser
 
