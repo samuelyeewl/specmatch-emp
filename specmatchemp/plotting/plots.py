@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.transforms as transforms
 import pandas as pd
 import os
 import lmfit
@@ -21,10 +22,116 @@ UNSHIFTED_PATH = '/Users/samuel/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/{0}.fits
 
 ############################## Helper functions ################################
 def reverse_x():
+    """Reverses the x-axis of the current figure"""
     plt.xlim(plt.xlim()[::-1])
 
 def reverse_y():
+    """Reverses the y-axis of the current figure"""
     plt.ylim(plt.ylim()[::-1])
+
+def annotate_point(x, y, text, offset=5, offset_x=None, offset_y=None, text_kw={}):
+    """Annotates the point at a given x, y position (in data coordinates),
+    at a given pixel offset.
+
+    Args:
+        x: x-coordinate in data space
+        y: y-coordinate in data space
+        text (str): String to annotate
+        offset: (optional) pixel offset to use
+        offset_x, offset_y: (optional) pixel offset to use in x, y directions
+        text_kw (dict): (optional) any additional keywords to pass to pyplot.text
+    """
+    ax = plt.gca()
+    # transform to pixel coords
+    disp_coords = ax.transData.transform((x, y))
+    if offset_x is None or offset_y is None:
+        offset_x = offset
+        offset_y = offset
+    disp_coords = (disp_coords[0]+offset_x, disp_coords[1]+offset_y)
+    # invert transform to go back to data coords
+    data_coords = ax.transData.inverted().transform(disp_coords)
+    plt.text(data_coords[0], data_coords[1], text, **text_kw)
+
+def annotate_spectrum(text, spec_offset=0, offset_x=10, offset_y=5, align='left', text_kw={'fontsize':'small'}):
+    """Annotates a spectrum.
+
+    Args:
+        text (str): String to annotate
+        spec_offset: (optional) Vertical offset of spectrum
+        offset_x: (optional) Pixel offset from left/right boundary
+        offset_y: (optional) Vertical pixel offset from spectrum
+        align: (optional) 'left' or 'right' alignment for text
+        text_kw (dict): (optional) any additional keywords to pass to pyplot.text
+    """
+    ax = plt.gca()
+    xlim = ax.get_xlim()
+    if align == 'left':
+        xpos = xlim[0]
+        offset_x = abs(offset_x)
+    elif align == 'right':
+        xpos = xlim[1]
+        offset_x = -abs(offset_x)
+    else:
+        return
+
+    # transform to pixel coords
+    disp_coords = ax.transData.transform((xpos, spec_offset+1))
+    disp_coords = (disp_coords[0]+offset_x, disp_coords[1]+offset_y)
+    # invert transform to go back to data coords
+    data_coords = ax.transData.inverted().transform(disp_coords)
+    ax_coords = ax.transAxes.inverted().transform(disp_coords)
+    # fix y position in data coordinates (fixed offset from spectrum)
+    # but allow x position to float
+    trans = transforms.blended_transform_factory(ax.transAxes, ax.transData)
+    plt.text(ax_coords[0], data_coords[1], text, transform=trans, horizontalalignment=align, **text_kw)
+
+
+def set_lims_around_targ(library_params, paramx, paramy, targ_idx, idxs, mode='symmetric', buf=0.3):
+    """Sets plot limits around a target
+
+    Args:
+        library_params (pd.DataFrame): Parameter table
+        paramx, paramy (str): Parameters plot on x, y axes
+        targ_idx (int): Index of target star
+        idxs (iterable of ints): Index of other stars
+        mode: (optional) 'symmetric': Make limits symmetric about target
+                        'tight': Use asymmetric limits 
+        buf (float): Buffer radius 
+    """
+    targx = library_params.loc[targ_idx, paramx]
+    distx = library_params.loc[idxs, paramx] - targx
+    ax = plt.gca()
+    # get right and left limits
+    maxx = max(max(distx), 0)
+    minx = min(min(distx), 0)
+    if mode == 'symmetric':
+        limx = max(abs(maxx), abs(minx))
+        limx = limx + buf*limx
+        ax.set_xlim((targx-limx, targx+limx))
+    elif mode == 'tight':
+        maxx = maxx + buf*maxx if maxx != 0 else -buf*minx
+        minx = minx + buf*minx if minx != 0 else -buf*maxx
+        ax.set_xlim((targx+minx, targx+maxx))
+
+    targy = library_params.loc[targ_idx, paramy]
+    disty = library_params.loc[idxs, paramy] - targy
+    ax = plt.gca()
+    # get upper and lower limits
+    maxy = max(max(disty), 0)
+    miny = min(min(disty), 0)
+    if mode == 'symmetric':
+        limy = max(abs(maxy), abs(miny))
+        limy = limy + buf*limy
+        ax.set_ylim((targy-limy, targy+limy))
+    elif mode == 'tight':
+        maxy = maxy + buf*maxy if maxy != 0 else -buf*miny
+        miny = miny + buf*miny if miny != 0 else -buf*maxy
+        ax.set_ylim((targy+miny, targy+maxy))
+
+def hide_y_ticks():
+    # Hide y label ticks
+    ax = plt.gca()
+    ax.axes.get_yaxis().set_ticks([])
 
 ######################### Library and Spectrum plots ###########################
 def plot_library_params(lib, param_x, param_y, grouped=False, ptlabels=False, plt_kw={}):
@@ -229,9 +336,35 @@ def plot_match(mt, plot_targ=True, plot_resid=True, offset=True, labels={}, plt_
         else:
             plt.text(xlim[0]+0.1, 0.05, 'Residuals', fontsize='small')
 
-    # Hide y label ticks
-    ax = plt.gca()
-    ax.axes.get_yaxis().set_ticks([])
+    hide_y_ticks()
+
+def plot_matchlincomb(mt, targ_label=None, ref_labels=None, mod_label=None, plt_kw={}):
+    """Plot a MatchLincomb object
+
+    Args:
+        mt (match.MatchLincomb): MatchLincomb object
+    """
+    plt.plot(mt.w, mt.s_targ, label="Target", **plt_kw)
+    if targ_label is not None:
+        annotate_spectrum(r"Target: "+targ_label, spec_offset=0)
+
+    for i in range(mt.num_refs):
+        offset = 1.5 + i*0.5
+        plt.plot(mt.w, mt.s_refs[i,0]+offset, color='0.4', label="Reference {0:d}".format(i+1))
+        if ref_labels is not None:
+            annotate_spectrum("Reference {0:d}: ".format(i+1)+ref_labels[i], offset)
+
+    plt.plot(mt.w, mt.s_mod+0.5, color='r', label="Linear Combination")
+    if mod_label is not None:
+        annotate_spectrum("Linear Combination: "+mod_label, spec_offset=0.5)
+
+    plt.plot(mt.w, mt.best_residuals(), color='c', label="Residuals")
+    annotate_spectrum(r"Residuals", spec_offset=-1)
+
+    plt.ylim((-0.2, 2.3+mt.num_refs*0.5))
+
+    hide_y_ticks()
+
 
 def plot_library_match(lib, targ_idx, ref_idx, plot_targ=True, plot_resid=True, offset=False):
     """Generate and plot the match object at the given indices
@@ -256,7 +389,25 @@ def bestmatch_comparison_plot(res, paramx, paramy, num_best, cscol, distcol='dis
     plt.plot(res.iloc[1:num_best+1][paramx], res.iloc[1:num_best+1][paramy], 's', label='Closest stars')
     res = res.sort_values(by=cscol)
     plt.plot(res.iloc[0:num_best][paramx], res.iloc[0:num_best][paramy], '^', label='Best matches')
-    plt.legend(numpoints=1, fontsize='small', loc='upper left')
+    plt.legend(numpoints=1, fontsize='small', loc='best')
+
+
+def lincomb_refs_plot(library_params, paramx, paramy, targ_idx, ref_idxs, annot=None, zoom=False, legend=True):
+    plt.plot(library_params[paramx], library_params[paramy], '.', label='_nolegend_')
+    plt.plot(library_params.loc[targ_idx, paramx], library_params.loc[targ_idx, paramy], '*', label='Target', ms=15)
+    plt.plot(library_params.loc[ref_idxs, paramx], library_params.loc[ref_idxs, paramy], '^', label='References')
+
+    if zoom:
+        set_lims_around_targ(library_params, paramx, paramy, targ_idx, ref_idxs)
+
+    # add annotations
+    if annot is not None:
+        ax = plt.gca()
+        for i, ref in enumerate(ref_idxs):
+            annotate_point(library_params.loc[ref, paramx], library_params.loc[ref, paramy], annot[i], text_kw={'fontsize':'small'})
+
+    if legend:
+        plt.legend(numpoints=1, fontsize='small', loc='upper left')
 
 
 ############################# Library test plots ###############################

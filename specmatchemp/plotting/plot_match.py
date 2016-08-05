@@ -41,6 +41,7 @@ def plot_bestmatch_comparison(res, targ_idx, num_best, cscol, distcol='dist'):
     ax = plt.gca()
     ax.set_yscale('log')
     ax.yaxis.set_minor_formatter(FormatStrFormatter("%.1f"))
+    ax.yaxis.set_major_formatter(FormatStrFormatter("%.1f"))
     targ_param = res.loc[targ_idx]
     plt.xlim((targ_param.Teff-200, targ_param.Teff+200))
     plt.ylim((targ_param.radius-0.3*targ_param.radius, targ_param.radius+0.3*targ_param.radius))
@@ -61,6 +62,7 @@ def plot_bestmatch_comparison(res, targ_idx, num_best, cscol, distcol='dist'):
     ax = plt.gca()
     ax.set_yscale('log')
     ax.yaxis.set_minor_formatter(FormatStrFormatter("%.1f"))
+    ax.yaxis.set_major_formatter(FormatStrFormatter("%.1f"))
     targ_param = res.loc[targ_idx]
     plt.xlim((targ_param.feh-0.5, targ_param.feh+0.5))
     plt.ylim((targ_param.radius-0.3*targ_param.radius, targ_param.radius+0.3*targ_param.radius))
