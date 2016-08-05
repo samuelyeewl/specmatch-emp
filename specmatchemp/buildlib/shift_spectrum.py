@@ -5,6 +5,8 @@
 Shifts spectra onto a common log-lambda scale
 """
 
+from __future__ import print_function
+
 import os, sys
 from argparse import ArgumentParser
 

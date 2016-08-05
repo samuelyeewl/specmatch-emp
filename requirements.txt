@@ -1,0 +1,9 @@
+numpy
+scipy
+matplotlib
+h5py
+pandas
+lmfit
+astropy
+astroquery
+isochrones

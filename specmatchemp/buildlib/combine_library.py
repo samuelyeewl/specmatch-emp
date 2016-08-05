@@ -5,6 +5,8 @@
 Combines the library parameters and spectra into a library.h5 file
 """
 
+from __future__ import print_function
+
 import os, sys
 from argparse import ArgumentParser
 

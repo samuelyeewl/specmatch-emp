@@ -5,6 +5,8 @@
 Generate script lines for shifting spectra
 """
 
+from __future__ import print_function
+
 import os
 import re
 import pandas as pd

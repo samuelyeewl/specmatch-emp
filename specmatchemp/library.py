@@ -4,6 +4,8 @@
 Defines the library class which will be used for matching
 """
 
+from __future__ import print_function
+
 import datetime
 
 import numpy as np
