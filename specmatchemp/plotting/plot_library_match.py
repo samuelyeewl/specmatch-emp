@@ -110,7 +110,7 @@ if __name__ == '__main__':
     psr = ArgumentParser(description="Produce plots for analysis of match results")
     psr.add_argument('library', type=str, help="Path to library h5 file")
     psr.add_argument('respath', type=str, help="Path to results csv file")
-    psr.add_argument('outpath', type=str, help="Path to output directory")
+    psr.add_argument('outpath', type=str, help="Path to output file")
     psr.add_argument('-s', '--suffix', type=str, default="", help="Suffix on plot files")
     args = psr.parse_args()
 
