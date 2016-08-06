@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 
 # Mock modules for readthedocs
-from mock import Mock as MagicMock
+from unittest.mock import MagicMock
 class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
