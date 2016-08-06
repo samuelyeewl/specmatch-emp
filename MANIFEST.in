@@ -1,5 +1,5 @@
 include requirements.txt
-recursive-incldue bin/*
-recursive-include docs/*
-recursive-include catalogs/*
-recursive-include refs/*
+include bin/*
+include docs/*
+include catalogs/*
+include refs/*

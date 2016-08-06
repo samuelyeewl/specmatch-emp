@@ -30,7 +30,8 @@ if on_rtd:
         def __getattr__(cls, name):
                 return Mock()
 
-    MOCK_MODULES = ['argparse', 'numpy', 'pandas', 'matplotlib', 'h5py', 'astropy', 'astroquery', 'isochrones', 'scipy', 'lmfit']
+    MOCK_MODULES = ['argparse', 'numpy', 'pandas', 'matplotlib', 'h5py', \
+    'astropy', 'astroquery', 'isochrones', 'scipy', 'scipy.interpolate', 'lmfit']
     sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
