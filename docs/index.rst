@@ -16,6 +16,7 @@ Contents:
    quickstart
    installation
    specmatch
+   library
 
 
 

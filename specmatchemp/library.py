@@ -19,11 +19,17 @@ STAR_PROPS = ['Teff', 'radius', 'logg', 'feh', 'mass', 'age']
 FLOAT_TOL = 1e-3
 
 class Library():
-    """Library class
+    """A container for a library of spectrum and corresponding stellar parameters.
 
-    This object is a container for the library spectrum and stellar 
-    parameters for the library stars. The library is indexed using
-    the library_index column.
+    The Library class is a container for the library spectrum and 
+    stellar parameters for the library stars. The library is indexed 
+    using the library_index column.
+
+    Attributes:
+        library_params (pd.DataFrame): The parameter table, which can
+            be queried directly.
+        library_spectra (np.ndarray): 3D array containing the library
+            spectra ordered according to the index column.
 
     Args: 
         library_params (pd.DataFrame): Pandas DataFrame containing
