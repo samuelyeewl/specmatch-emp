@@ -42,13 +42,19 @@ class Spectrum(object):
         self.w = w
         self.s = s
         self.serr = serr
-        self.mask = mask
+        if mask is None:
+            self.mask = np.empty_like(s)
+            self.mask.fill(True)
+        else:
+            self.mask = mask
+
         if name is None:
-            name = "Spectrum {0:d}".format(Spectrum._counter)
+            self.name = "Spectrum {0:d}".format(Spectrum._counter)
             Spectrum._counter += 1
         else:
             self.name = name
         self.attrs = attrs
+        self.header = header
 
     def to_fits(self, outfile):
         """Saves the spectrum to a fits file.
@@ -70,7 +76,8 @@ class Spectrum(object):
         tbhdu = fits.BinTableHDU.from_columns(
             [fits.Column(name='s', format='D', array=self.s),
             fits.Column(name='w', format='D', array=self.w),
-            fits.Column(name='serr', format='D', array=serr)])
+            fits.Column(name='serr', format='D', array=serr),
+            fits.Column(name='mask', format='L', array=self.mask)])
 
         hdulist = fits.HDUList([prihdu, tbhdu])
         hdulist.writeto(outpath, clobber=True)
@@ -96,9 +103,10 @@ class Spectrum(object):
         outfile.create_dataset('s', data=self.s)
         outfile.create_dataset('serr', data=serr)
         outfile.create_dataset('w', data=self.w)
+        outfile.create_dataset('mask', data=self.mask)
 
         outfile.attrs['name'] = self.name
-        outfile.attrs['header'] = self.header
+        outfile.attrs['header'] = str(self.header)
 
         for key in self.attrs.keys():
             outfile.attrs[key] = self.attrs[key]
@@ -115,14 +123,14 @@ class Spectrum(object):
         Returns:
             truncated (Spectrum): Truncated spectrum object
         """
-        inrange, = np.where((w >= minw) & (w <= maxw))
+        inrange, = np.where((self.w >= minw) & (self.w <= maxw))
         idxmin = inrange[0]
         idxmax = inrange[-1]+1
 
         w_trunc = self.w[idxmin:idxmax]
         s_trunc = self.s[idxmin:idxmax]
         serr_trunc = None if self.serr is None else self.serr[idxmin:idxmax]
-        mask = None if self.mask is None else self.mask[idxmin:idxmax]
+        mask_trunc = None if self.mask is None else self.mask[idxmin:idxmax]
 
         return Spectrum(w_trunc, s_trunc, serr_trunc, mask_trunc, self.name, self.attrs)
 
@@ -140,7 +148,7 @@ class Spectrum(object):
         if len(text) > 0:
             plots.annotate_spectrum(text, spec_offset=offset, text_kw=text_kw)
 
-        plt.grid()
+        plt.grid(True)
         plt.xlabel('Wavelength (Angstroms)')
         plt.ylabel('Normalized Flux (Arbitrary Offset')
 
@@ -160,6 +168,26 @@ def read_fits(infile):
     s = data['s']
     serr = data['serr']
     w = data['w']
+    if 'mask' in data.dtype.names:
+        mask = data['mask']
+    else:
+        mask = None
+    header = hdu[0].header
+
+    return Spectrum(w, s, serr, mask=mask, header=header)
+
+def read_hires_fits(infile):
+    """Reads a spectrum from a fits file that was produced by HIRES.
+
+    Args:
+        infile (str): Path to input fits file
+    Returns:
+        spec (Spectrum): Spectrum object
+    """
+    hdu = fits.open(infile)
+    s = hdu[0].data
+    serr = hdu[1].data
+    w = hdu[2].data
     header = hdu[0].header
 
     return Spectrum(w, s, serr, header=header)
@@ -180,9 +208,21 @@ def read_hdf(infile):
     s = infile['s'][:]
     serr = infile['serr'][:]
     w = infile['w'][:]
+    if 'mask' in infile.keys():
+        mask = infile['mask'][:]
+    else:
+        mask = None
+    
     attrs = dict(infile.attrs)
-    name = attrs.pop('name')
-    header = attrs.pop('header')
+    if 'name' in attrs.keys():
+        name = attrs.pop('name')
+    else:
+        name=None
 
-    return Spectrum(w, s, serr, name=name, header=header, attrs=attrs)
+    if 'header' in attrs.keys():
+        header = attrs.pop('header')
+    else:
+        header=None
+
+    return Spectrum(w, s, serr, mask=mask, name=name, header=header, attrs=attrs)
 

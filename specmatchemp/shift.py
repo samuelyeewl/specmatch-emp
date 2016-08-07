@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-@filename shift_spectra.py
+@filename shift.py
 
 Shift a target spectrum onto a reference spectrum.
 """
@@ -11,21 +11,26 @@ import numpy as np
 from scipy.interpolate import UnivariateSpline
 from scipy.optimize import least_squares
 
+from specmatchemp.spectrum import Spectrum
 from specmatchemp.io import specmatchio
 
-def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
+def shift(targ, ref, outfile=None):
     """Shifts the given spectrum by placing it on the same wavelength
     scale as the specified reference spectrum, then solves for shifts
     between the two spectra through cross-correlation.
 
     Args:
-        s, serr, w : Target spectrum, error and wavelength scale
-        s_ref, serr_ref, w_ref : Reference spectrum, error and wavelength scale
-        outfile : (optional) h5 file to store diagnostic data in
+        targ (Spectrum): Target spectrum
+        ref (Spectrum): Reference spectrum
+        outfile (optional [file]): h5 file to store diagnostic data in
 
     Returns:
-        s_adj, serr_adj, w_adj: Adjusted and flattened spectrum
+        shifted (Spectrum): Adjusted and flattened spectrum
     """
+    s = targ.s
+    serr = targ.serr
+    w = targ.w
+
     # normalize each order of the target spectrum by dividing by the 95th percentile
     percen_order = np.percentile(s, 95, axis=1)
     s /= percen_order.reshape(-1,1)
@@ -65,10 +70,10 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
         w_max = ww[-1]
 
         in_range = np.asarray([True if wr > w_min and wr < w_max else False
-            for wr in w_ref])
+            for wr in ref.w])
         start_idx = np.argmax(in_range)
-        w_ref_c = w_ref[in_range]
-        s_ref_c = s_ref[in_range]
+        w_ref_c = ref.w[in_range]
+        s_ref_c = ref.s[in_range]
 
         # place the target spectrum on the same wavelength scale
         ss, sserr = rescale_w(ss, sserr, ww, w_ref_c)
@@ -113,12 +118,12 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
 
         # don't read past the wavelength array
         pix_min = max(int(pix_shifted[0]), 0)
-        pix_max = min(int(pix_shifted[-1]), len(w_ref)-start_idx)
+        pix_max = min(int(pix_shifted[-1]), len(ref.w)-start_idx)
 
         # new pixel array
         new_pix = np.arange(pix_min, pix_max)
         # new wavelength array
-        w_ref_c = w_ref[start_idx+pix_min:start_idx+pix_max]
+        w_ref_c = ref.w[start_idx+pix_min:start_idx+pix_max]
 
         # interpolate the spectrum back onto the reference spectrum
         ss_shifted = np.interp(new_pix, pix_shifted, ss)
@@ -145,12 +150,12 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
     # flatten spectrum
     w_min = ws[0]
     w_max = ws[-1]
-    in_range = np.asarray([True if wr > w_min and wr < w_max else False for wr in w_ref])
-    w_ref_trunc = w_ref[in_range]
+    in_range = np.asarray([True if wr > w_min and wr < w_max else False for wr in ref.w])
+    w_ref_trunc = ref.w[in_range]
 
     w_flat, s_flat, serr_flat = flatten(ws, s_shifted, serr_shifted, w_ref=w_ref_trunc)
 
-    return s_flat, serr_flat, w_flat
+    return Spectrum(w_flat, s_flat, serr_flat, name=targ.name, header=targ.header, attrs=targ.attrs)
 
 
 def _isclose(a, b, abs_tol=1e-6):

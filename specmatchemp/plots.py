@@ -10,8 +10,6 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.transforms as transforms
 
-
-############################## Helper functions ################################
 def reverse_x():
     """Reverses the x-axis of the current figure"""
     plt.xlim(plt.xlim()[::-1])
@@ -77,3 +75,4 @@ def annotate_spectrum(text, spec_offset=0, offset_x=10, offset_y=5, align='left'
 
     bbox=dict(facecolor='white', edgecolor='none',alpha=0.8)
     plt.text(ax_coords[0], data_coords[1], text, bbox=bbox, transform=trans, horizontalalignment=align, **text_kw)
+    

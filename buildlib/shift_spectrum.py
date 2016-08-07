@@ -8,7 +8,8 @@ Shifts spectra onto a common log-lambda scale
 import os, sys
 from argparse import ArgumentParser
 
-from specmatchemp import shift_spectra
+from specmatchemp import spectrum
+from specmatchemp.shift import shift
 from specmatchemp.io import specmatchio
 
 import h5py
@@ -16,8 +17,8 @@ import numpy as np
 
 
 def main(name, specpath, refpath, outdir, suffix):
-    w_targ, s_targ, serr_targ, hdr_targ = specmatchio.read_hires_spectrum(specpath)
-    w_ref, s_ref, serr_ref, hdr_ref = specmatchio.read_standard_spectrum(refpath)
+    targ = spectrum.read_hires_fits(specpath)
+    ref = spectrum.read_fits(refpath)
 
     # create diagnostic file
     outdir = os.path.join(outdir, name)
@@ -26,20 +27,18 @@ def main(name, specpath, refpath, outdir, suffix):
     filepath = os.path.join(outdir, name+suffix+'_spec.h5')
     f = h5py.File(filepath, 'w')
 
-    s, serr, w = shift_spectra.shift(s_targ, serr_targ, w_targ, s_ref, serr_ref, w_ref, outfile=f)
-    f.create_dataset('s', data=s)
-    f.create_dataset('serr', data=serr)
-    f.create_dataset('w', data=w)
+    shifted = shift(targ, ref, outfile=f)
+    shifted.to_hdf(f)
     # get wavelength limits
-    w_min = w[0]
-    w_max = w[-1]
-    w_ref_trunc, s_ref_trunc, serr_ref_trunc = specmatchio.truncate_spectrum((w_min, w_max), w_ref, s_ref, serr_ref)
-    f.create_dataset('s_ref', data=s_ref_trunc)
-    f.create_dataset('serr_ref', data=serr_ref_trunc)
+    w_min = shifted.w[0]
+    w_max = shifted.w[-1]
+    ref_trunc = ref.cut(w_min, w_max)
+    f.create_dataset('s_ref', data=ref_trunc.s)
+    f.create_dataset('serr_ref', data=ref_trunc.serr)
     # store unshifted spectrum
-    f.create_dataset('s_unshifted', data=s_targ)
-    f.create_dataset('serr_unshifted', data=serr_targ)
-    f.create_dataset('w_unshifted', data=w_targ)
+    f.create_dataset('s_unshifted', data=targ.s)
+    f.create_dataset('serr_unshifted', data=targ.serr)
+    f.create_dataset('w_unshifted', data=targ.w)
 
     # store metadata
     f.attrs['cps_name'] = name
