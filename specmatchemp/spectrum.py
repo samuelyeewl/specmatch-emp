@@ -174,6 +174,8 @@ def read_fits(infile):
         mask = None
     header = hdu[0].header
 
+    hdu.close()
+
     return Spectrum(w, s, serr, mask=mask, header=header)
 
 def read_hires_fits(infile):
@@ -189,6 +191,8 @@ def read_hires_fits(infile):
     serr = hdu[1].data
     w = hdu[2].data
     header = hdu[0].header
+
+    hdu.close()
 
     return Spectrum(w, s, serr, header=header)
 
@@ -223,6 +227,9 @@ def read_hdf(infile):
         header = attrs.pop('header')
     else:
         header=None
+
+    if is_path:
+        infile.close()
 
     return Spectrum(w, s, serr, mask=mask, name=name, header=header, attrs=attrs)
 
