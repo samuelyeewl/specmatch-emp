@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd
 import h5py
 
+from specmatchemp.spectrum import Spectrum
+
 LIB_COLS = ['lib_index','cps_name', 'lib_obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 
             'logg', 'u_logg', 'feh', 'u_feh', 'mass', 'u_mass', 'age', 'u_age', 
             'vsini', 'source', 'source_name', 'snr']
@@ -216,6 +218,26 @@ class Library():
             print("Storing model spectra with chunks of size {0}".format(chunk_size))
             dset = f.create_dataset('library_spectra', data=self.library_spectra,
                 compression='gzip', compression_opts=1, shuffle=True, chunks=chunk_size)
+
+    def get_spectrum(self, index):
+        """Returns the spectrum at the given index.
+
+        Args:
+            index (int): Library index of spectrum.
+        Returns:
+            spec (Spectrum): Spectrum object
+        """
+        s = self.library_spectra[index, 0]
+        serr = self.library_spectra[index, 1]
+        w = self.wav
+        name = self.library_params.loc[index, 'cps_name']
+        attrs = {}
+        for p in STAR_PROPS:
+            attrs[p] = self.library_params.loc[index, p]
+
+        return Spectrum(w, s, serr, name=name, attrs=attrs)
+
+
 
     def __str__(self):
         """
