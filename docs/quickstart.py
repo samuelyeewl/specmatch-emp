@@ -7,7 +7,6 @@ from pylab import *
 import specmatchemp.library
 rc('savefig',dpi=160)
 
-
 def hr_diagram():
     semilogy()
     xlim(xlim()[::-1])
@@ -15,12 +14,8 @@ def hr_diagram():
     xlabel('Effective Temperature (K)')
     ylabel('Stellar Radius (Rsun)')
 
-
 # Now we'll load in the library around the Mgb triplet
-lib = specmatchemp.library.read_hdf(
-    '/Users/petigura/Dropbox/SpecMatch-Emp/library.h5',wavlim=[5140,5200]
-)  
-
+lib = specmatchemp.library.read_hdf(wavlim=[5140,5200])
 
 # Here's how the library spans the HR diagram.
 fig = figure()
@@ -52,7 +47,7 @@ cut = g.first()
 fig = figure()
 hr_diagram()
 plot(lib.library_params.Teff, lib.library_params.radius,'.')
-plot(cut.Teff, cut.radius,'.')
+plot(cut.Teff, cut.radius,'o')
 fig.savefig('quickstart-library-selected-stars.png')
 
 # Plot the Mgb region

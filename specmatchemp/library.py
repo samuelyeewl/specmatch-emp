@@ -6,6 +6,7 @@ Defines the library class which will be used for matching
 
 from __future__ import print_function
 
+import os, sys
 import datetime
 
 import numpy as np
@@ -16,6 +17,8 @@ import matplotlib.pyplot as plt
 from specmatchemp import plots
 from specmatchemp.spectrum import Spectrum
 
+from specmatchemp import match
+
 LIB_COLS = ['lib_index','cps_name', 'lib_obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 
             'logg', 'u_logg', 'feh', 'u_feh', 'mass', 'u_mass', 'age', 'u_age', 
             'vsini', 'source', 'source_name', 'snr']
@@ -23,6 +26,28 @@ LIB_COLS = ['lib_index','cps_name', 'lib_obs', 'Teff', 'u_Teff', 'radius', 'u_ra
 STAR_PROPS = ['Teff', 'radius', 'logg', 'feh', 'mass', 'age']
 """list: Numeric star properties"""
 FLOAT_TOL = 1e-3
+HOMEDIR = os.environ['HOME']
+LIBPATH = "{0}/.specmatchemp/library.h5".format(HOMEDIR)
+
+def reporthook(blocknum, blocksize, totalsize):
+    readsofar = blocknum * blocksize
+    if totalsize > 0:
+        percent = readsofar * 1e2 / totalsize
+        s = "\r%5.1f%% %*d / %d" % (
+            percent, len(str(totalsize)), readsofar, totalsize)
+        sys.stderr.write(s)
+        if readsofar >= totalsize: # near the end
+            sys.stderr.write("\n")
+    else: # total size is unknown
+        sys.stderr.write("read %d\n" % (readsofar,))
+
+liburl = "https://zenodo.org/record/59743/files/library.h5"
+if not os.path.exists(os.path.dirname(LIBPATH)):
+    os.mkdir(os.path.dirname(LIBPATH))
+if not os.path.exists(LIBPATH):
+    from six.moves import urllib
+    print("Downloading library.h5")
+    urllib.request.urlretrieve(liburl, LIBPATH, reporthook)
 
 class Library(object):
     """A container for a library of spectrum and corresponding stellar parameters.
@@ -44,7 +69,7 @@ class Library(object):
     """
     _target_chunk_bytes = 100e3  # Target number of bytes per chunk
 
-    def __init__(self, wav, library_spectra=None, library_params=None, header={}, wavlim=None, param_mask=None):
+    def __init__(self, wav=None, library_spectra=None, library_params=None, header={}, wavlim=None, param_mask=None):
         """
         Creates a fully-formed library from a given set of spectra.
 
@@ -201,6 +226,34 @@ class Library(object):
         elif len(res)>1:
             return np.array(res.iloc[:].lib_index)
         return None
+
+    def match_spectrum(self, target_spec):
+        """Match a spectrum to the library
+
+        """
+        wavmin = 5000
+        wavstep = 100
+        wavmax = 6100
+        results = self.library_params.copy()
+
+        for w in range(wavmin, wavmax, wavstep):
+            cs_col = 'chi_squared_{0:d}'.format(w)
+            results.loc[:,cs_col] = np.nan
+            fit_col = 'fit_params_{0:d}'.format(w)
+            results.loc[:,fit_col] = ""
+
+            for param_ref, spec_ref in self:
+                # match
+                mt = match.Match(self.wav, target_spec, spec_ref, opt='nelder')
+                mt.best_fit()
+
+                # store results
+                ref_idx = param_ref.lib_index
+                results.loc[ref_idx,cs_col] = mt.best_chisq
+                results.loc[ref_idx,fit_col] = mt.best_params.dumps()
+
+        return results
+
 
 
     def to_hdf(self, path):
@@ -367,7 +420,7 @@ class Library(object):
         """
         return index in self.library_params.lib_index
 
-def read_hdf(path, wavlim='all'):
+def read_hdf(path=None, wavlim='all'):
     """
     Reads in a library from a HDF file
 
@@ -380,7 +433,11 @@ def read_hdf(path, wavlim='all'):
     Returns:
         lib (library.Library) object
     """
+    if path is None:
+        return read_hdf(LIBPATH, wavlim)
+
     with h5py.File(path, 'r') as f:
+        print("Reading library from {0}".format(path))
         header = dict(f.attrs)
         wav = f['wav'][:]
         if 'param_mask' in f:
