@@ -217,7 +217,7 @@ class Library():
         wavmin = 5000
         wavstep = 100
         wavmax = 6100
-        results = pd.copy(self.library_params):
+        results = self.library_params.copy()
 
         for w in range(wavmin, wavmax, wavstep):
             cs_col = 'chi_squared_{0:d}'.format(w)
@@ -225,9 +225,9 @@ class Library():
             fit_col = 'fit_params_{0:d}'.format(w)
             results.loc[:,fit_col] = ""
 
-            for param_ref, spec_ref in lib:
+            for param_ref, spec_ref in self:
                 # match
-                mt = match.Match(lib.wav, spec_targ, spec_ref, opt='nelder')
+                mt = match.Match(self.wav, target_spec, spec_ref, opt='nelder')
                 mt.best_fit()
 
                 # store results
