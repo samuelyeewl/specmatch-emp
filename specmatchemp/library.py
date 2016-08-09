@@ -21,6 +21,26 @@ FLOAT_TOL = 1e-3
 HOMEDIR = os.environ['HOME']
 LIBPATH = "{0}/.specmatchemp/library.h5".format(HOMEDIR)
 
+def reporthook(blocknum, blocksize, totalsize):
+    readsofar = blocknum * blocksize
+    if totalsize > 0:
+        percent = readsofar * 1e2 / totalsize
+        s = "\r%5.1f%% %*d / %d" % (
+            percent, len(str(totalsize)), readsofar, totalsize)
+        sys.stderr.write(s)
+        if readsofar >= totalsize: # near the end
+            sys.stderr.write("\n")
+    else: # total size is unknown
+        sys.stderr.write("read %d\n" % (readsofar,))
+
+liburl = "https://zenodo.org/record/59743/files/library.h5"
+if not os.path.exists(os.path.dirname(LIBPATH)):
+    os.mkdir(os.path.dirname(LIBPATH))
+if not os.path.exists(LIBPATH):
+    from six.moves import urllib
+    print("Downloading library.h5")
+    urllib.request.urlretrieve(liburl, LIBPATH, reporthook)
+
 class Library():
     """A container for a library of spectrum and corresponding stellar parameters.
 
@@ -55,7 +75,7 @@ class Library():
     """
     target_chunk_bytes = 100e3  # Target number of bytes per chunk
 
-    def __init__(self, wav, library_spectra=None, library_params=None, header={}, wavlim=None, param_mask=None):
+    def __init__(self, wav=None, library_spectra=None, library_params=None, header={}, wavlim=None, param_mask=None):
         """
         Creates a fully-formed library from a given set of spectra.
         """
@@ -311,7 +331,7 @@ class Library():
         """
         return index in self.library_params.lib_index
 
-def read_hdf(path, wavlim='all'):
+def read_hdf(path=None, wavlim='all'):
     """
     Reads in a library from a HDF file
 
@@ -324,7 +344,11 @@ def read_hdf(path, wavlim='all'):
     Returns:
         lib (library.Library) object
     """
+    if path is None:
+        return read_hdf(LIBPATH, wavlim)
+
     with h5py.File(path, 'r') as f:
+        print("Reading library from {0}".format(path))
         header = dict(f.attrs)
         wav = f['wav'][:]
         param_mask = f['param_mask'][:]
@@ -347,27 +371,4 @@ def read_hdf(path, wavlim='all'):
 
     lib = Library(wav, library_spectra, library_params, header=header, wavlim=wavlim, param_mask=param_mask)
     return lib
-
-def reporthook(blocknum, blocksize, totalsize):
-    readsofar = blocknum * blocksize
-    if totalsize > 0:
-        percent = readsofar * 1e2 / totalsize
-        s = "\r%5.1f%% %*d / %d" % (
-            percent, len(str(totalsize)), readsofar, totalsize)
-        sys.stderr.write(s)
-        if readsofar >= totalsize: # near the end
-            sys.stderr.write("\n")
-    else: # total size is unknown
-        sys.stderr.write("read %d\n" % (readsofar,))
-
-def get_library():
-    liburl = "https://zenodo.org/record/59743/files/library.h5"
-    if not os.path.exists(os.path.dirname(LIBPATH)):
-        os.mkdir(os.path.dirname(LIBPATH))
-    if not os.path.exists(LIBPATH):
-        from six.moves import urllib
-        print("Downloading library.h5")
-        urllib.request.urlretrieve(liburl, LIBPATH, reporthook)
-
-    return read_hdf(LIBPATH)
 
