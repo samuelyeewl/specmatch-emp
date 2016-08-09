@@ -9,7 +9,9 @@ import datetime
 import numpy as np
 import pandas as pd
 import h5py
+import matplotlib.pyplot as plt
 
+from specmatchemp import plots
 from specmatchemp.spectrum import Spectrum
 
 LIB_COLS = ['lib_index','cps_name', 'lib_obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 
@@ -54,7 +56,7 @@ class Library():
         if library_params is None:
             self.library_params = pd.DataFrame(columns=LIB_COLS)
             self.wav = wav
-            self.library_spectra = np.empty((0, 2, len(wav)))
+            self.library_spectra = np.empty((0, 3, len(wav)))
             self.header = {'date_created': str(datetime.date.today())}
             self.wavlim = wavlim
             return
@@ -69,7 +71,7 @@ class Library():
         if library_spectra is None:
             self.library_params = library_params
             self.wav = wav
-            self.library_spectra = np.empty((0, 2, len(wav)))
+            self.library_spectra = np.empty((0, 3, len(wav)))
             self.header = {'date_created': str(datetime.date.today())}
             self.wavlim = wavlim
             return
@@ -84,8 +86,8 @@ class Library():
             "Error: Index {0:d} is out of bounds in library_spectra".format(i)
 
         # ensure library_spectra is of right shape
-        assert np.shape(library_spectra)[1] == 2 and np.shape(library_spectra)[2] == len(wav), \
-            "Error: library_spectra should have shape ({0:d}, 2, {1:d}".format(num_spec, len(wav))
+        assert np.shape(library_spectra)[1] == 3 and np.shape(library_spectra)[2] == len(wav), \
+            "Error: library_spectra should have shape ({0:d}, 3, {1:d}".format(num_spec, len(wav))
 
         # set index to be equal to lib_index
         library_params.lib_index = library_params.lib_index.astype(int)
@@ -207,11 +209,12 @@ class Library():
             r = np.array(r, dtype=dt)
             f['params'] = r
 
-            f['param_mask'] = self.param_mask
+            if self.param_mask is not None:
+                f['param_mask'] = self.param_mask
 
             # Compute chunk size - group wavelenth regions together
             chunk_row = len(self.library_spectra)
-            chunk_depth = 2
+            chunk_depth = 3
             chunk_col = int(self.target_chunk_bytes / self.library_spectra[:,:,0].nbytes)
             chunk_size = (chunk_row, chunk_depth, chunk_col)
 
@@ -237,7 +240,28 @@ class Library():
 
         return Spectrum(w, s, serr, name=name, attrs=attrs)
 
+    def plot(self, paramx, paramy, grouped=False, ptlabels=False, plt_kw={}):
+        """Create a plot of the library in parameter space
 
+        Args:
+            paramx (str): Parameter to plot on the x-axis
+            paramy (str): Parameter to plot on the y-axis
+            grouped (optional [bool]): Whether to group the stars by source
+            ptlabels (optional [str]): Library column to label points by
+            plt_kw (optional [dict]): Additional keyword arguments to pass to pyplot.plot
+        """
+        if grouped:
+            g = self.library_params.groupby('source')
+
+            for source in g.groups:
+                cut = self.library_params.ix[g.groups[source]]
+                plt.plot(cut[paramx], cut[paramy], '.', label=source)
+        else:
+            plt.plot(self.library_params[paramx], self.library_params[paramy], '.', **plt_kw)
+
+        if ptlabels is not False:
+            self.library_params.apply(lambda x: plots.annotate_point(x[paramx], x[paramy], x[ptlabels]), axis=1)
+            
 
     def __str__(self):
         """
@@ -338,7 +362,11 @@ def read_hdf(path, wavlim='all'):
     with h5py.File(path, 'r') as f:
         header = dict(f.attrs)
         wav = f['wav'][:]
-        param_mask = f['param_mask'][:]
+        if 'param_mask' in f:
+            param_mask = f['param_mask'][:]
+        else:
+            param_mask = None
+
         library_params = pd.DataFrame.from_records(f['params'][:], index='idx')
         # decode strings
         for (col_name, dt) in library_params.dtypes.iteritems():

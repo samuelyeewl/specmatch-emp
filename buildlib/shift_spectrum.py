@@ -10,13 +10,13 @@ from argparse import ArgumentParser
 
 from specmatchemp import spectrum
 from specmatchemp.shift import shift
-from specmatchemp.io import specmatchio
 
 import h5py
 import numpy as np
+import pandas as pd
 
 
-def main(name, specpath, refpath, outdir, suffix):
+def main(name, specpath, refpath, outdir, maskpath, suffix):
     targ = spectrum.read_hires_fits(specpath)
     ref = spectrum.read_fits(refpath)
 
@@ -27,7 +27,12 @@ def main(name, specpath, refpath, outdir, suffix):
     filepath = os.path.join(outdir, name+suffix+'_spec.h5')
     f = h5py.File(filepath, 'w')
 
-    shifted = shift(targ, ref, outfile=f)
+    # get telluric mask
+    chip = os.path.basename(specpath)[0:2]
+    mask = pd.read_csv(maskpath)
+    mask = mask[mask.chip.str.contains(chip)]
+
+    shifted = shift(targ, ref, mask=mask, outfile=f)
     shifted.to_hdf(f)
     # get wavelength limits
     w_min = shifted.w[0]
@@ -53,6 +58,7 @@ if __name__ == '__main__':
     psr.add_argument('specpath', type=str, help="Path to target spectrum")
     psr.add_argument('refpath', type=str, help="Path to reference spectrum")
     psr.add_argument('outdir', type=str, help="Directory to output result")
+    psr.add_argument('-m' '--mask', type=str, help="Path to telluric mask")
     psr.add_argument('-s', '--suffix', type=str, default="", help="Suffix to append to result filename")
     args = psr.parse_args()
 
@@ -65,4 +71,4 @@ if __name__ == '__main__':
 
     print("Shifting star {0}, obs {1} ref {2}".format(args.name, args.specpath, args.refpath))
 
-    main(args.name, args.specpath, args.refpath, args.outdir, args.suffix)
+    main(args.name, args.specpath, args.refpath, args.outdir, args.mask, args.suffix)

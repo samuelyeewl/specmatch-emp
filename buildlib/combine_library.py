@@ -31,7 +31,7 @@ def main(parampath, specdir, outpath, maskpath):
             wav = spec.w
             spectra = np.empty((0,3,len(wav)))
         else:
-            assert np.allclose(wav, w), "Library spectra not on same wavelength scale"
+            assert np.allclose(wav, spec.w), "Library spectra not on same wavelength scale"
 
         # add spectrum to library
         libparams.loc[idx, 'lib_index'] = len(spectra)

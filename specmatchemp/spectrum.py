@@ -7,6 +7,7 @@ Defines a spectrum object for use in SpecMatch-Emp
 import numpy as np 
 import h5py
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from astropy.io import fits
 
 from specmatchemp.io import pdplus
@@ -134,7 +135,8 @@ class Spectrum(object):
 
         return Spectrum(w_trunc, s_trunc, serr_trunc, mask_trunc, self.name, self.attrs)
 
-    def plot(self, offset=0, label='_nolegend_', plt_kw={'color':'RoyalBlue'}, text='', text_kw={'fontsize':'small'}):
+    def plot(self, offset=0, label='_nolegend_', plt_kw={'color':'RoyalBlue'}, showmask=False,\
+            text='', text_kw={'fontsize':'small'}):
         """Plots the spectrum
 
         Args:
@@ -148,11 +150,40 @@ class Spectrum(object):
         if len(text) > 0:
             plots.annotate_spectrum(text, spec_offset=offset, text_kw=text_kw)
 
+        if showmask:
+            ax = plt.gca()
+            # get list of masked regions
+            regions = self._convert_mask_to_regions()
+            for reg in regions:
+                ax.add_patch(patches.Rectangle((reg[0],offset), reg[1]-reg[0], offset+1,\
+                    ec='none', fc='gray', alpha=0.3))
+
+
         plt.grid(True)
         plt.xlabel('Wavelength (Angstroms)')
         plt.ylabel('Normalized Flux (Arbitrary Offset')
 
+    def _convert_mask_to_regions(self):
+        """Converts a boolean mask into a list of regions
+        """
+        ismasked = False
+        start = 0
+        end = 0
+        l = []
+        # p is FALSE for values to be masked out
+        for i, p in enumerate(self.mask):
+            if not ismasked and not p:
+                ismasked = True
+                start = i 
+            elif ismasked and p:
+                ismasked = False
+                end = i
+                l.append((self.w[start],self.w[end]))
+        if ismasked:
+            end = len(self.mask)
+            l.append((self.w[start],self.w[end]))
 
+        return l
 
 def read_fits(infile):
     """Reads a spectrum from a fits file
@@ -206,7 +237,7 @@ def read_hdf(infile):
     """
     is_path = False
     if isinstance(infile, str):
-        infile = h5py.File(outfile, 'r')
+        infile = h5py.File(infile, 'r')
         is_path = True
 
     s = infile['s'][:]
