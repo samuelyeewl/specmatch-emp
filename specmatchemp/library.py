@@ -6,8 +6,7 @@ Defines the library class which will be used for matching
 
 from __future__ import print_function
 
-import urllib
-import os
+import os, sys
 import datetime
 
 import numpy as np
@@ -349,13 +348,26 @@ def read_hdf(path, wavlim='all'):
     lib = Library(wav, library_spectra, library_params, header=header, wavlim=wavlim, param_mask=param_mask)
     return lib
 
+def reporthook(blocknum, blocksize, totalsize):
+    readsofar = blocknum * blocksize
+    if totalsize > 0:
+        percent = readsofar * 1e2 / totalsize
+        s = "\r%5.1f%% %*d / %d" % (
+            percent, len(str(totalsize)), readsofar, totalsize)
+        sys.stderr.write(s)
+        if readsofar >= totalsize: # near the end
+            sys.stderr.write("\n")
+    else: # total size is unknown
+        sys.stderr.write("read %d\n" % (readsofar,))
+
 def get_library():
     liburl = "https://zenodo.org/record/59743/files/library.h5"
     if not os.path.exists(os.path.dirname(LIBPATH)):
         os.mkdir(os.path.dirname(LIBPATH))
     if not os.path.exists(LIBPATH):
+        from six.moves import urllib
         print("Downloading library.h5")
-        urllib.request.urlretrieve(liburl, LIBPATH)
+        urllib.request.urlretrieve(liburl, LIBPATH, reporthook)
 
     return read_hdf(LIBPATH)
 
