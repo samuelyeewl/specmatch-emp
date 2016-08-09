@@ -1,0 +1,5 @@
+include requirements.txt
+include bin/*
+include docs/*
+include catalogs/*
+include refs/*

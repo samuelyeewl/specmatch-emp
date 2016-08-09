@@ -8,6 +8,8 @@ Uses the isochrones package to obtain a full set of stellar parameters from thos
 Saves the stars and parameters as a Pandas Dataframe.
 """
 
+from __future__ import print_function
+
 import sys, os
 from argparse import ArgumentParser
 

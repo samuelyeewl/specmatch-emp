@@ -3,6 +3,8 @@
 Provides functions to read and write spectra for use in specmatchemp
 """
 
+from __future__ import print_function
+
 import numpy as np
 import pandas as pd
 from astropy.io import fits
