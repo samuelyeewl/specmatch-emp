@@ -29,15 +29,15 @@ library, along with some other useful modules.
         xlabel('Effective Temperature (K)')
         ylabel('Stellar Radius (Rsun)')
   
-Now we'll load in the library around the Mgb triplet
+Now we'll load in the library around the Mgb triplet. By default,
+SpecMatch create the following directory ``${HOME}/.specmatchemp/`` and
+download the library into it.
 
 ::
 
-    lib = specmatchemp.library.read_hdf(
-        '/Users/petigura/Dropbox/SpecMatch-Emp/library.h5',wavlim=[5140,5200]
-    )  
+   # Only load spectra from 5140 to 5200 angstroms.
+   lib = specmatchemp.library.read_hdf(wavlim=[5140,5200])
 
-    
 Here's how the library spans the HR diagram.
 
 ::
