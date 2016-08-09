@@ -19,10 +19,12 @@ from specmatchemp.spectrum import Spectrum
 LIB_COLS = ['lib_index','cps_name', 'lib_obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 
             'logg', 'u_logg', 'feh', 'u_feh', 'mass', 'u_mass', 'age', 'u_age', 
             'vsini', 'source', 'source_name', 'snr']
+"""list: List of allowed library properties"""
 STAR_PROPS = ['Teff', 'radius', 'logg', 'feh', 'mass', 'age']
+"""list: Numeric star properties"""
 FLOAT_TOL = 1e-3
 
-class Library():
+class Library(object):
     """A container for a library of spectrum and corresponding stellar parameters.
 
     The Library class is a container for the library spectrum and 
@@ -32,33 +34,43 @@ class Library():
     Attributes:
         library_params (pd.DataFrame): The parameter table, which can
             be queried directly.
-        library_spectra (np.ndarray): 3D array containing the library
-            spectra ordered according to the index column.
-
-    Args: 
-        library_params (pd.DataFrame): Pandas DataFrame containing
-            the parameters for the library stars. It should have
-            the columns specified in LIB_COLS, although values can
-            be np.nan. The library_index of each row should
-            be the index of the specturm in library_spectra.
-
-        wav (np.ndarray): Wavelength scale for the library spectra.
 
         library_spectra (np.ndarray): 3D array containing the library
             spectra ordered according to the index column.
-            Each entry contains the spectrum and its uncertainty.
 
-        header (dict): (optional) Any additional metadata to store
-            with the library.
-
-        wavlim (2-element iterable): (optional) The upper and lower
-            wavelength limits to be read.
+        param_mask (pd.DataFrame): Boolean dataframe with
+            same rows and columns as library_params, marked True for
+            model-independent parameters.
     """
-    target_chunk_bytes = 100e3  # Target number of bytes per chunk
+    _target_chunk_bytes = 100e3  # Target number of bytes per chunk
 
     def __init__(self, wav, library_spectra=None, library_params=None, header={}, wavlim=None, param_mask=None):
         """
         Creates a fully-formed library from a given set of spectra.
+
+        Args: 
+            wav (np.ndarray): Wavelength scale for the library spectra.
+
+            library_params (pd.DataFrame): (optional) Pandas DataFrame containing
+                the parameters for the library stars. It should have
+                the columns specified in LIB_COLS, although values can
+                be np.nan. The library_index of each row should
+                be the index of the specturm in library_spectra.
+
+            library_spectra (np.ndarray): (optional) 3D array containing the library
+                spectra ordered according to the index column.
+                Each entry contains the spectrum, its uncertainty, and
+                a mask array.
+
+            header (dict): (optional) Any additional metadata to store
+                with the library.
+
+            wavlim (tuple): (optional) The upper and lower
+                wavelength limits to be read.
+
+            param_mask (pd.DataFrame): (optional) Boolean dataframe with
+                same rows and columns as library_params, marked True for
+                model-independent parameters.
         """
         # If no params included, create empty library
         if library_params is None:
@@ -109,37 +121,38 @@ class Library():
         self.wavlim = wavlim
         self.param_mask = param_mask
 
-    def append(self, params, spectrum, u_spectrum):
+    def append(self, params, spectrum=None):
         """Adds spectrum and associated stellar parameters into library.
 
         Args:
             params (pd.Series): A row to be added to the library array. It
                 should have the fields specified in LIB_COLS.
-            spectrum (np.ndarray): Array containing spectrum to be added.
-                The spectrum should have been shifted and interpolated onto
-                the same wavelength scale as the library.
-            u_spectrum (np.ndarray): Array containing uncertainty in spectrum.
+            spectrum (Spectrum): Spectrum object. Spectrum should have been shifted
+                and interpolated onto the same wavelength scale as the library.
         """
-        assert self.library_spectra is not None, \
-            "Error: Cannot append to library with no spectra"
+        if self.library_spectra is None and spectrum is not None:
+            print("Error: Cannot append to library with no spectra")
+            return
+        
         # ensure that parameter table, library spectra have same length.
         assert len(self.library_params) == len(self.library_spectra),    \
             "Error: Length of parameter table and library spectra are not equal."
 
         # ensure that parameter row has the right columns
         for col in params.columns:
-            assert col in LIB_COLS, \
-                "{0} is not an allowed column".format(col)
+            if col not in LIB_COLS:
+                raise KeyError("{0} is not an allowed column".format(col))
 
         # ensure that the provided spectrum has the same number of elements
         # as the wavelength array
-        assert len(spectrum) == len(self.wav), \
-            "Error: spectrum is not the same length as library wavelength array"
+        if len(spectrum.w) != len(self.wav) or not np.allclose(spectrum.w, self.wav):
+            print("Spectrum should be shifted and interpolated onto library wavelength scale")
 
         # add new star to library
         params.lib_index = len(self.library_spectra)
         self.library_params = pd.concat((self.library_params, params), ignore_index=True)
-        self.library_spectra = np.vstack((self.library_spectra, [[spectrum, u_spectrum]]))
+        if spectrum is not None:
+            self.library_spectra = np.vstack((self.library_spectra, [[spectrum.s, spectrum.serr, spectrum.mask]]))
         self.library_params.set_index('lib_index', inplace=True, drop=False)
 
     def remove(self, index):
@@ -223,7 +236,7 @@ class Library():
             # Compute chunk size - group wavelenth regions together
             chunk_row = len(self.library_spectra)
             chunk_depth = 3
-            chunk_col = int(self.target_chunk_bytes / self.library_spectra[:,:,0].nbytes)
+            chunk_col = int(self._target_chunk_bytes / self.library_spectra[:,:,0].nbytes)
             chunk_size = (chunk_row, chunk_depth, chunk_col)
 
             print("Storing model spectra with chunks of size {0}".format(chunk_size))
@@ -298,7 +311,7 @@ class Library():
 
         Returns:
             params (pd.Series): Stellar parameters for the next star.
-            spectrum (np.ndarray): Spectrum for the next star
+            spectrum (Spectrum): Spectrum for the next star
         """
         if self.__it_counter >= len(self.library_params):
             raise StopIteration
@@ -309,7 +322,7 @@ class Library():
         if self.library_spectra is None:
             return self.library_params.loc[idx]
         else:
-            return self.library_params.loc[idx], self.library_spectra[idx]
+            return self.library_params.loc[idx], self.get_spectrum(idx)
 
     def __len__(self):
         """
