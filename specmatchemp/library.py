@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 import h5py
 
+from specmatchemp import match
+
 LIB_COLS = ['lib_index','cps_name', 'lib_obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 
             'logg', 'u_logg', 'feh', 'u_feh', 'mass', 'u_mass', 'age', 'u_age', 
             'vsini', 'source', 'source_name', 'snr']
@@ -207,6 +209,34 @@ class Library():
         elif len(res)>1:
             return np.array(res.iloc[:].lib_index)
         return None
+
+    def match_spectrum(self, target_spec):
+        """Match a spectrum to the library
+
+        """
+        wavmin = 5000
+        wavstep = 100
+        wavmax = 6100
+        results = pd.copy(self.library_params):
+
+        for w in range(wavmin, wavmax, wavstep):
+            cs_col = 'chi_squared_{0:d}'.format(w)
+            results.loc[:,cs_col] = np.nan
+            fit_col = 'fit_params_{0:d}'.format(w)
+            results.loc[:,fit_col] = ""
+
+            for param_ref, spec_ref in lib:
+                # match
+                mt = match.Match(lib.wav, spec_targ, spec_ref, opt='nelder')
+                mt.best_fit()
+
+                # store results
+                ref_idx = param_ref.lib_index
+                results.loc[ref_idx,cs_col] = mt.best_chisq
+                results.loc[ref_idx,fit_col] = mt.best_params.dumps()
+
+        return results
+
 
 
     def to_hdf(self, path):
