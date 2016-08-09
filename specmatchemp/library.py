@@ -6,6 +6,8 @@ Defines the library class which will be used for matching
 
 from __future__ import print_function
 
+import urllib
+import os
 import datetime
 
 import numpy as np
@@ -17,6 +19,8 @@ LIB_COLS = ['lib_index','cps_name', 'lib_obs', 'Teff', 'u_Teff', 'radius', 'u_ra
             'vsini', 'source', 'source_name', 'snr']
 STAR_PROPS = ['Teff', 'radius', 'logg', 'feh', 'mass', 'age']
 FLOAT_TOL = 1e-3
+HOMEDIR = os.environ['HOME']
+LIBPATH = "{0}/.specmatchemp/library.h5".format(HOMEDIR)
 
 class Library():
     """A container for a library of spectrum and corresponding stellar parameters.
@@ -344,4 +348,14 @@ def read_hdf(path, wavlim='all'):
 
     lib = Library(wav, library_spectra, library_params, header=header, wavlim=wavlim, param_mask=param_mask)
     return lib
+
+def get_library():
+    liburl = "https://zenodo.org/record/59743/files/library.h5"
+    if not os.path.exists(os.path.dirname(LIBPATH)):
+        os.mkdir(os.path.dirname(LIBPATH))
+    if not os.path.exists(LIBPATH):
+        print("Downloading library.h5")
+        urllib.request.urlretrieve(liburl, LIBPATH)
+
+    return read_hdf(LIBPATH)
 
