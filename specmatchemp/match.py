@@ -11,24 +11,28 @@ from scipy import signal
 from scipy.ndimage.filters import convolve1d
 
 import specmatchemp.kernels
+from specmatchemp.spectrum import Spectrum
 
 class Match:
-    def __init__(self, wav, s_targ, s_ref, mode='default', opt='nelder'):
+    def __init__(self, target, reference, mode='default', opt='nelder'):
         """
         The Match class used for matching two spectra
 
         Args:
-            wav (np.ndarray): Common wavelength scale
-            s_targ (np.ndarray): 2d array containing target spectrum and uncertainty
-            s_ref (np.ndarray): 2d array containing reference spectrum and uncertainty
+            target (Spectrum): Target spectrum
+            reference (Spectrum): Reference spectrum
             mode: default (unnormalized chi-square), normalized (normalized chi-square)
             opt: lm (Levenberg-Marquadt optimization), nelder (Nelder-Mead)
         """
-        self.w = np.copy(wav)
-        self.s_targ = np.copy(s_targ[0])
-        self.serr_targ = np.copy(s_targ[1])
-        self.s_ref = np.copy(s_ref[0])
-        self.serr_ref = np.copy(s_ref[1])
+        if not np.allclose(target.w, reference.w):
+            print("Target and reference are on different wavelength scales.")
+            raise ValueError
+
+        self.w = np.copy(target.w)
+        self.s_targ = np.copy(target.s)
+        self.serr_targ = np.copy(target.serr)
+        self.s_ref = np.copy(reference.s)
+        self.serr_ref = np.copy(reference.serr)
         # replace nans with continuum
         self.s_targ[np.isnan(self.s_targ)] = 1
         self.serr_targ[np.isnan(self.serr_targ)] = 1
@@ -156,22 +160,29 @@ class Match:
 
 
 class MatchLincomb(Match):
-    def __init__(self, wav, s_targ, s_refs, vsini, mode='default'):
+    def __init__(self, target, refs, vsini, mode='default'):
         """
         Match subclass to find the best match from a linear combination of 
         reference spectra.
 
         Args:
-            wav (np.ndarray): Common wavelength scale
-            s_targ (np.ndarray): 2d array containing target spectrum and uncertainty
-            s_refs (np.ndarray): 3d list containing reference spectra and uncertainty
+            target (Spectrum): Target spectrum
+            refs (list of Spectrum): Array of reference spectra
             vsini (np.ndarray): array containing vsini broadening for each reference spectrum
         """
-        self.w = np.copy(wav)
-        self.s_targ = np.copy(s_targ[0])
-        self.serr_targ = np.copy(s_targ[1])
-        self.num_refs = len(s_refs)
-        self.s_refs = np.copy(s_refs)
+        for i in range(len(refs)):
+            if not np.allclose(target.w, refs[i].w):
+                print("Target and reference {0:d} are on different wavelength scales.".format(i))
+                raise ValueError
+
+        self.w = np.copy(target.w)
+        self.s_targ = np.copy(target.s)
+        self.serr_targ = np.copy(target.serr)
+        self.num_refs = len(refs)
+        self.s_refs = np.empty(0, 2, len(self.w))
+        for i in range(len(refs)):
+            self.s_refs = np.vstack((self.s_refs, [refs[i].s, refs[i].serr]))
+
         self.vsini = vsini
 
         ## Broaden reference spectra

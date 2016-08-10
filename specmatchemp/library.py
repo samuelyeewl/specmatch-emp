@@ -26,28 +26,9 @@ LIB_COLS = ['lib_index','cps_name', 'lib_obs', 'Teff', 'u_Teff', 'radius', 'u_ra
 STAR_PROPS = ['Teff', 'radius', 'logg', 'feh', 'mass', 'age']
 """list: Numeric star properties"""
 FLOAT_TOL = 1e-3
+
 HOMEDIR = os.environ['HOME']
 LIBPATH = "{0}/.specmatchemp/library.h5".format(HOMEDIR)
-
-def reporthook(blocknum, blocksize, totalsize):
-    readsofar = blocknum * blocksize
-    if totalsize > 0:
-        percent = readsofar * 1e2 / totalsize
-        s = "\r%5.1f%% %*d / %d" % (
-            percent, len(str(totalsize)), readsofar, totalsize)
-        sys.stderr.write(s)
-        if readsofar >= totalsize: # near the end
-            sys.stderr.write("\n")
-    else: # total size is unknown
-        sys.stderr.write("read %d\n" % (readsofar,))
-
-liburl = "https://zenodo.org/record/59743/files/library.h5"
-if not os.path.exists(os.path.dirname(LIBPATH)):
-    os.mkdir(os.path.dirname(LIBPATH))
-if not os.path.exists(LIBPATH):
-    from six.moves import urllib
-    print("Downloading library.h5")
-    urllib.request.urlretrieve(liburl, LIBPATH, reporthook)
 
 class Library(object):
     """A container for a library of spectrum and corresponding stellar parameters.
@@ -226,34 +207,6 @@ class Library(object):
         elif len(res)>1:
             return np.array(res.iloc[:].lib_index)
         return None
-
-    def match_spectrum(self, target_spec):
-        """Match a spectrum to the library
-
-        """
-        wavmin = 5000
-        wavstep = 100
-        wavmax = 6100
-        results = self.library_params.copy()
-
-        for w in range(wavmin, wavmax, wavstep):
-            cs_col = 'chi_squared_{0:d}'.format(w)
-            results.loc[:,cs_col] = np.nan
-            fit_col = 'fit_params_{0:d}'.format(w)
-            results.loc[:,fit_col] = ""
-
-            for param_ref, spec_ref in self:
-                # match
-                mt = match.Match(self.wav, target_spec, spec_ref, opt='nelder')
-                mt.best_fit()
-
-                # store results
-                ref_idx = param_ref.lib_index
-                results.loc[ref_idx,cs_col] = mt.best_chisq
-                results.loc[ref_idx,fit_col] = mt.best_params.dumps()
-
-        return results
-
 
 
     def to_hdf(self, path):
