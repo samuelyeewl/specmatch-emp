@@ -75,6 +75,52 @@ def plot_lincomb_refs(res, lib, targ_idx, num, wl):
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
 
+def plot_lincomb_refs(res, targ, coeffs, num_best=5):
+    params = res.append(targ, ignore_index=True)
+    targ_idx = params.iloc[-1].name
+    params.sort_values(by='chi_squared', inplace=True)
+    ref_idxs = params.head(num_best).index
+    
+    gs = gridspec.GridSpec(2,2)
+    plt.subplot(gs[0])
+    plots.lincomb_refs_plot(params, 'Teff', 'radius', targ_idx, ref_idxs)
+    ax = plt.gca()
+    ax.set_yscale('log')
+    plt.ylim((0.1, 16))
+    plots.reverse_x()
+    plt.xlabel(r'$T_{eff}$ (K)')
+    plt.ylabel(r'$R\ (R_\odot)$')
+
+    plt.subplot(gs[1])
+    plots.lincomb_refs_plot(params, 'Teff', 'radius', targ_idx, ref_idxs, annot=coeffs, zoom=True, legend=False)
+    ax = plt.gca()
+    # ax.set_yscale('log')
+    ax.yaxis.set_minor_formatter(FormatStrFormatter("%.1f"))
+    ax.yaxis.set_major_formatter(FormatStrFormatter("%.1f"))
+    plots.reverse_x()
+    plt.xlabel(r'$T_{eff}$ (K)')
+    plt.ylabel(r'$R\ (R_\odot)$')
+
+    plt.subplot(gs[2])
+    plots.lincomb_refs_plot(params, 'feh', 'radius', targ_idx, ref_idxs, legend=False)
+    ax = plt.gca()
+    ax.set_yscale('log')
+    plt.ylim((0.1, 16))
+    plt.xlabel(r'$[Fe/H]$ (dex)')
+    plt.ylabel(r'$R\ (R_\odot)$')
+
+    plt.subplot(gs[3])
+    plots.lincomb_refs_plot(params, 'feh', 'radius', targ_idx, ref_idxs, annot=coeffs, zoom=True, legend=False)
+    ax = plt.gca()
+    # ax.set_yscale('log')
+    ax.yaxis.set_minor_formatter(FormatStrFormatter("%.1f"))
+    ax.yaxis.set_major_formatter(FormatStrFormatter("%.1f"))
+    plt.xlabel(r'$[Fe/H]$ (dex)')
+    plt.ylabel(r'$R\ (R_\odot)$')
+
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+
+
 def plot_lincomb_specs(res, lib, num, wl):
     targ_idx = res.iloc[0].name
     # Load in values

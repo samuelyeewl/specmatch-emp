@@ -179,6 +179,28 @@ class Library(object):
             lambda i: i-1 if i > index else i)
         self.library_params.set_index('lib_index', inplace=True, drop=False)
 
+    def pop(self, index):
+        """Removes the spectrum and parameters with the given index from the library.
+
+        Args:
+            index (int): Index of spectrum to remove.
+        Returns:
+            params (pd.Series): Parameters of star
+            spectrum (np.ndarray): Spectrum
+        """
+        if not self.__contains__(index):
+            raise KeyError
+
+        params = self.library_params.loc[index]
+        if self.library_spectra is not None:
+            spectrum = self.library_spectra[index]
+
+        self.remove(index)
+        
+        if self.library_spectra is not None:
+            return params, spectrum
+        else:
+            return params
 
     def get_index(self, searchstr):
         """Searches the library for the given search string. Checks columns

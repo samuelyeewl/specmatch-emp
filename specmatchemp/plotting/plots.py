@@ -361,13 +361,14 @@ def lincomb_refs_plot(library_params, paramx, paramy, targ_idx, ref_idxs, annot=
 #     plt.plot(values.head(10)[param], values.head(10).chi_squared, 'r.')
 #     plt.axvline(x=lib.library_params.loc[targ_idx][param], color='k')
 
-def plot_param_chi_squared(res, param, targ_idx, suffix):
+def plot_param_chi_squared(res, param, targ_idx=None, suffix=''):
     cs_col = 'chi_squared'+suffix
     res = res.sort_values(by=cs_col)
 
     plt.plot(res[param], res[cs_col], '.')
-    plt.plot(res.head(10)[param], res.head(10)[cs_col], 'r.')
-    plt.axvline(x=res.loc[targ_idx, param], color='k')
+    plt.plot(res.head(5)[param], res.head(5)[cs_col], 'r.')
+    if targ_idx is not None:
+        plt.axvline(x=res.loc[targ_idx, param], color='k')
 
 
 def chi_squared_plot(res, targ_idx, suffix):
@@ -388,7 +389,6 @@ def chi_squared_plot(res, targ_idx, suffix):
     plt.semilogy()
     plot_param_chi_squared(res, 'feh', targ_idx, suffix)
     plt.xlabel(r'$[Fe/H]$ (dex)')
-    
 
 def library_comparison_plot(lib, param_x, param_y, xlabel=None, ylabel=None, ptlabels=False, suffix='_sm'):
     """Plots comparison between library and matched values.
