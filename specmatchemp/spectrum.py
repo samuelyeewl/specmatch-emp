@@ -185,6 +185,45 @@ class Spectrum(object):
 
         return l
 
+class Hires_Spectrum(Spectrum):
+    """Spectrum class for raw HIRES spectra
+        
+    Attributes:
+        w (np.ndarray): Wavelength scale
+        s (np.ndarray): Spectrum
+        serr (None or np.ndarray): Measurement error in spectrum
+        mask (np.ndarray): Boolean array with telluric line positions
+        name (str): Name associted with spectrum
+        header (FITS header): Header from FITS file
+        attrs (dict): A dictionary of further attributes
+    """
+    def __init__(self, w, s, serr=None, mask=None, mask_table=None, name=None, header=None, attrs={}):
+        """
+        Args:
+            w (np.ndarray): Wavelength scale
+            s (np.ndarray): Spectrum
+            serr (optional [np.ndarray]): Error in spectrum
+            mask (optional [np.ndarray]): Boolean array to mask out telluric lines
+            mask_table (optional [pd.DataFrame]): Table containing masked regions
+            name (optional [str]): Name associated with spectrum
+            header (optional [FITS header]): Header from fits file
+            attrs (optional [dict]): Any further attributes
+        """
+        self.mask_table = mask_table
+        if mask_table is not None and mask is None:
+            mask = np.empty_like(s)
+            mask.fill(True)
+            for order in len(mask):
+                mask_table_cut = mask_table.query('order == {0:d}'.format(order))
+                for n, row in mask_table_cut.iterrows():
+                    start = row['minpix']
+                    end = row['maxpix']
+                    mask[order,start:end] = False
+
+        super(Hires_Spectrum, self).__init__(w, s, serr, mask=mask, name=name, header=header, attrs=attrs)
+    
+
+
 def read_fits(infile):
     """Reads a spectrum from a fits file
 
@@ -209,7 +248,7 @@ def read_fits(infile):
 
     return Spectrum(w, s, serr, mask=mask, header=header)
 
-def read_hires_fits(infile):
+def read_hires_fits(infile, mask):
     """Reads a spectrum from a fits file that was produced by HIRES.
 
     Args:
