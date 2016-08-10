@@ -3,5 +3,5 @@
 Specmatch
 =========
 
-.. autoclass:: specmatchemp.match.Match
+.. autoclass:: specmatchemp.specmatch.SpecMatch
 	:members:
