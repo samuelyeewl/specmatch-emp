@@ -221,6 +221,7 @@ class Hires_Spectrum(Spectrum):
                     mask[order,start:end] = False
 
         super(Hires_Spectrum, self).__init__(w, s, serr, mask=mask, name=name, header=header, attrs=attrs)
+
     
 
 

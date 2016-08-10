@@ -49,7 +49,7 @@ def get_isochrone_params(stars, modeldir, overwrite=False):
                 # (value, uncertainty)
                 lib_props[p] = (row[p], row['u_'+p])
         # if all properties are known, we don't need to use the model
-        if not lib_props:
+        if len(lib_props) == 6:
             continue
 
         # isochrones requires fitting a distance to at least one magnitude - use arbitrary value
@@ -65,6 +65,10 @@ def get_isochrone_params(stars, modeldir, overwrite=False):
                 model = StarModel.load_hdf(modelfile)
             # otherwise perform the fit
             else:
+                print(len(lib_props))
+                print(lib_props)
+                print(row)
+                raise Exception
                 model = StarModel(dar, **lib_props)
                 model.fit(overwrite=True, verbose=False)
                 model.save_hdf(modelfile)
