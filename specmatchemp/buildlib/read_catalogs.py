@@ -345,12 +345,12 @@ def read_bruntt(catalogdir, cps_list):
 
 def read_kdwarfs(catalogdir, cps_list):
     """Read in K-Dwarf catalog"""
-    kdwarfs = pd.read_ramirez(os.path.join(catalogdir, KDWARF_FILENAME))
+    kdwarfs = pd.read_csv(os.path.join(catalogdir, KDWARF_FILENAME))
 
     stars = pd.DataFrame(columns=LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
-    for idx, row in kdwarfs:
+    for idx, row in kdwarfs.iterrows():
         query_result = cpsutils.find_spectra(row['name'], cps_list)
         if not query_result.empty:
             new_row = {}
@@ -485,9 +485,9 @@ def main(catalogdir, cpspath, outdir, append):
     stars.reset_index(drop=True, inplace=True)
     stars_nospectra.reset_index(drop=True, inplace=True)
     mask.reset_index(drop=True, inplace=True)
-    stars.to_csv(os.path.join(outdir, "libstars.csv"), mode=mode, header=header)
+    stars.to_csv(os.path.join(outdir, "libstars_kd.csv"), mode=mode, header=header)
     stars_nospectra.to_csv(os.path.join(outdir, "nospectra.csv"), mode=mode, header=header)
-    mask.to_csv(os.path.join(outdir, "libstars_mask.csv"), mode=mode, header=header)
+    mask.to_csv(os.path.join(outdir, "libstars_mask_kd.csv"), mode=mode, header=header)
 
 
 if __name__ == '__main__':
