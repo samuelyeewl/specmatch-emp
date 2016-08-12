@@ -97,7 +97,7 @@ class Library(object):
         if library_spectra is None:
             self.library_params = library_params
             self.wav = wav
-            self.library_spectra = np.empty((0, 3, len(wav)))
+            self.library_spectra = np.empty((0, 2, len(wav)))
             self.header = {'date_created': str(datetime.date.today())}
             self.wavlim = wavlim
             return
@@ -112,8 +112,8 @@ class Library(object):
             "Error: Index {0:d} is out of bounds in library_spectra".format(i)
 
         # ensure library_spectra is of right shape
-        assert np.shape(library_spectra)[1] == 3 and np.shape(library_spectra)[2] == len(wav), \
-            "Error: library_spectra should have shape ({0:d}, 3, {1:d}".format(num_spec, len(wav))
+        assert np.shape(library_spectra)[1] == 2 and np.shape(library_spectra)[2] == len(wav), \
+            "Error: library_spectra should have shape ({0:d}, 3, {1:d})".format(num_spec, len(wav))
 
         # set index to be equal to lib_index
         library_params.lib_index = library_params.lib_index.astype(int)
@@ -186,16 +186,17 @@ class Library(object):
             index (int): Index of spectrum to remove.
         Returns:
             params (pd.Series): Parameters of star
-            spectrum (np.ndarray): Spectrum
+            spectrum (Spectrum): Spectrum
         """
         if not self.__contains__(index):
             raise KeyError
 
         params = self.library_params.loc[index]
         if self.library_spectra is not None:
-            spectrum = self.library_spectra[index]
+            spectrum = self.get_spectrum(index)
 
         self.remove(index)
+        print(type(spectrum))
         
         if self.library_spectra is not None:
             return params, spectrum
@@ -271,23 +272,33 @@ class Library(object):
             dset = f.create_dataset('library_spectra', data=self.library_spectra,
                 compression='gzip', compression_opts=1, shuffle=True, chunks=chunk_size)
 
-    def get_spectrum(self, index):
+    def get_spectrum(self, indices):
         """Returns the spectrum at the given index.
 
         Args:
-            index (int): Library index of spectrum.
+            indices (int or list): Library indices of spectrum.
         Returns:
-            spec (Spectrum): Spectrum object
+            spec (Spectrum of list of Spectrum): Spectrum object
         """
-        s = self.library_spectra[index, 0]
-        serr = self.library_spectra[index, 1]
-        w = self.wav
-        name = self.library_params.loc[index, 'cps_name']
-        attrs = {}
-        for p in STAR_PROPS:
-            attrs[p] = self.library_params.loc[index, p]
+        if isinstance(indices, int) or isinstance(indices, np.int_):
+            indices = [indices]
 
-        return Spectrum(w, s, serr, name=name, attrs=attrs)
+        spectra = []
+        for idx in indices:
+            s = self.library_spectra[idx, 0]
+            serr = self.library_spectra[idx, 1]
+            w = self.wav
+            name = self.library_params.loc[idx, 'cps_name']
+            attrs = {}
+            for p in STAR_PROPS:
+                attrs[p] = self.library_params.loc[idx, p]
+
+            spectra.append(Spectrum(w, s, serr, name=name, attrs=attrs))
+
+        if len(spectra) == 1:
+            return spectra[0]
+        else:
+            return spectra
 
     def plot(self, paramx, paramy, grouped=False, ptlabels=False, plt_kw={}):
         """Create a plot of the library in parameter space
@@ -375,7 +386,7 @@ class Library(object):
         if self.library_spectra is None:
             return self.library_params.loc[index]
         else:
-            return self.library_params.loc[index], self.library_spectra[index]
+            return self.library_params.loc[index], self.get_spectrum(index)
 
     def __delitem__(self, index):
         """

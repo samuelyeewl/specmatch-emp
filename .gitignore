@@ -80,5 +80,7 @@ target/
 #Ipython Notebook
 .ipynb_checkpoints
 
+# IDE
+*.sublime*
 .DS_STORE
 

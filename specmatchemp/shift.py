@@ -1,12 +1,8 @@
-#!/usr/bin/env python
 """
 @filename shift.py
 
 Shift a target spectrum onto a reference spectrum.
 """
-import argparse
-
-import h5py
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 from scipy.optimize import least_squares
@@ -14,7 +10,7 @@ from scipy.optimize import least_squares
 from specmatchemp.spectrum import Spectrum
 from specmatchemp.io import specmatchio
 
-def shift(targ, ref, mask=None, outfile=None):
+def shift(targ, ref, store=None):
     """Shifts the given spectrum by placing it on the same wavelength
     scale as the specified reference spectrum, then solves for shifts
     between the two spectra through cross-correlation.
@@ -22,15 +18,15 @@ def shift(targ, ref, mask=None, outfile=None):
     Args:
         targ (Spectrum): Target spectrum
         ref (Spectrum): Reference spectrum
-        mask (optional [pd.DataFrame]): Mask for telluric lines
-        outfile (optional [file]): h5 file to store diagnostic data in
+        store (optional [file or dict]): h5 file or dict to store diagnostic data in
 
     Returns:
         shifted (Spectrum): Adjusted and flattened spectrum
     """
-    s = targ.s
-    serr = targ.serr
-    w = targ.w
+    s = np.copy(targ.s)
+    serr = np.copy(targ.serr)
+    w = np.copy(targ.w)
+    mask = np.copy(targ.mask)
 
     # normalize each order of the target spectrum by dividing by the 95th percentile
     percen_order = np.percentile(s, 95, axis=1)
@@ -54,22 +50,7 @@ def shift(targ, ref, mask=None, outfile=None):
         ww = w[i]
         ss = s[i]
         sserr = serr[i]
-
-        # create mask
-        mm = np.empty_like(ww)
-        mm.fill(True)
-        if mask is not None:
-            mask_cut = mask.query('order == {0:d}'.format(i))
-            for n, row in mask_cut.iterrows():
-                start = row['minpix']
-                end = row['maxpix']
-                mm[start:end] = False
-
-        if i == 15:
-            import matplotlib.pyplot as plt
-            plt.plot(ss-2)
-            plt.plot(mm-2)
-
+        mm = mask[i]
 
         # clip ends off each order
         cliplen = 15
@@ -98,19 +79,12 @@ def shift(targ, ref, mask=None, outfile=None):
         # place the target spectrum on the same wavelength scale
         ss, sserr, mm = rescale_w(ss, sserr, ww, mm, w_ref_c)
 
-        if i == 15:
-            plt.plot(ss-1)
-            plt.plot(mm-1)
-
         # solve for shifts in different sections
         l_sect = int(len(w_ref_c)/num_sections)
         lags = np.empty(num_sections)
         center_pix = np.empty(num_sections)
         lag_arrs = []
         xcorrs = []
-
-        if outfile is not None:
-            grp = outfile.create_group("/xcorr/order_{0:d}".format(i))
 
         for j in range(num_sections):
             ss_sect = ss[j*l_sect:(j+1)*l_sect]
@@ -120,10 +94,10 @@ def shift(targ, ref, mask=None, outfile=None):
             lags[j] = lag
             center_pix[j] = (j+1/2)*l_sect
 
-            if outfile is not None:
-                subgrp = grp.create_group("sect_{0:d}".format(j))
-                subgrp["xcorr"] = xcorr
-                subgrp["lag_arr"] = lag_arr
+            if store is not None:
+                key = "xcorr/order_{0:d}/sect_{1:d}/".format(i, j)
+                store[key+"xcorr"] = xcorr
+                store[key+"lag_arr"] = lag_arr
 
         # remove clear outliers
         med = np.median(lags)
@@ -175,10 +149,10 @@ def shift(targ, ref, mask=None, outfile=None):
 
 
     # save diagnostic data
-    if outfile is not None:
-        outfile.create_dataset('lag', data=np.asarray(lag_data))
-        outfile.create_dataset('center_pix', data=np.asarray(center_pix_data))
-        outfile.create_dataset('fit', data=np.asarray(fit_data))
+    if store is not None:
+        store['lag'] = np.asarray(lag_data)
+        store['center_pix'] = np.asarray(center_pix_data)
+        store['fit'] = np.asarray(fit_data)
 
     # flatten spectrum
     w_min = ws[0]
@@ -341,13 +315,3 @@ def rescale_w(s, serr, w, m, w_ref):
 
     return snew, serrnew, mnew
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Shift a target spectrum onto a reference spectrum')
-    parser.add_argument('target_path', type=str)
-    parser.add_argument('target_type', choices=io_types)
-    parser.add_argument('reference_path', type=str)
-    parser.add_argument('output_path', type=str)
-    args = parser.parse_args()
-
-    shift(args.target_path, args.target_type, args.reference_path, args.output_path)
