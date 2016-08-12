@@ -135,12 +135,6 @@ def shift(targ, ref, store=None):
         mask_shifted = np.append(mask_shifted, mm_shifted)
         ws = np.append(ws, w_ref_c)
 
-        if i == 15:
-            plt.plot(ss)
-            # shifted mask
-            plt.plot(ss_shifted+1)
-            plt.plot(mm_shifted+1)
-
         # save diagnostic data
         lag_data.append(lags)
         center_pix_data.append(center_pix)

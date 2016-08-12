@@ -16,6 +16,7 @@ EXECPATH = '/home/syee/specmatchemp-working/specmatchemp/buildlib/shift_spectrum
 LIBPATH = '/home/syee/specmatchemp-working/specmatchemp/lib/libstars.csv'
 SPECDIR = '/home/syee/specmatchemp-working/specmatchemp/spectra/iodfitsdb/'
 REFDIR = '/home/syee/specmatchemp-working/specmatchemp/spectra/refs/'
+TELLURICMASKPATH = '/home/syee/specmatchemp-working/specmatchemp/lib/telluric_mask.csv'
 # SHIFTINSTRUCTIONS = '/home/syee/specmatchemp-working/specmatchemp/spectra/shift_reference.csv'
 OUTDIR = '/home/syee/specmatchemp-working/specmatchemp/results/'
 # SCRIPTPATH = '/home/syee/specmatchemp-working/specmatchemp/buildlib/shift_script.txt'
@@ -60,7 +61,8 @@ if __name__ == '__main__':
             s+= row['cps_name']+" "
             s+= specpath+" "
             s+= refpath+" "
-            s+= OUTDIR
+            s+= OUTDIR+" "
+            s+= "-m "+TELLURICMASKPATH+" "
             if len(args.suffix) > 0:
                 s+= " -s "+args.suffix
             s+= "\n"

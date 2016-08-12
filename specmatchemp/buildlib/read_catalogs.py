@@ -33,7 +33,7 @@ RAMIREZ_FILENAME = "ramirez_2005_cut.csv"
 CASAGRANDE_FILENAME = "Casagrande2006/table1_cut.csv"
 BRUNTT_FILENAME = "Bruntt2012/table3.dat"
 BRUNTT_README = "Bruntt2012/ReadMe.txt"
-KDWARF_FILENAME = "kdwarfs.csv"
+KDWARF_FILENAME = "kdwarfs_cut.csv"
 CPS_INDEX = "cps_templates.csv"
 CPS_SPECTRA_DIR = "iodfitsdb/"
 
@@ -455,6 +455,11 @@ def read_catalogs(catalogdir, cpspath):
     stars.drop(idxs, inplace=True)
 
     print("Removing {0:d} duplicates, favoring von Braun, Bruntt and Casagrande data".format(len(idxs)))
+
+    idxs = stars.query('Teff > 7000 | feh < -1.0').index
+    stars.drop(idxs, inplace=True)
+
+    print("Removing {0:d} stars on edge of our parameter space".format(len(idxs)))
 
     print("Total of {0:d} stars read".format(len(stars)))
 
