@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from astropy.io import fits
 from specmatchemp.io import pdplus
+from specmatchemp.spectrum import Spectrum
 
 io_types = ['standard', 'hires']
 

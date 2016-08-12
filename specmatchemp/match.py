@@ -5,35 +5,44 @@ Defines the Match class
 """
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import lmfit
 from scipy.interpolate import LSQUnivariateSpline
 from scipy import signal
 from scipy.ndimage.filters import convolve1d
 
 import specmatchemp.kernels
+from specmatchemp.spectrum import Spectrum
+from specmatchemp import plots
 
 class Match:
-    def __init__(self, wav, s_targ, s_ref, mode='default', opt='nelder'):
+    def __init__(self, target, reference, mode='default', opt='nelder'):
         """
         The Match class used for matching two spectra
 
         Args:
-            wav (np.ndarray): Common wavelength scale
-            s_targ (np.ndarray): 2d array containing target spectrum and uncertainty
-            s_ref (np.ndarray): 2d array containing reference spectrum and uncertainty
+            target (Spectrum): Target spectrum
+            reference (Spectrum): Reference spectrum
             mode: default (unnormalized chi-square), normalized (normalized chi-square)
             opt: lm (Levenberg-Marquadt optimization), nelder (Nelder-Mead)
         """
-        self.w = np.copy(wav)
-        self.s_targ = np.copy(s_targ[0])
-        self.serr_targ = np.copy(s_targ[1])
-        self.s_ref = np.copy(s_ref[0])
-        self.serr_ref = np.copy(s_ref[1])
+
+        if not np.allclose(target.w, reference.w):
+            print("Target and reference are on different wavelength scales.")
+            raise ValueError
+        # common wavelength scale
+        self.w = np.copy(target.w)
+
+        # target, reference and modified spectra
+        self.target = target.copy()
+        self.reference = reference.copy()
+        self.modified = reference.copy()
+
         # replace nans with continuum
-        self.s_targ[np.isnan(self.s_targ)] = 1
-        self.serr_targ[np.isnan(self.serr_targ)] = 1
-        self.s_ref[np.isnan(self.s_ref)] = 1
-        self.serr_ref[np.isnan(self.serr_ref)] = 1
+        self.target.s[np.isnan(self.target.s)] = 1
+        self.target.serr[np.isnan(self.target.serr)] = 1
+        self.reference.s[np.isnan(self.reference.s)] = 1
+        self.reference.serr[np.isnan(self.reference.serr)] = 1
 
         self.best_params = lmfit.Parameters()
         self.best_chisq = np.NaN
@@ -55,20 +64,27 @@ class Match:
         based on the reference spectrum.
         Stores the tweaked model in spectra.s_mod and serr_mod.
         """
-        self.s_mod = np.nan_to_num(self.s_ref)
-        self.serr_mod = np.nan_to_num(self.serr_ref)
+        self.modified.s = np.nan_to_num(self.reference.s)
+        self.modified.serr = np.nan_to_num(self.reference.serr)
 
         # Apply broadening kernel
         vsini = params['vsini'].value
-        self.s_mod = self.broaden(vsini, self.s_mod)
-        self.serr_mod = self.broaden(vsini, self.serr_mod)
+        self.modified = self.broaden(vsini, self.modified)
 
         # Use linear least squares to fit a spline
-        s = LSQUnivariateSpline(self.w, self.s_targ/self.s_mod, self.knot_x)
-        self.spl = s(self.w)
+        spline = LSQUnivariateSpline(self.w, self.target.s/self.modified.s, self.knot_x)
+        self.spl = spline(self.w)
 
-        self.s_mod *= self.spl
-        self.serr_mod *= self.spl
+        self.modified.s *= self.spl
+        self.modified.serr *= self.spl
+
+    def load_params(self, params):
+        """
+        Method to create a model based on pre-determined parameters,
+        storing it as the best fit model.
+        """
+        self.best_chisq = self.objective(params)
+        self.best_params = params 
 
 
     def broaden(self, vsini, spec):
@@ -77,18 +93,20 @@ class Match:
 
         Args:
             vsini (float): vsini to determine width of broadening
-            spec (np.ndarray): spectrum to broaden
+            spec (Spectrum): spectrum to broaden
         Returns:
-            broadened (np.ndarray): Broadened spectrum
+            broadened (Spectrum): Broadened spectrum
         """
         SPEED_OF_LIGHT = 2.99792e5
         dv = (self.w[1]-self.w[0])/self.w[0]*SPEED_OF_LIGHT
         n = 151 # fixed number of points in the kernel
         varr, kernel = specmatchemp.kernels.rot(n, dv, vsini)
         # broadened = signal.fftconvolve(spec, kernel, mode='same')
-        broadened = convolve1d(spec, kernel)
+        
+        spec.s = convolve1d(spec.s, kernel)
+        spec.serr = convolve1d(spec.serr, kernel)
 
-        return broadened
+        return spec
 
 
     def objective(self, params):
@@ -105,9 +123,9 @@ class Match:
 
         # Calculate residuals (data - model)
         if self.mode == 'normalized':
-            residuals = (self.s_targ-self.s_mod)/np.sqrt(self.serr_targ**2+self.serr_mod**2)
+            residuals = (self.target.s-self.modified.s)/np.sqrt(self.target.serr**2+self.modified.serr**2)
         else:
-            residuals = (self.s_targ-self.s_mod)
+            residuals = (self.target.s-self.modified.s)
 
         chi_square = np.sum(residuals**2)
 
@@ -150,35 +168,68 @@ class Match:
             np.ndarray
         """
         if self.mode == 'normalized':
-            return (self.s_targ-self.s_mod)/np.sqrt(self.serr_targ**2+self.serr_mod**2)
+            return (self.target.s-self.modified.s)/np.sqrt(self.target.serr**2+self.modified.serr**2)
         else:
-            return (self.s_targ-self.s_mod) # data - model
+            return (self.target.s-self.modified.s) # data - model
+
+    def get_spline_positions(self):
+        """Wrapper function for getting spline positions
+
+        Returns:
+            knotx (np.ndarray)
+        """
+        return get_spline_positions(self.best_params)
+
+
+    def plot(self, verbose=True):
+        if verbose:
+            labels = {'target': 'Target: {0}'.format(self.target.name),\
+                    'reference': 'Reference: {0}'.format(self.reference.name),\
+                    'modified': r'Reference (modified): $v\sin i = {0:.2f}$'.format(self.best_params['vsini'].value),\
+                    'residuals': r'Residuals: $\chi^2 = {0:.3f}$'.format(self.best_chisq)}
+        else:
+            labels = {'target': 'Target', 'reference': 'Reference', \
+                    'modified': 'Reference (Modified)', 'residuals': 'Residuals'}
+
+        self.target.plot(text=labels['target'], plt_kw={'color':'royalblue'})
+        self.modified.plot(offset=1, plt_kw={'color':'forestgreen'}, text=labels['modified'])
+        self.reference.plot(offset=2, plt_kw={'color':'firebrick'}, text=labels['reference'])
+
+        plt.plot(self.target.w, self.modified.s-self.target.s, '-', color='black')
+        plots.annotate_spectrum(labels['residuals'], spec_offset=-1)
 
 
 class MatchLincomb(Match):
-    def __init__(self, wav, s_targ, s_refs, vsini, mode='default'):
+    def __init__(self, target, refs, vsini, mode='default'):
         """
         Match subclass to find the best match from a linear combination of 
         reference spectra.
 
         Args:
-            wav (np.ndarray): Common wavelength scale
-            s_targ (np.ndarray): 2d array containing target spectrum and uncertainty
-            s_refs (np.ndarray): 3d list containing reference spectra and uncertainty
+            target (Spectrum): Target spectrum
+            refs (list of Spectrum): Array of reference spectra
             vsini (np.ndarray): array containing vsini broadening for each reference spectrum
         """
-        self.w = np.copy(wav)
-        self.s_targ = np.copy(s_targ[0])
-        self.serr_targ = np.copy(s_targ[1])
-        self.num_refs = len(s_refs)
-        self.s_refs = np.copy(s_refs)
+        for i in range(len(refs)):
+            if not np.allclose(target.w, refs[i].w):
+                print("Target and reference {0:d} are on different wavelength scales.".format(i))
+                raise ValueError
+
+        self.w = np.copy(target.w)
+        self.target = target.copy()
+        self.num_refs = len(refs)
+        self.refs = []
+        for i in range(self.num_refs):
+            self.refs.append(refs[i].copy())
+        
         self.vsini = vsini
 
         ## Broaden reference spectra
-        self.s_broad = np.empty_like(self.s_refs)
+        self.broadened = []
         for i in range(self.num_refs):
-            self.s_broad[i,0] = self.broaden(vsini[i], self.s_refs[i,0])
-            self.s_broad[i,1] = self.broaden(vsini[i], self.s_refs[i,1])
+            self.broadened.append(self.broaden(vsini[i], self.refs[i]))
+
+        self.modified = Spectrum(self.w, name='Linear Combination {0:d}'.format(self.num_refs))
 
         self.best_params = lmfit.Parameters()
         self.best_chisq = np.NaN
@@ -200,22 +251,22 @@ class MatchLincomb(Match):
         based on the reference spectrum.
         Stores the tweaked model in spectra.s_mod and serr_mod.
         """
-        self.s_mod = np.zeros_like(self.w)
-        self.serr_mod = np.zeros_like(self.w)
+        self.modified.s = np.zeros_like(self.w)
+        self.modified.serr = np.zeros_like(self.w)
 
         # create the model from a linear combination of the reference spectra
         coeffs = get_lincomb_coeffs(params)
         for i in range(self.num_refs):
-            self.s_mod += self.s_broad[i,0] * coeffs[i]
-            self.serr_mod += self.s_broad[i,1] * coeffs[i]
+            self.modified.s += self.broadened[i].s * coeffs[i]
+            self.modified.serr += self.broadened[i].serr * coeffs[i]
 
         # Use linear least squares to fit a spline
-        s = LSQUnivariateSpline(self.w, self.s_targ/self.s_mod, self.knot_x)
-        self.spl = s(self.w)
+        spline = LSQUnivariateSpline(self.w, self.target.s/self.modified.s, self.knot_x)
+        self.spl = spline(self.w)
 
-        self.s_mod *= self.spl
-        self.serr_mod *= self.spl
-        
+        self.modified.s *= self.spl
+        self.modified.serr *= self.spl
+
 
     def objective(self, params):
         """
@@ -260,6 +311,46 @@ class MatchLincomb(Match):
         self.best_chisq = self.objective(self.best_params)
 
         return self.best_chisq
+
+    def get_vsini(self):
+        """Wrapper function to get vsini list from MatchLincomb object
+        
+        Returns:
+            vsini (np.ndarray)
+        """
+        return get_vsini(self.best_params)
+
+    def get_lincomb_coeffs(self):
+        """Wrapper function to get lincomb coefficients from MatchLincomb object
+
+        Returns:
+            coeffs (np.ndarray)
+        """
+        return get_lincomb_coeffs(self.best_params)
+
+
+    def plot(self, verbose=True):
+        if verbose:
+            labels = {'target': 'Target: {0}'.format(self.target.name),\
+                    'modified': r'Linear Combination',\
+                    'residuals': r'Residuals: $\chi^2 = {0:.3f}$'.format(self.best_chisq)}
+            coeffs = self.get_lincomb_coeffs()
+            for i in range(self.num_refs):
+                labels['ref_{0:d}'.format(i)] = r'Reference: {0}, $v\sin i = {1:.2f}$, $c_{{2:d}} = {3:.3f}$'.format(
+                    self.refs[i].name, self.vsini[i], i, coeffs[i])
+        else:
+            labels = {'target': 'Target', 'modified': 'Reference (Modified)', 'residuals': 'Residuals'}
+            for i in range(self.num_refs):
+                labels['ref_{0:d}'.format(i)] = 'Reference {0:d}'.format(i)
+
+        self.target.plot(plt_kw={'color':'royalblue'}, text=labels['target'])
+        self.modified.plot(offset=0.5, plt_kw={'color':'forestgreen'}, text=labels['modified'])
+        for i in range(self.num_refs):
+            self.refs[i].plot(offset=1.5+i*0.5, plt_kw={'color':'firebrick'}, \
+                text=labels['ref_{0:d}'.format(i)])
+
+        plt.plot(self.target.w, self.modified.s-self.target.s, '-', color='black')
+        plots.annotate_spectrum(labels['residuals'], spec_offset=-1)
 
 
 def add_spline_positions(params, knotx):
@@ -330,7 +421,6 @@ def get_vsini(params):
         vsini.append(params[p].value)
 
     return np.array(vsini)
-
 
 
 def add_lincomb_coeffs(params, num_refs):

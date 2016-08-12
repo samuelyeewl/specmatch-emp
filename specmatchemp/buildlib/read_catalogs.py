@@ -33,6 +33,7 @@ RAMIREZ_FILENAME = "ramirez_2005_cut.csv"
 CASAGRANDE_FILENAME = "Casagrande2006/table1_cut.csv"
 BRUNTT_FILENAME = "Bruntt2012/table3.dat"
 BRUNTT_README = "Bruntt2012/ReadMe.txt"
+KDWARF_FILENAME = "kdwarfs_cut.csv"
 CPS_INDEX = "cps_templates.csv"
 CPS_SPECTRA_DIR = "iodfitsdb/"
 
@@ -342,6 +343,43 @@ def read_bruntt(catalogdir, cps_list):
 
     return stars, nospectra
 
+def read_kdwarfs(catalogdir, cps_list):
+    """Read in K-Dwarf catalog"""
+    kdwarfs = pd.read_csv(os.path.join(catalogdir, KDWARF_FILENAME))
+
+    stars = pd.DataFrame(columns=LIB_COLS)
+    nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
+
+    for idx, row in kdwarfs.iterrows():
+        query_result = cpsutils.find_spectra(row['name'], cps_list)
+        if not query_result.empty:
+            new_row = {}
+            new_row['cps_name'] = str(query_result.iloc[0]['name'])
+            new_row['obs'] = query_result.obs.values
+            new_row['Teff'] = row['teff_derived']
+            new_row['u_Teff'] = row['e_teff_derived']
+            new_row['feh'] = row['fe']
+            new_row['u_feh'] = 0.1
+            new_row['logg'] = row['logg']
+            new_row['u_logg'] = row['u_logg']
+            new_row['mass'] = row['mass']
+            new_row['u_mass'] = row['u_mass']
+            new_row['radius'] = row['radius']
+            new_row['u_radius'] = row['u_radius']
+            new_row['age'] = row['age']
+            new_row['u_age'] = row['u_age']
+            new_row['source'] = 'Gaidos'
+            new_row['source_name'] = row['name']
+
+            stars = stars.append(pd.Series(new_row), ignore_index=True)
+        else:
+            new_row = {}
+            new_row['name'] = row['name']
+            new_row['source'] = 'Gaidos'
+            nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
+
+    return stars, nospectra
+
 def read_catalogs(catalogdir, cpspath):
     """Reads in the catalogs
 
@@ -405,12 +443,23 @@ def read_catalogs(catalogdir, cpspath):
     stars_nospectra = stars_nospectra.append(b_nospec)
     print("\t{0:d} stars with spectra from Bruntt catalog".format(len(b_stars)))
 
+    print("Reading K Dwarfs catalog")
+    k_stars, k_nospec = read_kdwarfs(catalogdir, cps_list)
+    stars = pd.concat((stars, k_stars), ignore_index=True)
+    stars_nospectra = stars_nospectra.append(k_nospec)
+    print("\t{0:d} stars with spectra from K Dwarf catalog".format(len(b_stars)))
+
     dups = stars[stars.duplicated(subset='cps_name', keep=False)].sort_values(by='cps_name')
     dups_vb = dups[~dups.source.str.contains('Von Braun|Bruntt|Casagrande')]
     idxs = dups_vb.index
     stars.drop(idxs, inplace=True)
 
     print("Removing {0:d} duplicates, favoring von Braun, Bruntt and Casagrande data".format(len(idxs)))
+
+    idxs = stars.query('Teff > 7000 | feh < -1.0').index
+    stars.drop(idxs, inplace=True)
+
+    print("Removing {0:d} stars on edge of our parameter space".format(len(idxs)))
 
     print("Total of {0:d} stars read".format(len(stars)))
 
@@ -441,9 +490,9 @@ def main(catalogdir, cpspath, outdir, append):
     stars.reset_index(drop=True, inplace=True)
     stars_nospectra.reset_index(drop=True, inplace=True)
     mask.reset_index(drop=True, inplace=True)
-    stars.to_csv(os.path.join(outdir, "libstars.csv"), mode=mode, header=header)
+    stars.to_csv(os.path.join(outdir, "libstars_kd.csv"), mode=mode, header=header)
     stars_nospectra.to_csv(os.path.join(outdir, "nospectra.csv"), mode=mode, header=header)
-    mask.to_csv(os.path.join(outdir, "libstars_mask.csv"), mode=mode, header=header)
+    mask.to_csv(os.path.join(outdir, "libstars_mask_kd.csv"), mode=mode, header=header)
 
 
 if __name__ == '__main__':

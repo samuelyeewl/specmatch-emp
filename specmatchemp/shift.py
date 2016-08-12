@@ -1,31 +1,33 @@
-#!/usr/bin/env python
 """
-@filename shift_spectra.py
+@filename shift.py
 
 Shift a target spectrum onto a reference spectrum.
 """
-import argparse
-
-import h5py
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 from scipy.optimize import least_squares
 
+from specmatchemp.spectrum import Spectrum
 from specmatchemp.io import specmatchio
 
-def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
+def shift(targ, ref, store=None):
     """Shifts the given spectrum by placing it on the same wavelength
     scale as the specified reference spectrum, then solves for shifts
     between the two spectra through cross-correlation.
 
     Args:
-        s, serr, w : Target spectrum, error and wavelength scale
-        s_ref, serr_ref, w_ref : Reference spectrum, error and wavelength scale
-        outfile : (optional) h5 file to store diagnostic data in
+        targ (Spectrum): Target spectrum
+        ref (Spectrum): Reference spectrum
+        store (optional [file or dict]): h5 file or dict to store diagnostic data in
 
     Returns:
-        s_adj, serr_adj, w_adj: Adjusted and flattened spectrum
+        shifted (Spectrum): Adjusted and flattened spectrum
     """
+    s = np.copy(targ.s)
+    serr = np.copy(targ.serr)
+    w = np.copy(targ.w)
+    mask = np.copy(targ.mask)
+
     # normalize each order of the target spectrum by dividing by the 95th percentile
     percen_order = np.percentile(s, 95, axis=1)
     s /= percen_order.reshape(-1,1)
@@ -33,6 +35,7 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
     # create empty 2d arrays to store each order
     s_shifted = np.asarray([[]])
     serr_shifted = np.asarray([[]])
+    mask_shifted = np.asarray([[]])
     ws = np.asarray([[]])
 
     # create lists to store diagnostic data
@@ -47,31 +50,34 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
         ww = w[i]
         ss = s[i]
         sserr = serr[i]
+        mm = mask[i]
 
         # clip ends off each order
         cliplen = 15
         ww = ww[cliplen:-cliplen]
         ss = ss[cliplen:-cliplen]
         sserr = sserr[cliplen:-cliplen]
+        mm = mm[cliplen:-cliplen]
 
         # clip obvious noise
-        mask = np.asarray([True if sp < 1.2 else False for sp in ss])
-        ss = ss[mask]
-        sserr = sserr[mask]
-        ww = ww[mask]
+        clip = np.asarray([True if sp < 1.2 else False for sp in ss])
+        ss = ss[clip]
+        sserr = sserr[clip]
+        mm = mm[clip]
+        ww = ww[clip]
 
         # get the reference spectrum in the same range as the target range
         w_min = ww[0]
         w_max = ww[-1]
 
         in_range = np.asarray([True if wr > w_min and wr < w_max else False
-            for wr in w_ref])
+            for wr in ref.w])
         start_idx = np.argmax(in_range)
-        w_ref_c = w_ref[in_range]
-        s_ref_c = s_ref[in_range]
+        w_ref_c = ref.w[in_range]
+        s_ref_c = ref.s[in_range]
 
         # place the target spectrum on the same wavelength scale
-        ss, sserr = rescale_w(ss, sserr, ww, w_ref_c)
+        ss, sserr, mm = rescale_w(ss, sserr, ww, mm, w_ref_c)
 
         # solve for shifts in different sections
         l_sect = int(len(w_ref_c)/num_sections)
@@ -79,9 +85,6 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
         center_pix = np.empty(num_sections)
         lag_arrs = []
         xcorrs = []
-
-        if outfile is not None:
-            grp = outfile.create_group("/xcorr/order_{0:d}".format(i))
 
         for j in range(num_sections):
             ss_sect = ss[j*l_sect:(j+1)*l_sect]
@@ -91,10 +94,10 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
             lags[j] = lag
             center_pix[j] = (j+1/2)*l_sect
 
-            if outfile is not None:
-                subgrp = grp.create_group("sect_{0:d}".format(j))
-                subgrp["xcorr"] = xcorr
-                subgrp["lag_arr"] = lag_arr
+            if store is not None:
+                key = "xcorr/order_{0:d}/sect_{1:d}/".format(i, j)
+                store[key+"xcorr"] = xcorr
+                store[key+"lag_arr"] = lag_arr
 
         # remove clear outliers
         med = np.median(lags)
@@ -113,20 +116,23 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
 
         # don't read past the wavelength array
         pix_min = max(int(pix_shifted[0]), 0)
-        pix_max = min(int(pix_shifted[-1]), len(w_ref)-start_idx)
+        pix_max = min(int(pix_shifted[-1]), len(ref.w)-start_idx)
 
         # new pixel array
         new_pix = np.arange(pix_min, pix_max)
         # new wavelength array
-        w_ref_c = w_ref[start_idx+pix_min:start_idx+pix_max]
+        w_ref_c = ref.w[start_idx+pix_min:start_idx+pix_max]
 
         # interpolate the spectrum back onto the reference spectrum
         ss_shifted = np.interp(new_pix, pix_shifted, ss)
         sserr_shifted = np.interp(new_pix, pix_shifted, sserr)
+        mm_shifted = np.interp(new_pix, pix_shifted, mm)
+
 
         # append to array
         s_shifted = np.append(s_shifted, ss_shifted)
         serr_shifted = np.append(serr_shifted, sserr_shifted)
+        mask_shifted = np.append(mask_shifted, mm_shifted)
         ws = np.append(ws, w_ref_c)
 
         # save diagnostic data
@@ -137,20 +143,20 @@ def shift(s, serr, w, s_ref, serr_ref, w_ref, outfile=None):
 
 
     # save diagnostic data
-    if outfile is not None:
-        outfile.create_dataset('lag', data=np.asarray(lag_data))
-        outfile.create_dataset('center_pix', data=np.asarray(center_pix_data))
-        outfile.create_dataset('fit', data=np.asarray(fit_data))
+    if store is not None:
+        store['lag'] = np.asarray(lag_data)
+        store['center_pix'] = np.asarray(center_pix_data)
+        store['fit'] = np.asarray(fit_data)
 
     # flatten spectrum
     w_min = ws[0]
     w_max = ws[-1]
-    in_range = np.asarray([True if wr > w_min and wr < w_max else False for wr in w_ref])
-    w_ref_trunc = w_ref[in_range]
+    in_range = np.asarray([True if wr > w_min and wr < w_max else False for wr in ref.w])
+    w_ref_trunc = ref.w[in_range]
 
-    w_flat, s_flat, serr_flat = flatten(ws, s_shifted, serr_shifted, w_ref=w_ref_trunc)
+    w_flat, s_flat, serr_flat, mask_flat = flatten(ws, s_shifted, serr_shifted, mask_shifted, w_ref=w_ref_trunc)
 
-    return s_flat, serr_flat, w_flat
+    return Spectrum(w_flat, s_flat, serr_flat, name=targ.name, mask=mask_flat, header=targ.header, attrs=targ.attrs)
 
 
 def _isclose(a, b, abs_tol=1e-6):
@@ -172,7 +178,7 @@ def _linear_fit_residuals(p, x, y):
     return p[0]*x + p[1] - y
 
 
-def flatten(w, s, serr, w_ref=None, wavlim=None):
+def flatten(w, s, serr, mask, w_ref=None, wavlim=None):
     """Flattens a given 2-D spectrum into a 1-D array.
     Merges overlapped points by taking the mean.
     If w_ref is given, fills values that don't occur in the 2D spectrum
@@ -181,7 +187,8 @@ def flatten(w, s, serr, w_ref=None, wavlim=None):
     Args:
         w (np.ndarray): Wavelength array
         s (np.ndarray): Spectrum
-        serr (np.ndarray): (optional) Uncertainty in spectrum
+        serr (np.ndarray): Uncertainty in spectrum
+        mask (np.ndarray): Boolean mask
         w_ref (np.nadarray): (optional) Reference, 1-D wavelength array
         wavlim (2-element iterable): (optional) Wavelength limits
     
@@ -199,6 +206,7 @@ def flatten(w, s, serr, w_ref=None, wavlim=None):
     # create new arrays to contain spectrum
     s_flattened = np.empty_like(w_flattened)
     serr_flattened = np.empty_like(w_flattened)
+    mask_flattened = np.empty_like(w_flattened)
     idx_max = len(w)-1
     c_idx = 0
     n_idx = 0
@@ -210,6 +218,7 @@ def flatten(w, s, serr, w_ref=None, wavlim=None):
         if c_idx >= idx_max:
             s_flattened[i] = np.nan
             serr_flattened[i] = np.nan
+            mask_flattened[i] = False
             continue
 
         overlap = False
@@ -229,15 +238,18 @@ def flatten(w, s, serr, w_ref=None, wavlim=None):
             if overlap:
                 s_flattened[i] = (s[c_idx]+s[n_idx])/2
                 serr_flattened[i] = (serr[c_idx]+serr[n_idx])/2
+                mask_flattened[i] = bool(mask[c_idx]) & bool(mask[n_idx])
             else:
                 s_flattened[i] = s[c_idx]
                 serr_flattened[i] = serr[c_idx]
+                mask_flattened[i] = mask[c_idx]
             c_idx += 1
         else:
             s_flattened[i] = np.nan
             serr_flattened[i] = np.nan
+            mask_flattened[i] = False
 
-    return w_flattened, s_flattened, serr_flattened
+    return w_flattened, s_flattened, serr_flattened, mask_flattened
 
 def solve_for_shifts(s, s_ref):
     """
@@ -280,7 +292,7 @@ def solve_for_shifts(s, s_ref):
 
     return lag, lag_arr, xcorr
 
-def rescale_w(s, serr, w, w_ref):
+def rescale_w(s, serr, w, m, w_ref):
     """
     Place the given spectrum on the wavelength scale specified by w_ref
 
@@ -293,16 +305,7 @@ def rescale_w(s, serr, w, w_ref):
     """
     snew = np.interp(w_ref, w, s)
     serrnew = np.interp(w_ref, w, serr)
+    mnew = np.interp(w_ref, w, m).astype(bool)
 
-    return snew, serrnew
+    return snew, serrnew, mnew
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Shift a target spectrum onto a reference spectrum')
-    parser.add_argument('target_path', type=str)
-    parser.add_argument('target_type', choices=io_types)
-    parser.add_argument('reference_path', type=str)
-    parser.add_argument('output_path', type=str)
-    args = parser.parse_args()
-
-    shift(args.target_path, args.target_type, args.reference_path, args.output_path)

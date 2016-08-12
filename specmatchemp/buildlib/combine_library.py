@@ -7,7 +7,7 @@ Combines the library parameters and spectra into a library.h5 file
 
 from __future__ import print_function
 
-import os, sys
+import os
 from argparse import ArgumentParser
 
 import h5py
@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 
 from specmatchemp import library
-from specmatchemp.io import specmatchio
+from specmatchemp import spectrum
 
 WAVLIM = (4990, 6410)
 
@@ -27,34 +27,29 @@ def main(parampath, specdir, outpath, maskpath):
     for idx, row in libparams.iterrows():
         # get shifted spectrum
         specpath = os.path.join(specdir,row.cps_name+"/"+row.cps_name+"_spec.h5")
-        f = h5py.File(specpath, 'r')
-        s = f['s'][:]
-        serr = f['serr'][:]
-        w = f['w'][:]
-        f.close()
-        # truncate spectrum
-        w, s, serr = specmatchio.truncate_spectrum(WAVLIM, w, s, serr)
+        spec = spectrum.read_hdf(specpath)
+        spec = spec.cut(*WAVLIM)
         if wav is None:
-            wav = w
-            spectra = np.empty((0,2,len(wav)))
+            wav = spec.w
+            spectra = np.empty((0,3,len(wav)))
         else:
-            assert np.allclose(wav, w), "Library spectra not on same wavelength scale"
+            assert np.allclose(wav, spec.w), "Library spectra not on same wavelength scale"
 
         # add spectrum to library
         libparams.loc[idx, 'lib_index'] = len(spectra)
-        spectra = np.vstack((spectra, [[s, serr]]))
+        spectra = np.vstack((spectra, [[spec.s, spec.serr, spec.mask]]))
 
         # calculate signal to noise
-        libparams.loc[idx, 'snr'] = np.nanpercentile(1/serr, 90)
+        libparams.loc[idx, 'snr'] = np.nanpercentile(1/spec.serr, 90)
 
-    mask = None
+    param_mask = None
     if maskpath is not None:
-        mask = pd.read_csv(maskpath, index_col=0)
+        param_mask = pd.read_csv(maskpath, index_col=0)
 
     libparams.drop('obs', axis=1, inplace=True)
 
     # save as library object
-    lib = library.Library(wav, spectra, libparams, wavlim=WAVLIM, param_mask=mask)
+    lib = library.Library(wav, spectra, libparams, wavlim=WAVLIM, param_mask=param_mask)
     lib.to_hdf(outpath)
 
 

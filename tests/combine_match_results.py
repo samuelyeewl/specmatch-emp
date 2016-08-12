@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 
 import pandas as pd
-import glob
 import os
 import sys
 import re
 from argparse import ArgumentParser
 
+from specmatchemp import library
+
 if __name__ == '__main__':
     # Argument parser
     psr = ArgumentParser(description="Combine match results")
+    psr.add_argument('libpath', type=str, help="Path to library file")
     psr.add_argument('resdir', type=str, help="Path to results directory")
     psr.add_argument('-s', '--suffix', type=str, default="", help="Suffix to append to results files")
     args = psr.parse_args()
@@ -18,36 +20,22 @@ if __name__ == '__main__':
         print("Could not find folder at {0}".format(args.resdir))
         sys.exit(1)
 
+    lib = library.read_hdf(args.libpath, wavlim='none')
+
     # get names of stars
-    dirs = glob.glob(os.path.join(args.resdir, '*/'))
-    names = [os.path.basename(os.path.normpath(d)) for d in dirs]
+    names = list(lib.library_params.cps_name)
 
     # global dataframe to store 
     res_global = pd.DataFrame()
-    for name, sdir in zip(names, dirs):
+
+    for name in names:
+        res_path = os.path.join(args.resdir, '{0}/{0}_match.csv'.format(name))
+
         # individual dataframe for each star
-        res_star = pd.DataFrame()
-
-        # get wavelengths used
-        files = glob.glob(os.path.join(sdir, name+'_*_match.csv'))
-        files = [f for f in files if re.search(str(name)+r'_\d+_match.csv', f)]
-        wls = [re.search(name+'_(.+?)_match.csv', f).group(1) for f in files]
-
-        for wl, f in zip(wls, files):
-            if res_star.empty:
-                res_star = pd.read_csv(f, index_col=0)
-                res_star.rename(columns={'lib_index.1':'lib_index'}, inplace=True)
-            else:
-                # merge on columns
-                df = pd.read_csv(f, index_col=0)
-                res_star = res_star.join(df['chi_squared_{0} fit_params_{0}'.format(wl).split()])
-
-        # save each star's result
-        outpath_star = os.path.join(sdir, name+'_match.csv')
-        res_star.to_csv(outpath_star)
+        res_star = pd.read_csv(res_path, index_col=0)
 
         # concatenate rows to global dataframe
-        targ_idx = res_star[res_star.cps_name.str.contains('^'+str(name)+'$')].index[0]
+        targ_idx = lib.library_params[lib.library_params.cps_name.str.contains('^'+name+'$')].index[0]
         res_star['targ_idx'] = targ_idx
         res_star['ref_idx'] = res_star.index
 
