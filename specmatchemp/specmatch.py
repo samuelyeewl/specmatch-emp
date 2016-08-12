@@ -97,7 +97,7 @@ class SpecMatch(object):
         if not lincomb:
             best_idx = self.match_results.iloc[0].name
             for p in library.STAR_PROPS:
-                self.results[p] = lib.library_params.loc[best_idx, p]
+                self.results[p] = self.lib.library_params.loc[best_idx, p]
             return
 
         # Now perform lincomb match
