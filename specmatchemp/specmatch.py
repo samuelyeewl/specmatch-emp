@@ -185,14 +185,15 @@ class SpecMatch(object):
                 shared_ax = ax
             else:
                 ax = plt.subplot(num_best, 1, i+1, sharex=shared_ax)
-            ref_idx = self.match_results.iloc[i]['lib_index']
+            ref_idx = self.match_results.iloc[i]['lib_index.1']
             ref = self.lib.get_spectrum(ref_idx)
             params = lmfit.Parameters()
             params.loads(self.match_results.iloc[i][fit_col])
             mt = match.Match(self.target, ref)
             mt.load_params(params)
             mt.plot()
-            plt.setp(ax.get_xticklabels(), visible=False)
+            if i != num_best-1:
+                plt.setp(ax.get_xticklabels(), visible=False)
             ax.set_xlabel('')
             ax.set_ylabel('')
 
@@ -224,7 +225,7 @@ class SpecMatch(object):
             plt.plot(self.match_results[paramx], self.match_results[paramy], \
                 '.', alpha=0.6, label='_nolegend_')
             plt.plot(self.match_results.head(num_best)[paramx], \
-                self.match_results.head(num_best)[paramy], '^', color='forestgreen')
+                self.match_results.head(num_best)[paramy], '^', color='forestgreen', label='Best Matches')
             if zoom:
                 plots.set_tight_lims(self.match_results.head(num_best)[paramx], \
                     self.match_results.head(num_best)[paramy])

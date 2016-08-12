@@ -192,13 +192,12 @@ class Library(object):
             raise KeyError
 
         params = self.library_params.loc[index]
-        if self.library_spectra is not None:
+        if self.library_spectra.size > 0:
             spectrum = self.get_spectrum(index)
 
         self.remove(index)
-        print(type(spectrum))
         
-        if self.library_spectra is not None:
+        if self.library_spectra.size > 0:
             return params, spectrum
         else:
             return params
