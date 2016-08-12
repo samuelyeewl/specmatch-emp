@@ -16,7 +16,8 @@ import matplotlib.gridspec as gridspec
 import os
 from argparse import ArgumentParser
 
-from specmatchemp.plotting import plots
+from specmatchemp import spectrum
+from specmatchemp import plots
 from specmatchemp.io import specmatchio
 
 REGION1 = (5158,5172)
@@ -56,31 +57,44 @@ def main(specpath, outpath, nso=None):
         plt.close()
 
 
-def plot_shifts(f, wavlim, nso=None):
+def plot_shifts(f, wavlim, nsopath=None):
     """Wrapper function to take in a file object
     """
-    s = f['s'][:]
-    w = f['w'][:]
-    w, s = specmatchio.truncate_spectrum(wavlim, w, s)
-    s_un = np.reshape(f['s_unshifted'][:],-1)
-    w_un = np.reshape(f['w_unshifted'][:],-1)
-    w_un, s_un=  specmatchio.truncate_spectrum(wavlim, w_un, s_un)
-    s_ref = f['s_ref'][:]
-    w_ref = f['w'][:]
-    w_ref, s_ref = specmatchio.truncate_spectrum(wavlim, w_ref, s_ref)
-    if nso is not None:
-        w_nso, s_nso, serr_nso, hdr_nso = specmatchio.read_standard_spectrum(nso,wavlim=wavlim)
-    else:
-        s_nso = None
-        w_nso = None
+    target = spectrum.read_hdf(f).cut(*wavlim)
+    target.plot(offset=1, text='Target (shifted): {0}'.format(target.attrs['obs']))
 
-    plots.plot_shifts(s, w, s_un, w_un, s_ref, w_ref, s_nso, w_nso, \
-        labels={'targ_label':f.attrs['obs'][:], 'ref_label':f.attrs['ref'], 'nso_label':''})
+    unshifted = spectrum.HiresSpectrum(f['w_unshifted'][:], f['s_unshifted'][:]).cut(*wavlim)
+    unshifted.plot(offset=0, normalize=True, text='Target (unshifted)', plt_kw={'color':'forestgreen'})
 
-    plt.legend(loc='lower left', fontsize='small')
+    reference = spectrum.Spectrum(f['w'][:], f['s_ref'][:], attrs={'obs':f.attrs['ref']}).cut(*wavlim)
+    reference.plot(offset=1.5, text='Reference: {0}'.format(reference.attrs['obs']), plt_kw={'color':'firebrick'})
+
+    if nsopath is not None:
+        nso = spectrum.read_fits(nsopath).cut(*wavlim)
+        nso.plot(offset=2.0, text='NSO', plt_kw={'color':'c'})
+
+    plt.plot(target.w, reference.s-target.s, '-', color='purple')
+    plots.annotate_spectrum('Residuals', spec_offset=-1)
+
+    plt.ylim(-0.4, 3.4)
+
 
 def plot_lags(f):
-    plots.plot_lags(f['lag'][:], f['center_pix'][:], f['fit'][:])
+    lags = f['lag'][:]
+    center_pix = f['center_pix'][:]
+    fit = f['fit'][:]
+
+    num_orders = lags.shape[0]
+    # set different colors for each set
+    colormap = plt.cm.nipy_spectral
+
+    for i in range(num_orders):
+        plt.plot(center_pix[i], lags[i], 'o', color=colormap(0.9*i/num_orders))
+        plt.plot(center_pix[i], fit[i], '-', color=colormap(0.9*i/num_orders), label='{0:d}'.format(i))
+
+    plt.xlabel('Pixel number')
+    plt.ylabel('Shift (pixels)')
+    plt.legend(loc='best', ncol=2, fontsize='small')
 
 def plot_xcorr(f, order):
     """Plot the correlation array produced when shifting

@@ -50,7 +50,7 @@ class Spectrum(object):
             self.s = s
 
         if serr is None:
-            self.serr = np.zeros_like(serr)
+            self.serr = np.zeros_like(w)
         else:
             self.serr = serr
 
@@ -148,10 +148,11 @@ class Spectrum(object):
 
         w_trunc = self.w[wavmask]
         s_trunc = self.s[wavmask]
+
         serr_trunc = None if self.serr is None else self.serr[wavmask]
         mask_trunc = None if self.mask is None else self.mask[wavmask]
 
-        return type(self)(w_trunc, s_trunc, serr_trunc, mask_trunc, self.name, self.attrs)
+        return type(self)(w_trunc, s_trunc, serr_trunc, mask_trunc, name=self.name, attrs=self.attrs)
 
 
     def plot(self, offset=0, label='_nolegend_', plt_kw={'color':'RoyalBlue'}, showmask=False,\
@@ -255,7 +256,8 @@ class HiresSpectrum(Spectrum):
 
         super(HiresSpectrum, self).__init__(w, s, serr, mask=mask, name=name, header=header, attrs=attrs)
 
-    def plot(self, offset=0, normalize=False, label='_nolegend_', plt_kw={}, showmask=False):
+    def plot(self, offset=0, normalize=False, label='_nolegend_', plt_kw={'color':'RoyalBlue'}, 
+            showmask=False, text='', text_kw={}):
         """Plots the spectrum
 
         Args:
@@ -263,20 +265,29 @@ class HiresSpectrum(Spectrum):
             label (optional [str]): Label of spectrum (appears in plt.legend)
             plt_kw (optional [dict]): Keyword arguments to pass to plt.plot
         """
-        if normalize:
-            plt.plot(self.w.T, self.s.T/np.percentile(self.s, 95, axis=1)+offset, '-', label=label, **plt_kw)
-        else:
-            plt.plot(self.w.T, self.s.T+offset, '-', label=label, **plt_kw)
+        if self.w.ndim > 1:
+            if normalize:
+                plt.plot(self.w.T, self.s.T/np.percentile(self.s, 95, axis=1)+offset, '-', label=label, **plt_kw)
+            else:
+                plt.plot(self.w.T, self.s.T+offset, '-', label=label, **plt_kw)
 
-        if showmask:
-            ax = plt.gca()
-            ylim = ax.get_ylim()
-            # get list of masked regions
-            regions = self._convert_mask_to_regions()
-            for order in range(len(self.w)):
-                for reg in regions[order]:
-                    ax.add_patch(patches.Rectangle((reg[0],ylim[0]), reg[1]-reg[0], ylim[1]-ylim[0],\
-                        ec='none', fc='gray', alpha=0.3))
+            if showmask:
+                ax = plt.gca()
+                ylim = ax.get_ylim()
+                # get list of masked regions
+                regions = self._convert_mask_to_regions()
+                for order in range(len(self.w)):
+                    for reg in regions[order]:
+                        ax.add_patch(patches.Rectangle((reg[0],ylim[0]), reg[1]-reg[0], ylim[1]-ylim[0],\
+                            ec='none', fc='gray', alpha=0.3))
+        else:
+            if normalize:
+                plt.plot(self.w, self.s/np.percentile(self.s, 95)+offset, '-', label=label, **plt_kw)
+            else:
+                plt.plot(self.w, self.s+offset, '-', label=label, **plt_kw)
+
+        if len(text) > 0:
+            plots.annotate_spectrum(text, spec_offset=offset, text_kw=text_kw)
 
         plt.grid(True)
         plt.xlabel('Wavelength (Angstroms)')
