@@ -47,14 +47,14 @@ def main(libpath, targ_name, respath, outpath, num_best):
         res_lincomb[refidxs_col] = json.dumps(ref_idxs.tolist())
 
         coeffs_col = 'coeffs_lincomb{0:d}_{1:d}'.format(num_best, wl)
-        coeffs = np.array(match.get_lincomb_coeffs(mt.best_params))
+        coeffs = np.array(match.get_lincomb_coeffs(sm.mt_lincomb.best_params))
         res_lincomb[coeffs_col] = json.dumps(coeffs.tolist())
 
         cs_col = 'chi_squared_lincomb{0:d}_{1:d}'.format(num_best, wl)
-        res_lincomb[cs_col] = mt.best_chisq
+        res_lincomb[cs_col] = sm.mt_lincomb.best_chisq
 
         fit_col = 'fit_params_lincomb{0:d}_{1:d}'.format(num_best, wl)
-        res_lincomb[fit_col] = mt.best_params.dumps()
+        res_lincomb[fit_col] = sm.mt_lincomb.best_params.dumps()
 
     res_lincomb.to_csv(outpath)
 
