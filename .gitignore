@@ -8,11 +8,9 @@ working/
 runstats_*
 
 # Ignore plots and data
-*.png
 results/
 
 # Ignore plots and working data
-*.png
 chi-squared.csv
 working/
 
@@ -80,5 +78,7 @@ target/
 #Ipython Notebook
 .ipynb_checkpoints
 
+# IDE
+*.sublime*
 .DS_STORE
 
