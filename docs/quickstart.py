@@ -1,6 +1,4 @@
-#``specmatch-emp`` comes with a large library high-resolution optical
-# spectra shifted onto the rest wavelength scale. We'll import the
-# library, along with some other useful modules.
+# code-start-imports
 from matplotlib.transforms import blended_transform_factory
 import pandas as pd
 from pylab import *
@@ -13,17 +11,29 @@ def hr_diagram():
     autoscale(tight='y')
     xlabel('Effective Temperature (K)')
     ylabel('Stellar Radius (Rsun)')
+# code-stop-imports
 
-# Now we'll load in the library around the Mgb triplet
+
+
+
+# code-start-loadlibrary: load in the library around the Mgb triplet
 lib = specmatchemp.library.read_hdf(wavlim=[5140,5200])
+# code-stop-loadlibrary
 
-# Here's how the library spans the HR diagram.
+
+
+
+# code-start-library: Here's how the library spans the HR diagram.
 fig = figure()
 hr_diagram()
 plot(lib.library_params.Teff, lib.library_params.radius,'.')
+# code-stop-library
 fig.savefig('quickstart-library.png')
 
-# and here's the libray with the sources labeled
+
+
+
+# code-start-library-labeled
 fig = figure()
 hr_diagram()
 g = lib.library_params.groupby('source')
@@ -35,11 +45,14 @@ for source, idx in g.groups.iteritems():
     plot(cut.Teff, cut.radius,'.',label=source,color=color,alpha=0.8,ms=5) 
     i +=1
 legend()
+# code-stop-library-labeled
 fig.savefig('quickstart-library-labeled.png')
 
 
-# The parameters are stored in a pandas DataFrame which makes querying
-# easy. Let's grab some representative dwarf star spectra.
+
+
+
+# code-start-library-selected-stars
 cut = lib.library_params.query('radius < 1.5 and -0.25 < feh < 0.25')
 g = cut.groupby(pd.cut(cut.Teff,bins=arange(3000,7000,500)))
 cut = g.first()
@@ -49,8 +62,13 @@ hr_diagram()
 plot(lib.library_params.Teff, lib.library_params.radius,'.')
 plot(cut.Teff, cut.radius,'o')
 fig.savefig('quickstart-library-selected-stars.png')
+# code-stop-library-selected-stars
 
-# Plot the Mgb region
+
+
+
+
+# code-start-spectra-selected-stars
 fig,ax = subplots(figsize=(8,4))
 trans = blended_transform_factory(ax.transAxes,ax.transData)
 bbox = dict(facecolor='white', edgecolor='none',alpha=0.8)
@@ -66,5 +84,6 @@ for _,row in cut.iterrows():
 grid()
 xlabel('Wavelength (Angstroms)')
 ylabel('Normalized Flux (Arbitrary Offset)')
+# code-stop-spectra-selected-stars
 fig.set_tight_layout(True)
 fig.savefig('quickstart-spectra-selected-stars.png')
