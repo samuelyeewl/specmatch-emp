@@ -49,7 +49,7 @@ def main(parampath, specdir, outpath, maskpath):
     libparams.drop('obs', axis=1, inplace=True)
 
     # save as library object
-    lib = library.Library(wav, libparams, spectra, wavlim=WAVLIM, param_mask=param_mask)
+    lib = library.Library(wav, spectra, libparams, wavlim=WAVLIM, param_mask=param_mask)
     lib.to_hdf(outpath)
 
 
