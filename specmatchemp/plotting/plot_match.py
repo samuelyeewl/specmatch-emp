@@ -88,9 +88,9 @@ def main(cps_name, respath, outpath, libpath, num_best):
 
 if __name__ == '__main__':
     psr = ArgumentParser(description="Build the SpecMatch-Emp library from the various catalogs")
+    psr.add_argument('libpath', type=str, help="Path to library")
     psr.add_argument('name', type=str, help="CPS name of star")
     psr.add_argument('resdir', type=str, help="Directory of results")
-    psr.add_argument('libpath', type=str, help="Path to library")
     psr.add_argument('-n', '--num_best', type=int, default=5, help="Number of best matches to plot")
     psr.add_argument('-s', '--suffix', type=str, default="", help="Suffix on results file")
     args = psr.parse_args()

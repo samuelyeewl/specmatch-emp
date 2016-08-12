@@ -72,14 +72,14 @@ class SpecMatch(object):
                 combination. If set to false, uses the best match as the
                 derived results.
         """
+        cs_col = 'chi_squared'
+        fit_col = 'fit_params'
         if match_results is not None:
             self.match_results = match_results
         else:
             # First, perform standard match
             self.match_results = self.lib.library_params.copy()
-            cs_col = 'chi_squared'
             self.match_results.loc[:,cs_col] = np.nan
-            fit_col = 'fit_params'
             self.match_results.loc[:,fit_col] = np.nan
 
             for param_ref, spec_ref in self.lib:
