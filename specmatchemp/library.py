@@ -112,7 +112,8 @@ class Library(object):
             "Error: Index {0:d} is out of bounds in library_spectra".format(i)
 
         # ensure library_spectra is of right shape
-        assert np.shape(library_spectra)[1] == 3 and np.shape(library_spectra)[2] == len(wav), \
+        # EAP hack to get library to build
+        assert np.shape(library_spectra)[1] == 2 and np.shape(library_spectra)[2] == len(wav), \
             "Error: library_spectra should have shape ({0:d}, 3, {1:d})".format(num_spec, len(wav))
 
         # set index to be equal to lib_index

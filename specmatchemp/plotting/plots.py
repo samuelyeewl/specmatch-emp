@@ -66,6 +66,21 @@ def hide_y_ticks():
     ax = plt.gca()
     ax.axes.get_yaxis().set_ticks([])
 
+def label_axes(param_x, param_y):
+    """Convenience function for tweaking axes to make plots
+    """
+    if param_x is 'Teff' and param_y is 'radius':
+        yt = [0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1, 2, 3, 4, 5, 7, 10, 20]
+        plt.semilogy()
+        plt.xlim(plt.xlim()[::-1])
+        plt.ylim(yt[0],yt[-1])
+        plt.xlabel('Effective Temperature (K)')
+        plt.ylabel('Stellar Radius (Solar-radii)')
+        plt.yticks(yt,yt)
+        return None
+
+    assert False, "invalid param_x, param_y"
+
 ######################### Library and Spectrum plots ###########################
 def plot_library_params(lib, param_x, param_y, grouped=False, ptlabels=False, plt_kw={}):
     """Plot a H-R diagram from the library
