@@ -24,7 +24,7 @@ def main(cps_name, respath, outpath, libpath, num_best):
     lib = library.read_hdf(libpath)
     res = pd.read_csv(respath, index_col=0)
     targ_idx = lib.get_index(cps_name)
-    targ_param, targ_spec = lib.pop(targ_idx)
+    targ_param, targ_spec = lib.[targ_idx]
     res.loc[:,'targ_idx'] = targ_idx
     res.loc[:,'ref_idx'] = res.index
 
