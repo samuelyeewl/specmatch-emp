@@ -37,9 +37,9 @@ fig.savefig('quickstart-library.png')
 fig = figure()
 hr_diagram()
 g = lib.library_params.groupby('source')
-colors = ['Red','Orange','LimeGreen','Cyan','RoyalBlue','Magenta']
+colors = ['Red','Orange','LimeGreen','Cyan','RoyalBlue','Magenta','ForestGreen']
 i = 0
-for source, idx in g.groups.iteritems():
+for source, idx in g.groups.items():
     cut = lib.library_params.ix[idx]
     color = colors[i]
     plot(cut.Teff, cut.radius,'.',label=source,color=color,alpha=0.8,ms=5) 
@@ -87,3 +87,65 @@ ylabel('Normalized Flux (Arbitrary Offset)')
 # code-stop-spectra-selected-stars
 fig.set_tight_layout(True)
 fig.savefig('quickstart-spectra-selected-stars.png')
+
+
+
+
+
+# code-start-specmatch-load
+lib = specmatchemp.library.read_hdf(wavlim=[5300,5400])
+
+idx1 = lib.get_index('190406')
+G_star = lib.pop(idx1)
+idx2 = lib.get_index('GL699')
+M_star = lib.pop(idx2)
+# code-stop-specmatch-load
+
+
+
+
+# code-start-specmatch-match
+from specmatchemp.specmatch import SpecMatch
+match_G = SpecMatch(G_star[1], lib, (5300,5400))
+match_G.match()
+# code-stop-specmatch-match
+
+
+
+# code-start-specmatch-print
+print('Derived Parameters: ')
+print('Teff: {0:.0f}, Radius: {1:.2f}, [Fe/H]: {2:.2f}'.format(\
+        match_G.results['Teff'], match_G.results['radius'], match_G.results['feh']))
+print('Library Parameters: ')
+print('Teff: {0:.0f}, Radius: {1:.2f}, [Fe/H]: {2:.2f}'.format(\
+        G_star[0]['Teff'], G_star[0]['radius'], G_star[0]['feh']))
+# code-stop-specmatch-print
+
+
+# code-start-plot-chisquared
+fig = figure(figsize=(12,8))
+match_G.plot_chi_squared_surface()
+# Indicate library parameters for target star.
+axes = fig.axes
+axes[0].axvline(G_star[0]['Teff'], color='k')
+axes[1].axvline(G_star[0]['radius'], color='k')
+axes[2].axvline(G_star[0]['feh'], color='k')
+# code-stop-plot-chisquared
+
+fig.set_tight_layout(True)
+fig.savefig('quickstart-Gstar-chisquared-surface.png')
+
+
+# code-start-plot-references
+fig = figure(figsize=(12,10))
+match_G.plot_references(verbose=True)
+# plot target onto HR diagram
+axes = fig.axes
+axes[0].plot(G_star[0]['Teff'], G_star[0]['radius'], '*', ms=15, color='red', label='Target')
+axes[1].plot(G_star[0]['Teff'], G_star[0]['radius'], '*', ms=15, color='red')
+axes[2].plot(G_star[0]['feh'], G_star[0]['radius'], '*', ms=15, color='red')
+axes[3].plot(G_star[0]['feh'], G_star[0]['radius'], '*', ms=15, color='red')
+axes[0].legend(numpoints=1, fontsize='small', loc='best')
+# code-stop-plot-references
+
+fig.savefig('quickstart-Gstar-lincomb-references.png')

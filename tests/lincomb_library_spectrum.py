@@ -80,7 +80,7 @@ if __name__ == '__main__':
     respath = os.path.join(outdir, args.cps_name \
         + '_match{0}.csv'.format(args.suffix))
     outpath = os.path.join(outdir, args.cps_name \
-        +'_lincomb{0:d}_match{1}.csv'.format(args.num_best, args.suffix))
+        +'_lincomb{0:d}{1}.csv'.format(args.num_best, args.suffix))
 
     main(args.library, args.cps_name, respath, outpath, args.num_best)
 
