@@ -24,7 +24,7 @@ WAVSTEP=100
 def main(libpath, targ_name, respath, outpath, num_best):
     lib = library.read_hdf(libpath)
     targ_idx = lib.get_index(targ_name)
-    targ_param, targ_spec = lib.pop(targ_idx)
+    targ_param, targ_spec = lib[targ_idx]
 
     res_match = pd.read_csv(respath, index_col=0)
     res_lincomb = targ_param.to_frame().transpose()
