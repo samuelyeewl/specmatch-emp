@@ -51,7 +51,7 @@ class SpecMatch(object):
         self.mt_lincomb = None
         self.results = {}
 
-    def match(self, match_results=None, lincomb=True):
+    def match(self, match_results=None, lincomb=True, ignore=None):
         """Run the SpecMatch routine to obtain the parameters.
 
         First performs a pairwise match between the target spectrum and every
@@ -71,6 +71,8 @@ class SpecMatch(object):
             lincomb (optional [bool]): Whether to perform the linear 
                 combination. If set to false, uses the best match as the
                 derived results.
+            ignore (optional [int]): A library index to ignore. Useful for
+                n-1 library test.
         """
         cs_col = 'chi_squared'
         fit_col = 'fit_params'
@@ -83,6 +85,10 @@ class SpecMatch(object):
             self.match_results.loc[:,fit_col] = np.nan
 
             for param_ref, spec_ref in self.lib:
+                # ignore a particular index
+                if ignore is not None and param_ref.name == ignore:
+                    continue
+                    
                 # match
                 mt = match.Match(self.target, spec_ref, opt='nelder')
                 mt.best_fit()
