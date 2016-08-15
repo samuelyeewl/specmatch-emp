@@ -50,7 +50,7 @@ easy. Let's grab some representative dwarf star spectra.
 
 .. literalinclude:: quickstart.py
    :start-after: code-start-library-selected-stars
-   :end-before: code-start-library-selected-stars
+   :end-before: code-stop-library-selected-stars
 
 .. image:: quickstart-library-selected-stars.png
 
