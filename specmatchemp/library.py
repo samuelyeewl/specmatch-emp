@@ -383,10 +383,11 @@ class Library(object):
         if not self.__contains__(index):
             raise KeyError
 
-        if self.library_spectra is None:
-            return self.library_params.loc[index]
-        else:
+        if self.library_spectra.size > 0:
             return self.library_params.loc[index], self.get_spectrum(index)
+        else:
+            return self.library_params.loc[index]
+            
 
     def __delitem__(self, index):
         """

@@ -21,14 +21,14 @@ WAVSTEP=100
 def main(libpath, targ_name, outpath):
     lib = library.read_hdf(libpath)
     targ_idx = lib.get_index(targ_name)
-    targ_param, targ_spec = lib.pop(targ_idx)
+    targ_param, targ_spec = lib[targ_idx]
 
     results = lib.library_params.copy()
     
     for wl in range(WAVLIM[0], WAVLIM[1], WAVSTEP):
         print("Matching region {0:d} - {1:d}".format(wl, wl+100))
         sm = specmatch.SpecMatch(targ_spec, lib, (wl,wl+WAVSTEP))
-        sm.match(lincomb=False)
+        sm.match(lincomb=False, ignore=targ_idx)
 
         cs_col = 'chi_squared_{0:d}'.format(wl)
         results[cs_col] = sm.match_results['chi_squared']
