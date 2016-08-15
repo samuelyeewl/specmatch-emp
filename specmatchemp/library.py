@@ -113,7 +113,7 @@ class Library(object):
 
         # ensure library_spectra is of right shape
         # EAP hack to get library to build
-        assert np.shape(library_spectra)[1] == 2 and np.shape(library_spectra)[2] == len(wav), \
+        assert np.shape(library_spectra)[1] == 3 and np.shape(library_spectra)[2] == len(wav), \
             "Error: library_spectra should have shape ({0:d}, 3, {1:d})".format(num_spec, len(wav))
 
         # set index to be equal to lib_index

@@ -47,7 +47,7 @@ else:
         else: # total size is unknown
             sys.stderr.write("read %d\n" % (readsofar,))
 
-    liburl = "https://zenodo.org/record/59743/files/library.h5"
+    liburl = "https://zenodo.org/record/60225/files/library.h5"
     if not os.path.exists(os.path.dirname(LIBPATH)):
         os.mkdir(os.path.dirname(LIBPATH))
     if not os.path.exists(LIBPATH):
