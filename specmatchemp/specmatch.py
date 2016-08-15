@@ -88,7 +88,7 @@ class SpecMatch(object):
                 # ignore a particular index
                 if ignore is not None and param_ref.name == ignore:
                     continue
-                    
+
                 # match
                 mt = match.Match(self.target, spec_ref, opt='nelder')
                 mt.best_fit()
@@ -122,8 +122,15 @@ class SpecMatch(object):
 
         # get derived values
         self.coeffs = np.array(self.mt_lincomb.get_lincomb_coeffs())
+        self.get_derived_values()
+
+
+    # get derived values
+    def get_derived_values(self):
         for p in library.STAR_PROPS:
             self.results[p] = analysis.lincomb_props(self.lib.library_params, p, self.ref_idxs, self.coeffs)
+
+        return self.results
 
 
     def plot_chi_squared_surface(self, num_best=None):
@@ -244,6 +251,7 @@ class SpecMatch(object):
         gs = gridspec.GridSpec(2,2)
         plt.subplot(gs[0])
         _plot_ref_params('Teff','radius')
+        plt.plot(self.results['Teff'], self.results['radius'], 's', color='purple', label='Derived Parameters')
         ax = plt.gca()
         ax.set_yscale('log')
         plt.ylim((0.1, 16))
@@ -253,6 +261,7 @@ class SpecMatch(object):
 
         plt.subplot(gs[1])
         _plot_ref_params('Teff', 'radius', zoom=True)
+        plt.plot(self.results['Teff'], self.results['radius'], 's', color='purple', label='Derived Parameters')
         ax = plt.gca()
         plots.reverse_x()
         plt.xlabel(r'$T_{eff}$ (K)')
@@ -260,6 +269,7 @@ class SpecMatch(object):
 
         plt.subplot(gs[2])
         _plot_ref_params('feh','radius')
+        plt.plot(self.results['feh'], self.results['radius'], 's', color='purple', label='Derived Parameters')
         ax = plt.gca()
         ax.set_yscale('log')
         plt.ylim((0.1, 16))
@@ -268,6 +278,7 @@ class SpecMatch(object):
 
         plt.subplot(gs[3])
         _plot_ref_params('feh', 'radius', zoom=True)
+        plt.plot(self.results['feh'], self.results['radius'], 's', color='purple', label='Derived Parameters')
         ax = plt.gca()
         plt.xlabel(r'$[Fe/H]$ (dex)')
         plt.ylabel(r'$R\ (R_\odot)$')

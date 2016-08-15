@@ -48,7 +48,7 @@ if __name__ == '__main__':
                 res_star[cols] = res_star_num[cols]
 
         # save result for each star
-        outpath_star = os.path.join(args.resdir, '/{0}/{0}_lincomb.csv'.format(name))
+        outpath_star = os.path.join(args.resdir, '{0}/{0}_lincomb.csv'.format(name))
         res_star.to_csv(outpath_star)
 
         # concatenate each star to global dataframe
