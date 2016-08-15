@@ -136,3 +136,31 @@ diagram together with the coefficients found in the linear combination step.
 
 
 .. image:: quickstart-Gstar-lincomb-references.png
+
+Finally, we can view the spectra used to synthesize the final library spectrum.
+
+.. literalinclude:: quickstart.py
+    :start-after: code-start-plot-lincomb-spectra
+    :end-before: code-end-plot-lincomb-spectra
+
+.. image:: quickstart-Gstar-lincomb-spectra.png
+
+
+We can repeat the entire process for Barnard's star.
+
+.. literalinclude:: quickstart.py
+    :start-after: code-start-mstar
+    :end-before: code-end-mstar
+
+::
+
+    Derived Parameters:
+  Teff: 3261, Radius: 0.24, [Fe/H]: -0.26
+  Library Parameters:
+  Teff: 3222, Radius: 0.19, [Fe/H]: -0.39
+
+.. image:: quickstart-Mstar-chisquared-surface.png
+
+.. image:: quickstart-Mstar-lincomb-references.png
+
+.. image:: quickstart-Mstar-lincomb-spectra.png

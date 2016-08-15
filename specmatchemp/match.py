@@ -338,7 +338,7 @@ class MatchLincomb(Match):
             coeffs = self.get_lincomb_coeffs()
             for i in range(self.num_refs):
                 if self.ref_chisq is None:
-                    labels['ref_{0:d}'.format(i)] = r'Reference: {0}, $v\sin i = {1:.2f}$, $c_{{2:d}} = {3:.3f}$'.format(
+                    labels['ref_{0:d}'.format(i)] = r'Reference: {0}, $v\sin i = {1:.2f}$, $c_{2:d} = {3:.3f}$'.format(
                         self.refs[i].name, self.vsini[i], i, coeffs[i])
                 else:
                     labels['ref_{0:d}'.format(i)] = r'Reference: {0}, $v\sin i = {1:.2f}$, $\chi^2 = {2:.2f}$, $c_{3:d} = {4:.3f}$'.format(

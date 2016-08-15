@@ -18,7 +18,7 @@ lib = specmatchemp.library.read_hdf(wavlim=[5140,5200])
 
 # code-start-library: Here's how the library spans the HR diagram.
 fig = figure()
-plot(lib.library_params.Teff, lib.library_params.radius,'.')
+plot(lib.library_params.Teff, lib.library_params.radius,'k.',)
 smplot.label_axes('Teff','radius')
 # code-stop-library
 fig.savefig('quickstart-library.png')
@@ -54,7 +54,7 @@ g = cut.groupby(pd.cut(cut.Teff,bins=arange(3000,7000,500)))
 cut = g.first()
 
 fig = figure()
-plot(lib.library_params.Teff, lib.library_params.radius,'.')
+plot(lib.library_params.Teff, lib.library_params.radius,'.', label='_nolegend_')
 plot(cut.Teff, cut.radius,'o', label='Selected Stars')
 legend()
 smplot.label_axes('Teff','radius')
@@ -147,3 +147,50 @@ axes[0].legend(numpoints=1, fontsize='small', loc='best')
 # code-stop-plot-references
 
 fig.savefig('quickstart-Gstar-lincomb-references.png')
+
+# code-start-plot-lincomb-spectra
+fig = plt.figure(figsize=(12,6))
+match_G.plot_lincomb()
+# code-end-plot-lincomb-spectra
+
+fig.set_tight_layout(True)
+fig.savefig('quickstart-Gstar-lincomb-spectra.png')
+
+# code-start-mstar
+match_M = SpecMatch(M_star[1], lib, (5300,5400))
+match_M.match()
+
+print('Derived Parameters: ')
+print('Teff: {0:.0f}, Radius: {1:.2f}, [Fe/H]: {2:.2f}'.format(\
+        match_M.results['Teff'], match_M.results['radius'], match_M.results['feh']))
+print('Library Parameters: ')
+print('Teff: {0:.0f}, Radius: {1:.2f}, [Fe/H]: {2:.2f}'.format(\
+        M_star[0]['Teff'], M_star[0]['radius'], M_star[0]['feh']))
+
+fig1 = figure(figsize=(12,8))
+match_M.plot_chi_squared_surface()
+# Indicate library parameters for target star.
+axes = fig1.axes
+axes[0].axvline(M_star[0]['Teff'], color='k')
+axes[1].axvline(M_star[0]['radius'], color='k')
+axes[2].axvline(M_star[0]['feh'], color='k')
+
+fig2 = figure(figsize=(12,10))
+match_M.plot_references(verbose=True)
+# plot target onto HR diagram
+axes = fig2.axes
+axes[0].plot(M_star[0]['Teff'], M_star[0]['radius'], '*', ms=15, color='red', label='Target')
+axes[1].plot(M_star[0]['Teff'], M_star[0]['radius'], '*', ms=15, color='red')
+axes[2].plot(M_star[0]['feh'], M_star[0]['radius'], '*', ms=15, color='red')
+axes[3].plot(M_star[0]['feh'], M_star[0]['radius'], '*', ms=15, color='red')
+axes[0].legend(numpoints=1, fontsize='small', loc='best')
+
+fig3 = plt.figure(figsize=(12,6))
+match_M.plot_lincomb()
+# code-end-mstar
+
+fig1.set_tight_layout(True)
+fig1.savefig('quickstart-Mstar-chisquared-surface.png')
+fig2.savefig('quickstart-Mstar-lincomb-references.png')
+fig3.set_tight_layout(True)
+fig3.savefig('quickstart-Mstar-lincomb-spectra.png')
