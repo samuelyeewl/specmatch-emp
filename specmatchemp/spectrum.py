@@ -99,11 +99,12 @@ class Spectrum(object):
         hdulist = fits.HDUList([prihdu, tbhdu])
         hdulist.writeto(outpath, clobber=True)
 
-    def to_hdf(self, outfile):
+    def to_hdf(self, outfile, suffix=""):
         """Saves the spectrum to a hdf file.
 
         Args:
             outfile (str or h5 file): Output path or file handle
+            suffix (str, optional): Suffix to append to h5 field names
         """
         # Allow either a string or h5 file object ot be passed.
         is_path = False
@@ -118,16 +119,16 @@ class Spectrum(object):
         else:
             serr = self.serr
 
-        outfile.create_dataset('s', data=self.s)
-        outfile.create_dataset('serr', data=serr)
-        outfile.create_dataset('w', data=self.w)
-        outfile.create_dataset('mask', data=self.mask)
+        outfile.create_dataset('s' + suffix, data=self.s)
+        outfile.create_dataset('serr' + suffix, data=serr)
+        outfile.create_dataset('w' + suffix, data=self.w)
+        outfile.create_dataset('mask' + suffix, data=self.mask)
 
-        outfile.attrs['name'] = self.name
-        outfile.attrs['header'] = str(self.header)
+        outfile.attrs['name' + suffix] = self.name
+        outfile.attrs['header' + suffix] = str(self.header)
 
         for key in self.attrs.keys():
-            outfile.attrs[key] = self.attrs[key]
+            outfile.attrs[key + suffix] = self.attrs[key]
 
         if is_path:
             outfile.close()
@@ -215,6 +216,11 @@ class Spectrum(object):
                 l.append(get_regions(self.mask[i], self.w[i]))
 
         return l
+
+    def __len__(self):
+        """Get number of elements in spectrum.
+        """
+        return self.w.size
 
 
 class HiresSpectrum(Spectrum):
@@ -366,11 +372,12 @@ def read_hires_fits(infile, maskfile=None):
     return HiresSpectrum(w, s, serr, mask_table=mask_table, header=header)
 
 
-def read_hdf(infile):
+def read_hdf(infile, suffix=""):
     """Reads a spectrum from a hdf file
 
     Args:
         infile (str or h5 file): Input path or file handle
+        suffix (str, optional): Suffix on h5 keys
     Returns:
         spec (Spectrum): Spectrum object
     """
@@ -379,24 +386,30 @@ def read_hdf(infile):
         infile = h5py.File(infile, 'r')
         is_path = True
 
-    s = infile['s'][:]
-    serr = infile['serr'][:]
-    w = infile['w'][:]
-    if 'mask' in infile.keys():
-        mask = infile['mask'][:]
+    s = infile['s' + suffix][:]
+    serr = infile['serr' + suffix][:]
+    w = infile['w' + suffix][:]
+    if ('mask' + suffix) in infile.keys():
+        mask = infile['mask' + suffix][:]
     else:
         mask = None
 
     attrs = dict(infile.attrs)
-    if 'name' in attrs.keys():
-        name = attrs.pop('name')
+    if ('name' + suffix) in attrs.keys():
+        name = attrs.pop('name' + suffix)
     else:
         name = None
 
-    if 'header' in attrs.keys():
-        header = attrs.pop('header')
+    if ('header' + suffix) in attrs.keys():
+        header = attrs.pop('header' + suffix)
     else:
         header = None
+
+    if len(suffix) > 0:
+        # strip suffixes from remaining keys
+        for k in attrs.keys():
+            attr = attrs.pop(k)
+            attrs[k[:-len(suffix)]] = attr
 
     if is_path:
         infile.close()

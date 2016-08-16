@@ -11,10 +11,12 @@ import datetime
 import numpy as np
 import pandas as pd
 import h5py
+import json
 import matplotlib.pyplot as plt
 
 from specmatchemp import LIBPATH
 from specmatchemp import plots
+from specmatchemp import spectrum
 from specmatchemp.spectrum import Spectrum
 
 
@@ -25,6 +27,21 @@ class Library(object):
     The Library class is a container for the library spectrum and
     stellar parameters for the library stars. The library is indexed
     using the library_index column.
+
+    Attributes:
+        library_params (pd.DataFrame): The parameter table, which can
+            be queried directly as a pandas DataFrame.
+
+        library_spectra (np.ndarray): 3D array containing the library
+            spectra ordered according to the index column.
+
+        wav (np.ndarray): Common wavelength scale for the library spectra.
+
+        param_mask (pd.DataFrame): Boolean dataframe with same rows and
+            columns as library_params, marked True for model-independent
+            parameters.
+
+        nso (Spectrum): NSO spectrum.
 
     Args:
         wav (np.ndarray, optional): Wavelength scale for the library spectra.
@@ -50,18 +67,7 @@ class Library(object):
             same rows and columns as library_params, marked True for
             model-independent parameters.
 
-    Attributes:
-        library_params (pd.DataFrame): The parameter table, which can
-            be queried directly as a pandas DataFrame.
-
-        library_spectra (np.ndarray): 3D array containing the library
-            spectra ordered according to the index column.
-
-        wav (np.ndarray): Common wavelength scale for the library spectra.
-
-        param_mask (pd.DataFrame): Boolean dataframe with same rows and
-            columns as library_params, marked True for model-independent
-            parameters.
+        nso (Spectrum): NSO spectrum
     """
     #: Columns required in library
     LIB_COLS = ['lib_index', 'cps_name', 'lib_obs', 'Teff', 'u_Teff',
@@ -74,7 +80,7 @@ class Library(object):
     _target_chunk_bytes = 100e3  # Target number of bytes per chunk
 
     def __init__(self, wav=None, library_spectra=None, library_params=None,
-                 header={}, wavlim=None, param_mask=None):
+                 header={}, wavlim=None, param_mask=None, nso=None):
         # If no params included, create empty library
         if library_params is None:
             self.library_params = pd.DataFrame(columns=Library.LIB_COLS)
@@ -82,6 +88,7 @@ class Library(object):
             self.library_spectra = np.empty((0, 3, len(wav)))
             self.header = {'date_created': str(datetime.date.today())}
             self.wavlim = wavlim if wavlim is not None else (wav[0], wav[-1])
+            self.nso = nso
             return
 
         # Check if the necessary columns have been included.
@@ -96,6 +103,7 @@ class Library(object):
             self.library_spectra = np.empty((0, 3, len(wav)))
             self.header = {'date_created': str(datetime.date.today())}
             self.wavlim = None
+            self.nso = nso
             return
 
         # ensure that parameter table, library spectra have same length.
@@ -129,14 +137,24 @@ class Library(object):
         header['date_created'] = str(datetime.date.today())
         self.wavlim = wavlim if wavlim is not None else (wav[0], wav[-1])
         self.param_mask = param_mask
+        self.nso = nso
 
     def copy(self):
         """Return a deep copy of the library object.
-
         """
-        return Library(np.copy(self.wav), np.copy(self.library_spectra),
-                       self.library_params.copy(), self.header.copy(),
-                       self.wavlim, self.param_mask.copy())
+        wav = np.copy(self.wav) if self.wav is not None else None
+        library_spectra = np.copy(self.library_spectra) \
+            if self.library_spectra is not None else None
+        library_params = self.library_params.copy() \
+            if self.library_params is not None else None
+        header = self.header.copy() if self.header is not None else None
+        wavlim = self.wavlim
+        param_mask = self.param_mask.copy() \
+            if self.param_mask is not None else None
+        nso = self.nso.copy() if self.nso is not None else None
+
+        return Library(wav, library_spectra, library_params, header,
+                       wavlim, param_mask, nso)
 
     def append(self, params, spectrum=None):
         """Adds spectrum and associated stellar parameters into library.
@@ -267,10 +285,14 @@ class Library(object):
         with h5py.File(path, 'w') as f:
             # saving attributes
             for key in self.header.keys():
-                f.attrs[key] = self.header[key]
+                f.attrs[key] = json.dumps(self.header[key])
 
             # saving wavlength array
             f['wav'] = self.wav
+
+            if self.nso is not None:
+                f.create_group('nso')
+                self.nso.to_hdf(f['nso'])
 
             # convert library_params to record array
             r = self.library_params.to_records()
@@ -502,7 +524,14 @@ def read_hdf(path=None, wavlim='all'):
     with h5py.File(path, 'r') as f:
         print("Reading library from {0}".format(path))
         header = dict(f.attrs)
+        for k in header.keys():
+            header[k] = json.loads(header[k])
+
         wav = f['wav'][:]
+
+        if 'nso' in f:
+            nso = spectrum.read_hdf(f['nso'])
+
         if 'param_mask' in f:
             param_mask = f['param_mask'][:]
         else:
@@ -527,5 +556,5 @@ def read_hdf(path=None, wavlim='all'):
             wav = wav[idxmin:idxmax]
 
     lib = Library(wav, library_spectra, library_params, header=header,
-                  wavlim=wavlim, param_mask=param_mask)
+                  wavlim=wavlim, param_mask=param_mask, nso=nso)
     return lib
