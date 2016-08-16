@@ -130,6 +130,14 @@ class Library(object):
         self.wavlim = wavlim if wavlim is not None else (wav[0], wav[-1])
         self.param_mask = param_mask
 
+    def copy(self):
+        """Return a deep copy of the library object.
+
+        """
+        return Library(np.copy(self.wav), np.copy(self.library_spectra),
+                       self.library_params.copy(), self.header.copy(),
+                       self.wavlim, self.param_mask.copy())
+
     def append(self, params, spectrum=None):
         """Adds spectrum and associated stellar parameters into library.
 

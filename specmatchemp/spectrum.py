@@ -5,49 +5,46 @@ Defines a spectrum object for use in SpecMatch-Emp
 """
 
 import os
-import numpy as np 
+import numpy as np
 import pandas as pd
 import h5py
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from astropy.io import fits
 
-from specmatchemp.io import pdplus
 from specmatchemp import plots
 
+
 class Spectrum(object):
-    """Spectrum class
+    """Spectrum class.
+
+    This object is a container for a spectrum and its properties.
+
+    Args:
+        w (np.ndarray): Wavelength scale
+        s (np.ndarray): Spectrum
+        serr (np.ndarray, optional): Error in spectrum
+        mask (np.ndarray, optional): Boolean array to mask out telluric lines
+        name (str, optional): Name associated with spectrum
+        header (FITS header, optional): Header from fits file
+        attrs (dict, optional): Any further attributes
 
     Attributes:
         w (np.ndarray): Wavelength scale
         s (np.ndarray): Spectrum
-        serr (None or np.ndarray): Measurement error in spectrum
+        serr (np.ndarray): Measurement error in spectrum
         mask (np.ndarray): Boolean array with telluric line positions
         name (str): Name associted with spectrum
         header (FITS header): Header from FITS file
         attrs (dict): A dictionary of further attributes
-
-    This object is a container for a spectrum and other
-    properties which may be required.
     """
     _counter = 1
-    def __init__(self, w, s=None, serr=None, mask=None, name=None, header=None, attrs={}):
-        """
-        Args:
-            w (np.ndarray): Wavelength scale
-            s (np.ndarray): Spectrum
-            serr (optional [np.ndarray]): Error in spectrum
-            mask (optional [np.ndarray]): Boolean array to mask out telluric lines
-            name (optional [str]): Name associated with spectrum
-            header (optional [FITS header]): Header from fits file
-            attrs (optional [dict]): Any further attributes
-        """
+
+    def __init__(self, w, s, serr=None, mask=None, name=None, header=None,
+                 attrs={}):
+        # Wavelength and spectrum are both required
         self.w = w
-        
-        if s is None:
-            self.s = np.zeros_like(w)
-        else:
-            self.s = s
+        self.s = s
 
         if serr is None:
             self.serr = np.zeros_like(w)
@@ -65,21 +62,22 @@ class Spectrum(object):
             Spectrum._counter += 1
         else:
             self.name = name
+
         self.attrs = attrs
         self.header = header
 
     def copy(self):
         """Returns a deep copy of the Spectrum object
         """
-        return type(self)(np.copy(self.w), np.copy(self.s), np.copy(self.serr)\
-            , mask=np.copy(self.mask), name=self.name, header=self.header, attrs=self.attrs.copy())
+        return type(self)(np.copy(self.w), np.copy(self.s), np.copy(self.serr),
+                          mask=np.copy(self.mask), name=self.name,
+                          header=self.header, attrs=self.attrs.copy())
 
-
-    def to_fits(self, outfile):
+    def to_fits(self, outpath):
         """Saves the spectrum to a fits file.
 
         Args:
-            outfile (str): Path to output file
+            outpath (str): Path to output file
         """
         if self.header is None:
             self.header = fits.Header()
@@ -94,13 +92,12 @@ class Spectrum(object):
 
         tbhdu = fits.BinTableHDU.from_columns(
             [fits.Column(name='s', format='D', array=self.s),
-            fits.Column(name='w', format='D', array=self.w),
-            fits.Column(name='serr', format='D', array=serr),
-            fits.Column(name='mask', format='L', array=self.mask)])
+             fits.Column(name='w', format='D', array=self.w),
+             fits.Column(name='serr', format='D', array=serr),
+             fits.Column(name='mask', format='L', array=self.mask)])
 
         hdulist = fits.HDUList([prihdu, tbhdu])
         hdulist.writeto(outpath, clobber=True)
-
 
     def to_hdf(self, outfile):
         """Saves the spectrum to a hdf file.
@@ -108,6 +105,7 @@ class Spectrum(object):
         Args:
             outfile (str or h5 file): Output path or file handle
         """
+        # Allow either a string or h5 file object ot be passed.
         is_path = False
         if isinstance(outfile, str):
             outfile = h5py.File(outfile, 'w')
@@ -134,7 +132,6 @@ class Spectrum(object):
         if is_path:
             outfile.close()
 
-
     def cut(self, minw, maxw):
         """Truncate the spectrum between the given limits
 
@@ -142,7 +139,7 @@ class Spectrum(object):
             minw (float): Minimum wavelength
             maxw (float): Maximum wavelength
         Returns:
-            truncated (Spectrum): Truncated spectrum object
+            Spectrum: Truncated spectrum object
         """
         wavmask = (self.w >= minw) & (self.w <= maxw)
 
@@ -152,21 +149,23 @@ class Spectrum(object):
         serr_trunc = None if self.serr is None else self.serr[wavmask]
         mask_trunc = None if self.mask is None else self.mask[wavmask]
 
-        return type(self)(w_trunc, s_trunc, serr_trunc, mask_trunc, name=self.name, attrs=self.attrs)
+        return type(self)(w_trunc, s_trunc, serr_trunc, mask_trunc,
+                          name=self.name, attrs=self.attrs.copy())
 
-
-    def plot(self, offset=0, label='_nolegend_', plt_kw={'color':'RoyalBlue'}, showmask=False,\
-            text='', text_kw={}):
-        """Plots the spectrum
+    def plot(self, offset=0, label='_nolegend_', showmask=False,
+             plt_kw={'color': 'RoyalBlue'}, text='', text_kw={}):
+        """Plots the spectrum.
 
         Args:
-            offset (optional [float]): Vertical offset of the spectrum
-            label (optional [str]): Label of spectrum (appears in plt.legend)
-            plt_kw (optional [dict]): Keyword arguments to pass to plt.plot
-            text (optional [str]): String to label the spectrum
-            text_kw (optional [dict]): Keyword arguments to pass to plt.text
+            offset (float, optional): Vertical offset of the spectrum
+            label (str, optional): Label of spectrum (appears in plt.legend)
+            showmask (bool, optional): Whether to highlight the telluric mask
+                in the plot. Defaults to False.
+            plt_kw (dict, optional): Keyword arguments to pass to plt.plot
+            text (str, optional): String to label the spectrum
+            text_kw (dict, optional): Keyword arguments to pass to plt.text
         """
-        plt.plot(self.w, self.s+offset, '-', label=label, **plt_kw)
+        plt.plot(self.w, self.s + offset, '-', label=label, **plt_kw)
         if len(text) > 0:
             plots.annotate_spectrum(text, spec_offset=offset, text_kw=text_kw)
 
@@ -175,13 +174,14 @@ class Spectrum(object):
             # get list of masked regions
             regions = self._convert_mask_to_regions()
             for reg in regions:
-                ax.add_patch(patches.Rectangle((reg[0],offset), reg[1]-reg[0], offset+1,\
-                    ec='none', fc='gray', alpha=0.3))
+                ax.add_patch(patches.Rectangle((reg[0], offset),
+                                               reg[1] - reg[0], offset + 1,
+                                               ec='none', fc='gray',
+                                               alpha=0.3))
 
         plt.grid(True)
         plt.xlabel('Wavelength (Angstroms)')
         plt.ylabel('Normalized Flux (Arbitrary Offset)')
-
 
     def _convert_mask_to_regions(self):
         """Converts a boolean mask into a list of regions
@@ -196,14 +196,14 @@ class Spectrum(object):
             for i, p in enumerate(mask):
                 if not ismasked and not p:
                     ismasked = True
-                    start = i 
+                    start = i
                 elif ismasked and p:
                     ismasked = False
                     end = i
-                    l.append((w[start],w[end]))
+                    l.append((w[start], w[end]))
             if ismasked:
                 end = len(self.mask)
-                l.append((w[start],w[end]))
+                l.append((w[start], w[end]))
             return l
         ###
 
@@ -220,8 +220,8 @@ class Spectrum(object):
 class HiresSpectrum(Spectrum):
     """Spectrum class for raw HIRES spectra.
 
-    Is read by the read_hires
-        
+    Is read by the read_hires_fits function.
+
     Attributes:
         w (np.ndarray): Wavelength scale
         s (np.ndarray): Spectrum
@@ -230,46 +230,60 @@ class HiresSpectrum(Spectrum):
         name (str): Name associted with spectrum
         header (FITS header): Header from FITS file
         attrs (dict): A dictionary of further attributes
+
+    Args:
+        w (np.ndarray): Wavelength scale
+        s (np.ndarray): Spectrum
+        serr (np.ndarray, optional): Error in spectrum
+        mask (np.ndarray, optional): Boolean array to mask out
+            telluric lines
+        mask_table (pd.DataFrame, optional): Table containing
+            masked regions
+        name (str, optional): Name associated with spectrum
+        header (FITS header, optional): Header from fits file
+        attrs (dict, optional): Any further attributes
     """
-    def __init__(self, w, s, serr=None, mask=None, mask_table=None, name=None, header=None, attrs={}):
-        """
-        Args:
-            w (np.ndarray): Wavelength scale
-            s (np.ndarray): Spectrum
-            serr (optional [np.ndarray]): Error in spectrum
-            mask (optional [np.ndarray]): Boolean array to mask out telluric lines
-            mask_table (optional [pd.DataFrame]): Table containing masked regions
-            name (optional [str]): Name associated with spectrum
-            header (optional [FITS header]): Header from fits file
-            attrs (optional [dict]): Any further attributes
-        """
+    def __init__(self, w, s, serr=None, mask=None, mask_table=None, name=None,
+                 header=None, attrs={}):
         self.mask_table = mask_table
         if mask_table is not None and mask is None:
             mask = np.empty_like(s)
             mask.fill(True)
             for order in range(len(mask)):
-                mask_table_cut = mask_table.query('order == {0:d}'.format(order))
+                mask_table_cut = mask_table.query('order == {0:d}'
+                                                  .format(order))
                 for n, row in mask_table_cut.iterrows():
                     start = row['minpix']
                     end = row['maxpix']
-                    mask[order,start:end] = False
+                    mask[order, start:end] = False
 
-        super(HiresSpectrum, self).__init__(w, s, serr, mask=mask, name=name, header=header, attrs=attrs)
+        super(HiresSpectrum, self).__init__(w, s, serr, mask=mask, name=name,
+                                            header=header, attrs=attrs)
 
-    def plot(self, offset=0, normalize=False, label='_nolegend_', plt_kw={'color':'RoyalBlue'}, 
-            showmask=False, text='', text_kw={}):
+    def plot(self, offset=0, label='_nolegend_', normalize=False,
+             showmask=False, plt_kw={'color': 'RoyalBlue'},
+             text='', text_kw={}):
         """Plots the spectrum
 
         Args:
             offset (optional [float]): Vertical offset of the spectrum
             label (optional [str]): Label of spectrum (appears in plt.legend)
+            normalize (optional [bool]): Whether to normalize the spectrum.
+                Defaults to False
+            showmask (bool, optional): Whether to highlight the telluric mask
+                in the plot. Defaults to False.
             plt_kw (optional [dict]): Keyword arguments to pass to plt.plot
+            text (str, optional): String to label the spectrum
+            text_kw (dict, optional): Keyword arguments to pass to plt.text
         """
         if self.w.ndim > 1:
             if normalize:
-                plt.plot(self.w.T, self.s.T/np.percentile(self.s, 95, axis=1)+offset, '-', label=label, **plt_kw)
+                plt.plot(self.w.T,
+                         self.s.T / np.percentile(self.s, 95, axis=1) + offset,
+                         '-', label=label, **plt_kw)
             else:
-                plt.plot(self.w.T, self.s.T+offset, '-', label=label, **plt_kw)
+                plt.plot(self.w.T, self.s.T + offset, '-', label=label,
+                         **plt_kw)
 
             if showmask:
                 ax = plt.gca()
@@ -278,13 +292,15 @@ class HiresSpectrum(Spectrum):
                 regions = self._convert_mask_to_regions()
                 for order in range(len(self.w)):
                     for reg in regions[order]:
-                        ax.add_patch(patches.Rectangle((reg[0],ylim[0]), reg[1]-reg[0], ylim[1]-ylim[0],\
+                        ax.add_patch(patches.Rectangle((reg[0], ylim[0]),
+                            reg[1] - reg[0], ylim[1] - ylim[0],
                             ec='none', fc='gray', alpha=0.3))
         else:
             if normalize:
-                plt.plot(self.w, self.s/np.percentile(self.s, 95)+offset, '-', label=label, **plt_kw)
+                plt.plot(self.w, self.s / np.percentile(self.s, 95) + offset,
+                         '-', label=label, **plt_kw)
             else:
-                plt.plot(self.w, self.s+offset, '-', label=label, **plt_kw)
+                plt.plot(self.w, self.s + offset, '-', label=label, **plt_kw)
 
         if len(text) > 0:
             plots.annotate_spectrum(text, spec_offset=offset, text_kw=text_kw)
@@ -299,9 +315,9 @@ def read_fits(infile, wavlim=None):
 
     Args:
         infile (str): Path to input fits file
-        wavlim (optional [tuple]): Wavelength limits to read
+        wavlim (tuple, optional): Wavelength limits to read
     Returns:
-        spec (Spectrum): Spectrum object
+        Spectrum: Spectrum object
     """
     hdu = fits.open(infile)
 
@@ -347,8 +363,8 @@ def read_hires_fits(infile, maskfile=None):
         chip = os.path.basename(infile)[0:2]
         mask_table = mask_table[mask_table.chip.str.contains(chip)]
 
-
     return HiresSpectrum(w, s, serr, mask_table=mask_table, header=header)
+
 
 def read_hdf(infile):
     """Reads a spectrum from a hdf file
@@ -370,20 +386,20 @@ def read_hdf(infile):
         mask = infile['mask'][:]
     else:
         mask = None
-    
+
     attrs = dict(infile.attrs)
     if 'name' in attrs.keys():
         name = attrs.pop('name')
     else:
-        name=None
+        name = None
 
     if 'header' in attrs.keys():
         header = attrs.pop('header')
     else:
-        header=None
+        header = None
 
     if is_path:
         infile.close()
 
-    return Spectrum(w, s, serr, mask=mask, name=name, header=header, attrs=attrs)
-
+    return Spectrum(w, s, serr, mask=mask, name=name,
+                    header=header, attrs=attrs)

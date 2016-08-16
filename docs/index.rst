@@ -15,9 +15,9 @@ Contents:
 
    quickstart
    installation
-   specmatch
    library
-
+   spectrum
+   specmatch
 
 
 Indices and tables
