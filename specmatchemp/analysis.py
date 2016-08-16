@@ -7,7 +7,7 @@ Helper functions for analysis of results
 import numpy as np
 import pandas as pd
 
-from specmatchemp import library
+from specmatchemp.library import Library
 
 def generate_sm_values(params, results, method='lincomb', suffix='_sm', cscol='chi_squared', refcol='ref_idxs', coeffcol='coeffs'):
     """Generate the derived values and add it to the parameters table
@@ -32,7 +32,7 @@ def generate_sm_values(params, results, method='lincomb', suffix='_sm', cscol='c
     # Use linear combination results as sm values
     if method == 'lincomb':
         results = results.set_index('targ_idx')
-        for p in library.STAR_PROPS:
+        for p in Library.STAR_PROPS:
             psm = p+suffix
             params.loc[:,psm] = params.lib_index.apply(lambda i: \
                 lincomb_props(params, p, results.loc[i, refcol], results.loc[i, coeffcol]))
@@ -41,7 +41,7 @@ def generate_sm_values(params, results, method='lincomb', suffix='_sm', cscol='c
         grouped_results = results.groupby('targ_idx')
         params.loc[:,'best_match'+suffix] = params.lib_index.apply(\
             lambda i: grouped_results.get_group(i).sort_values(by=cscol).iloc[0].ref_idx)
-        for p in library.STAR_PROPS:
+        for p in Library.STAR_PROPS:
             psm = p+suffix
             params.loc[:,psm] = params['best_match'+suffix].apply(lambda i: params.loc[i, p])
         
@@ -52,7 +52,7 @@ def generate_sm_values(params, results, method='lincomb', suffix='_sm', cscol='c
         grouped_results = results.groupby('targ_idx')
         params.loc[:,'best_n'+suffix] = params.lib_index.apply(lambda i: \
             np.array(grouped_results.get_group(i).sort_values(by=cscol).iloc[0:num_mean].ref_idx))
-        for p in library.STAR_PROPS:
+        for p in Library.STAR_PROPS:
             psm = p+suffix
             params.loc[:,psm] = params['best_n'+suffix].apply(lambda i: params.loc[i, p].mean())
     
@@ -80,7 +80,7 @@ def lincomb_props(params, prop, idxs, coeffs):
         sm_prop += lib_prop*coeffs[i]
     return sm_prop
 
-def generate_residuals(params, suffix='_sm', props=library.STAR_PROPS):
+def generate_residuals(params, suffix='_sm', props=Library.STAR_PROPS):
     """Calculates the residuals between the derived and true values
 
     Args:

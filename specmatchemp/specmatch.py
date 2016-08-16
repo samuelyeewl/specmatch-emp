@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 from specmatchemp import library
+from specmatchemp.library import Library
 from specmatchemp import match
 from specmatchemp import analysis
 from specmatchemp import plots
@@ -27,7 +28,7 @@ class SpecMatch(object):
             by SpecMatch. Keys are elements of library.STAR_PROPS.
 
     Args:
-        target (np.ndarray): Target spectrum and uncertainty
+        target (spectrum.Spectrum): Target spectrum and uncertainty
         lib (library.Library): Library object to match against
         wavlim (tuple): Wavelength limits to perform matching on.
         num_best (optional [int]): Number of target spectra to use
@@ -102,7 +103,7 @@ class SpecMatch(object):
 
         if not lincomb:
             best_idx = self.match_results.iloc[0].name
-            for p in library.STAR_PROPS:
+            for p in Library.STAR_PROPS:
                 self.results[p] = self.lib.library_params.loc[best_idx, p]
             return
 
@@ -127,7 +128,7 @@ class SpecMatch(object):
 
     # get derived values
     def get_derived_values(self):
-        for p in library.STAR_PROPS:
+        for p in Library.STAR_PROPS:
             self.results[p] = analysis.lincomb_props(self.lib.library_params, p, self.ref_idxs, self.coeffs)
 
         return self.results

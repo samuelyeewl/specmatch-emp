@@ -20,6 +20,7 @@ from isochrones.dartmouth import Dartmouth_Isochrone
 from isochrones import StarModel
 
 from specmatchemp import library
+from specmatchemp.library import Library
 
 
 def get_isochrone_params(stars, modeldir, overwrite=False):
@@ -44,7 +45,7 @@ def get_isochrone_params(stars, modeldir, overwrite=False):
 
         # get known stellar properties
         lib_props = {}
-        for p in library.STAR_PROPS:
+        for p in Library.STAR_PROPS:
             if not np.isnan(row[p]):
                 # (value, uncertainty)
                 lib_props[p] = (row[p], row['u_'+p])
@@ -78,7 +79,7 @@ def get_isochrone_params(stars, modeldir, overwrite=False):
         MIN_PERCENTILE = 0.05
         incons_props = 0
         # fill out unknown parameters
-        for p in library.STAR_PROPS:
+        for p in Library.STAR_PROPS:
             value = model.samples[p].quantile(0.5)
             upper_bound = model.samples[p].quantile(MAX_PERCENTILE)
             lower_bound = model.samples[p].quantile(MIN_PERCENTILE)

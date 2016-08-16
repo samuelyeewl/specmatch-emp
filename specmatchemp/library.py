@@ -6,7 +6,6 @@ Defines the library class which will be used for matching
 
 from __future__ import print_function
 
-import os, sys
 import datetime
 
 import numpy as np
@@ -14,118 +13,121 @@ import pandas as pd
 import h5py
 import matplotlib.pyplot as plt
 
+from specmatchemp import LIBPATH
 from specmatchemp import plots
 from specmatchemp.spectrum import Spectrum
 
-from specmatchemp import match
-
-LIB_COLS = ['lib_index','cps_name', 'lib_obs', 'Teff', 'u_Teff', 'radius', 'u_radius', 
-            'logg', 'u_logg', 'feh', 'u_feh', 'mass', 'u_mass', 'age', 'u_age', 
-            'vsini', 'source', 'source_name', 'snr']
-"""list: List of allowed library properties"""
-STAR_PROPS = ['Teff', 'radius', 'logg', 'feh', 'mass', 'age']
-"""list: Numeric star properties"""
-FLOAT_TOL = 1e-3
-
-HOMEDIR = os.environ['HOME']
-LIBPATH = "{0}/.specmatchemp/library.h5".format(HOMEDIR)
 
 class Library(object):
-    """A container for a library of spectrum and corresponding stellar parameters.
+    """A container for a library of spectrum and corresponding stellar
+    parameters.
 
-    The Library class is a container for the library spectrum and 
-    stellar parameters for the library stars. The library is indexed 
+    The Library class is a container for the library spectrum and
+    stellar parameters for the library stars. The library is indexed
     using the library_index column.
+
+    Args:
+        wav (np.ndarray, optional): Wavelength scale for the library spectra.
+
+        library_params (pd.DataFrame, optional): Pandas DataFrame
+            containing the parameters for the library stars. It should
+            have the columns specified in LIB_COLS, although values can
+            be np.nan. The library_index of each row should be the index
+            of the specturm in library_spectra.
+
+        library_spectra (np.ndarray, optional): 3D array containing the
+            library spectra ordered according to the index column.
+            Each entry contains the spectrum, its uncertainty, and a mask
+            array.
+
+        header (dict, optional): Any additional metadata to store with
+            the library.
+
+        wavlim (tuple, optional): The upper and lower
+            wavelength limits to be read.
+
+        param_mask (pd.DataFrame, optional): Boolean dataframe with
+            same rows and columns as library_params, marked True for
+            model-independent parameters.
 
     Attributes:
         library_params (pd.DataFrame): The parameter table, which can
-            be queried directly.
+            be queried directly as a pandas DataFrame.
 
         library_spectra (np.ndarray): 3D array containing the library
             spectra ordered according to the index column.
 
-        param_mask (pd.DataFrame): Boolean dataframe with
-            same rows and columns as library_params, marked True for
-            model-independent parameters.
+        wav (np.ndarray): Common wavelength scale for the library spectra.
+
+        param_mask (pd.DataFrame): Boolean dataframe with same rows and
+            columns as library_params, marked True for model-independent
+            parameters.
     """
+    #: Columns required in library
+    LIB_COLS = ['lib_index', 'cps_name', 'lib_obs', 'Teff', 'u_Teff',
+                'radius', 'u_radius', 'logg', 'u_logg', 'feh', 'u_feh',
+                'mass', 'u_mass', 'age', 'u_age', 'vsini', 'source',
+                'source_name', 'snr']
+    #: Numeric star properties
+    STAR_PROPS = ['Teff', 'radius', 'logg', 'feh', 'mass', 'age']
+
     _target_chunk_bytes = 100e3  # Target number of bytes per chunk
 
-    def __init__(self, wav=None, library_spectra=None, library_params=None, header={}, wavlim=None, param_mask=None):
-        """
-        Creates a fully-formed library from a given set of spectra.
-
-        Args: 
-            wav (np.ndarray): Wavelength scale for the library spectra.
-
-            library_params (pd.DataFrame): (optional) Pandas DataFrame containing
-                the parameters for the library stars. It should have
-                the columns specified in LIB_COLS, although values can
-                be np.nan. The library_index of each row should
-                be the index of the specturm in library_spectra.
-
-            library_spectra (np.ndarray): (optional) 3D array containing the library
-                spectra ordered according to the index column.
-                Each entry contains the spectrum, its uncertainty, and
-                a mask array.
-
-            header (dict): (optional) Any additional metadata to store
-                with the library.
-
-            wavlim (tuple): (optional) The upper and lower
-                wavelength limits to be read.
-
-            param_mask (pd.DataFrame): (optional) Boolean dataframe with
-                same rows and columns as library_params, marked True for
-                model-independent parameters.
-        """
+    def __init__(self, wav=None, library_spectra=None, library_params=None,
+                 header={}, wavlim=None, param_mask=None):
         # If no params included, create empty library
         if library_params is None:
-            self.library_params = pd.DataFrame(columns=LIB_COLS)
+            self.library_params = pd.DataFrame(columns=Library.LIB_COLS)
             self.wav = wav
             self.library_spectra = np.empty((0, 3, len(wav)))
             self.header = {'date_created': str(datetime.date.today())}
-            self.wavlim = wavlim
+            self.wavlim = wavlim if wavlim is not None else (wav[0], wav[-1])
             return
 
-        # otherwise we need to include the provided tables
-        # ensure that parameter table has the right columns
-        for col in library_params:
-            assert col in LIB_COLS, \
-                "{0} is not an allowed column".format(col)
+        # Check if the necessary columns have been included.
+        for col in Library.LIB_COLS:
+            if col not in library_params:
+                raise ValueError("{0} is a required column.".format(col))
 
-        # If no spectra included but params are included, we have a spectrumless library
+        # We can create a library with no spectra for increased i/o speed.
         if library_spectra is None:
             self.library_params = library_params
-            self.wav = wav
+            self.wav = None
             self.library_spectra = np.empty((0, 3, len(wav)))
             self.header = {'date_created': str(datetime.date.today())}
-            self.wavlim = wavlim
+            self.wavlim = None
             return
 
         # ensure that parameter table, library spectra have same length.
+        if len(library_params) != len(library_spectra):
+            raise ValueError("Library params and spectra are of " +
+                             "unequal length")
+
+        # ensure that all indices in library_params can be found
+        # are smaller than the number of library_spectra
         num_spec = len(library_spectra)
-        assert len(library_params) == num_spec,    \
-            "Error: Length of parameter table and library spectra are not equal."
-        # ensure that all indices in library_params can be found in library_spectra
         for i, row in library_params.iterrows():
-            assert row.lib_index < num_spec,     \
-            "Error: Index {0:d} is out of bounds in library_spectra".format(i)
+            if row.lib_index >= num_spec:
+                raise IndexError("Index {0:d} ".format(row.lib_index) +
+                                 "is out of bounds in library_spectra")
 
         # ensure library_spectra is of right shape
-        # EAP hack to get library to build
-        assert np.shape(library_spectra)[1] == 3 and np.shape(library_spectra)[2] == len(wav), \
-            "Error: library_spectra should have shape ({0:d}, 3, {1:d})".format(num_spec, len(wav))
+        if np.shape(library_spectra)[1] != 3 or \
+                np.shape(library_spectra)[2] != len(wav):
+            raise IndexError("library_spectra should have shape " +
+                             "({0:d}, 3, {1:d})".format(num_spec, len(wav)))
 
         # set index to be equal to lib_index
         library_params.lib_index = library_params.lib_index.astype(int)
-        self.library_params = library_params
-        self.library_params.set_index('lib_index', inplace=True, drop=False)
+        library_params.set_index('lib_index', inplace=True, drop=False)
 
+        # assign attributes
         self.wav = wav
+        self.library_params = library_params
         self.library_spectra = library_spectra
         self.header = header
         header['date_created'] = str(datetime.date.today())
-        self.wavlim = wavlim
+        self.wavlim = wavlim if wavlim is not None else (wav[0], wav[-1])
         self.param_mask = param_mask
 
     def append(self, params, spectrum=None):
@@ -133,51 +135,54 @@ class Library(object):
 
         Args:
             params (pd.Series): A row to be added to the library array. It
-                should have the fields specified in LIB_COLS.
-            spectrum (Spectrum): Spectrum object. Spectrum should have been shifted
-                and interpolated onto the same wavelength scale as the library.
+                should have the fields specified in Library.LIB_COLS.
+            spectrum (Spectrum): Spectrum object. Spectrum should have been
+                shifted and interpolated onto the same wavelength scale as
+                the library.
         """
         if self.library_spectra is None and spectrum is not None:
-            print("Error: Cannot append to library with no spectra")
-            return
-        
-        # ensure that parameter table, library spectra have same length.
-        assert len(self.library_params) == len(self.library_spectra),    \
-            "Error: Length of parameter table and library spectra are not equal."
+            raise ValueError("Error: Cannot append to library with no spectra")
 
         # ensure that parameter row has the right columns
         for col in params.columns:
-            if col not in LIB_COLS:
+            if col not in Library.LIB_COLS:
                 raise KeyError("{0} is not an allowed column".format(col))
 
         # ensure that the provided spectrum has the same number of elements
         # as the wavelength array
-        if len(spectrum.w) != len(self.wav) or not np.allclose(spectrum.w, self.wav):
-            print("Spectrum should be shifted and interpolated onto library wavelength scale")
+        if len(spectrum.w) != len(self.wav) \
+                or not np.allclose(spectrum.w, self.wav):
+            raise ValueError("Spectrum should be shifted and interpolated " +
+                             "onto library wavelength scale.")
 
         # add new star to library
         params.lib_index = len(self.library_spectra)
-        self.library_params = pd.concat((self.library_params, params), ignore_index=True)
+        self.library_params = pd.concat((self.library_params, params),
+                                        ignore_index=True)
         if spectrum is not None:
-            self.library_spectra = np.vstack((self.library_spectra, [[spectrum.s, spectrum.serr, spectrum.mask]]))
+            new_spec = [spectrum.s, spectrum.serr, spectrum.mask]
+            self.library_spectra = np.vstack((self.library_spectra, new_spec))
         self.library_params.set_index('lib_index', inplace=True, drop=False)
 
     def remove(self, index):
-        """Removes the spectrum and parameters with the given index from the library.
+        """Removes the spectrum and parameters with the given index from
+        the library.
 
         Args:
-            index (int): Index of spectrum to remove.
+            index (int of array of ints): Indices of spectra to remove.
         """
         if not self.__contains__(index):
             raise KeyError
 
         if self.library_spectra is not None:
-            self.library_spectra = np.delete(self.library_spectra, [index], axis=0)
-        self.library_params = self.library_params[self.library_params.lib_index != index]
+            self.library_spectra = np.delete(self.library_spectra, index,
+                                             axis=0)
+        self.library_params = self.library_params[self.library_params.
+                                                  lib_index != index]
 
         # reset index
-        self.library_params.lib_index = self.library_params.lib_index.apply(\
-            lambda i: i-1 if i > index else i)
+        self.library_params.lib_index = self.library_params.lib_index. \
+            apply(lambda i: i - 1 if i > index else i)
         self.library_params.set_index('lib_index', inplace=True, drop=False)
 
     def pop(self, index):
@@ -186,8 +191,9 @@ class Library(object):
         Args:
             index (int): Index of spectrum to remove.
         Returns:
-            params (pd.Series): Parameters of star
-            spectrum (Spectrum): Spectrum
+            (pd.Series, spectrum.Spectrum):
+                - params (pd.Series): Parameters of star
+                - spectrum (Spectrum): Spectrum
         """
         if not self.__contains__(index):
             raise KeyError
@@ -197,7 +203,7 @@ class Library(object):
             spectrum = self.get_spectrum(index)
 
         self.remove(index)
-        
+
         if self.library_spectra.size > 0:
             return params, spectrum
         else:
@@ -208,29 +214,34 @@ class Library(object):
         lib_obs, cps_name, source_name in order.
 
         Args:
-            searchstr (str): String to search for
-        Returns:
-            lib_index (int): Library index of the found star. Returns None if no
-                object found. 
-        """
-        pattern='^'+searchstr+'$'
-        res = self.library_params[self.library_params.lib_obs.str.match(pattern)]
-        if len(res)==1:
-            return res.iloc[0].lib_index
-        elif len(res)>1:
-            return np.array(res.iloc[:].lib_index)
-        res = self.library_params[self.library_params.cps_name.str.match(pattern)]
-        if len(res)==1:
-            return res.iloc[0].lib_index
-        elif len(res)>1:
-            return np.array(res.iloc[:].lib_index)
-        res = self.library_params[self.library_params.source_name.str.match(pattern)]
-        if len(res)==1:
-            return res.iloc[0].lib_index
-        elif len(res)>1:
-            return np.array(res.iloc[:].lib_index)
-        return None
+            searchstr (str): String to search for.
 
+        Returns:
+            int: Library index of the found star.
+            Returns None if no object found.
+        """
+        pattern = '^' + searchstr + '$'
+        lib_params = self.library_params
+        # Search columns in order
+        res = lib_params[lib_params.lib_obs.str.match(pattern)]
+        if len(res) == 1:
+            return res.iloc[0].lib_index
+        elif len(res) > 1:
+            return np.array(res.iloc[:].lib_index)
+
+        res = lib_params[lib_params.cps_name.str.match(pattern)]
+        if len(res) == 1:
+            return res.iloc[0].lib_index
+        elif len(res) > 1:
+            return np.array(res.iloc[:].lib_index)
+
+        res = lib_params[lib_params.source_name.str.match(pattern)]
+        if len(res) == 1:
+            return res.iloc[0].lib_index
+        elif len(res) > 1:
+            return np.array(res.iloc[:].lib_index)
+
+        return None
 
     def to_hdf(self, path):
         """
@@ -239,14 +250,18 @@ class Library(object):
         Args:
             path (str): Path to store library
         """
-        self.library_params.lib_index = self.library_params.lib_index.astype(int)
+        self.library_params.lib_index = self.library_params.lib_index \
+            .astype(int)
         self.library_params.set_index('lib_index', inplace=True, drop=False)
         self.library_params.index.rename('idx', inplace=True)
 
         # store spectrum
         with h5py.File(path, 'w') as f:
+            # saving attributes
             for key in self.header.keys():
                 f.attrs[key] = self.header[key]
+
+            # saving wavlength array
             f['wav'] = self.wav
 
             # convert library_params to record array
@@ -265,12 +280,15 @@ class Library(object):
             # Compute chunk size - group wavelenth regions together
             chunk_row = len(self.library_spectra)
             chunk_depth = 3
-            chunk_col = int(self._target_chunk_bytes / self.library_spectra[:,:,0].nbytes)
+            chunk_col = int(self._target_chunk_bytes /
+                            self.library_spectra[:, :, 0].nbytes)
             chunk_size = (chunk_row, chunk_depth, chunk_col)
 
-            print("Storing model spectra with chunks of size {0}".format(chunk_size))
-            dset = f.create_dataset('library_spectra', data=self.library_spectra,
-                compression='gzip', compression_opts=1, shuffle=True, chunks=chunk_size)
+            print("Storing library spectra with chunks of size {0}"
+                  .format(chunk_size))
+            f.create_dataset('library_spectra', data=self.library_spectra,
+                             compression='gzip', compression_opts=1,
+                             shuffle=True, chunks=chunk_size)
 
     def get_spectrum(self, indices):
         """Returns the spectrum at the given index.
@@ -278,7 +296,7 @@ class Library(object):
         Args:
             indices (int or list): Library indices of spectrum.
         Returns:
-            spec (Spectrum of list of Spectrum): Spectrum object
+            Spectrum or list of Spectrum: Spectra at given indices.
         """
         if isinstance(indices, int) or isinstance(indices, np.int_):
             indices = [indices]
@@ -290,7 +308,7 @@ class Library(object):
             w = self.wav
             name = self.library_params.loc[idx, 'cps_name']
             attrs = {}
-            for p in STAR_PROPS:
+            for p in Library.STAR_PROPS:
                 attrs[p] = self.library_params.loc[idx, p]
 
             spectra.append(Spectrum(w, s, serr, name=name, attrs=attrs))
@@ -300,15 +318,55 @@ class Library(object):
         else:
             return spectra
 
+    def query_params(self, querystr):
+        """Query the library_params table and return the indices of matching
+        stars.
+
+        Args:
+            querystr (str): Query string
+
+        Returns:
+            int or list of int:
+            Index or indices of library entries matching the query string.
+        """
+        return np.array(self.library_params.query(querystr).index)
+
+    def wav_cut(self, minw, maxw, deepcopy=False):
+        """Returns a library with spectra within the given limits.
+
+        Args:
+            minw (float): Minimum wavelength
+            maxw (float): Maximum wavelength
+            deepcopy (bool, optional): True to return a library with all
+                attributes copied. Default is False.
+
+        Returns:
+            Library: New library object.
+        """
+        idxwav, = np.where((self.wav > minw) & (self.wav < maxw))
+        idxmin = idxwav[0]
+        idxmax = idxwav[-1] + 1  # add 1 to include last index when slicing
+
+        if deepcopy:
+            return Library(np.copy(self.wav),
+                           self.library_spectra[:, :, idxmin:idxmax],
+                           self.library_params.copy(), self.header.copy(),
+                           (minw, maxw), self.param_mask.copy())
+        else:
+            return Library(self.wav, self.library_spectra[:, :, idxmin:idxmax],
+                           self.library_params, self.header, (minw, maxw),
+                           self.param_mask)
+
     def plot(self, paramx, paramy, grouped=False, ptlabels=False, plt_kw={}):
         """Create a plot of the library in parameter space
 
         Args:
             paramx (str): Parameter to plot on the x-axis
             paramy (str): Parameter to plot on the y-axis
-            grouped (optional [bool]): Whether to group the stars by source
-            ptlabels (optional [str]): Library column to label points by
-            plt_kw (optional [dict]): Additional keyword arguments to pass to pyplot.plot
+            grouped (bool, optional): Whether to group the stars by source
+            ptlabels (str, optional): Library column to annotate points with
+            plt_kw (dict, optional): Additional keyword arguments to pass to
+                pyplot.plot
         """
         if grouped:
             g = self.library_params.groupby('source')
@@ -317,23 +375,31 @@ class Library(object):
                 cut = self.library_params.ix[g.groups[source]]
                 plt.plot(cut[paramx], cut[paramy], '.', label=source)
         else:
-            plt.plot(self.library_params[paramx], self.library_params[paramy], '.', **plt_kw)
+            plt.plot(self.library_params[paramx], self.library_params[paramy],
+                     '.', **plt_kw)
 
         if ptlabels is not False:
-            self.library_params.apply(lambda x: plots.annotate_point(x[paramx], x[paramy], x[ptlabels]), axis=1)
-            
+            self.library_params.apply(lambda x: plots.annotate_point(x[paramx],
+                                      x[paramy], x[ptlabels]), axis=1)
+
+        plots.label_axes(paramx, paramy)
 
     def __str__(self):
-        """
-        String representation of library
+        """String representation of library
         """
         outstr = "<specmatchemp.library.Library>\n"
+        outstr += "Contains {0:d} stars\n".format(len(self.library_params))
+        if self.wavlim is not None:
+            outstr += "Wavelength region: {0:.2f} - {1:.2f}\n" \
+                .format(**self.wavlim)
+
+        # print other attributes
         for key, val in self.header.items():
             outstr += "{0}: {1}\n".format(key, val)
 
         return outstr
 
-    ## Container methods
+    # Container methods
     def __iter__(self):
         """
         Allow library to be an iterable
@@ -387,7 +453,6 @@ class Library(object):
             return self.library_params.loc[index], self.get_spectrum(index)
         else:
             return self.library_params.loc[index]
-            
 
     def __delitem__(self, index):
         """
@@ -407,18 +472,21 @@ class Library(object):
         """
         return index in self.library_params.lib_index
 
+
 def read_hdf(path=None, wavlim='all'):
     """
-    Reads in a library from a HDF file
+    Reads in the library from a HDF file.
 
     Args:
-        paramfile (str): path to h5 file containing star parameters.
-        specfile (str): path to h5 file containing spectra.
-        wavlim (2-element iterable): (optional) The upper and lower wavelength
-            limits to be read. If 'none', reads in library without spectra.
+        path (str, optional): path to h5 file containing library.
+            If no path is given, reads in from default directory.
+        wavlim (2-element iterable or str, optional):
+            The upper and lower wavelength limits to be read.
+            If 'none', reads in library without spectra.
+            If 'all', reads in complete stored spectra.
 
     Returns:
-        lib (library.Library) object
+        Library: Library object
     """
     if path is None:
         return read_hdf(LIBPATH, wavlim)
@@ -436,19 +504,20 @@ def read_hdf(path=None, wavlim='all'):
         # decode strings
         for (col_name, dt) in library_params.dtypes.iteritems():
             if dt == 'object':
-                library_params[col_name] = library_params[col_name].str.decode('utf-8')
+                library_params[col_name] = library_params[col_name]\
+                    .str.decode('utf-8')
 
         if wavlim == 'all':
             library_spectra = f['library_spectra'][:]
         elif wavlim == 'none':
             library_spectra = None
         else:
-            idxwav, = np.where( (wav > wavlim[0]) & (wav < wavlim[1]))
+            idxwav, = np.where((wav > wavlim[0]) & (wav < wavlim[1]))
             idxmin = idxwav[0]
-            idxmax = idxwav[-1] + 1 # add 1 to include last index when slicing
-            library_spectra = f['library_spectra'][:,:,idxmin:idxmax]
+            idxmax = idxwav[-1] + 1  # add 1 to include last index when slicing
+            library_spectra = f['library_spectra'][:, :, idxmin:idxmax]
             wav = wav[idxmin:idxmax]
 
-    lib = Library(wav, library_spectra, library_params, header=header, wavlim=wavlim, param_mask=param_mask)
+    lib = Library(wav, library_spectra, library_params, header=header,
+                  wavlim=wavlim, param_mask=param_mask)
     return lib
-

@@ -17,8 +17,7 @@ import pandas as pd
 
 from astropy.io import ascii
 
-from specmatchemp.library import LIB_COLS
-from specmatchemp.library import STAR_PROPS
+from specmatchemp.library import Library
 from specmatchemp.utils import cpsutils
 from specmatchemp.utils import utils
 
@@ -55,7 +54,7 @@ def read_brewer(catalogdir, cps_list):
     """
     brewer_data = ascii.read(os.path.join(catalogdir, BREWER_FILENAME))
 
-    stars = pd.DataFrame(columns=LIB_COLS)
+    stars = pd.DataFrame(columns=Library.LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for row in brewer_data:
@@ -98,7 +97,7 @@ def read_mann(catalogdir, cps_list):
 
     mann_data = mann_data[~mann_data['CNS3'].mask]
 
-    stars = pd.DataFrame(columns=LIB_COLS)
+    stars = pd.DataFrame(columns=Library.LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for row in mann_data:
@@ -144,7 +143,7 @@ def read_vonbraun(catalogdir, cps_list):
     """
     vb_data = ascii.read(os.path.join(catalogdir, VONBRAUN_FILENAME))
 
-    stars = pd.DataFrame(columns=LIB_COLS)
+    stars = pd.DataFrame(columns=Library.LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for row in vb_data:
@@ -185,7 +184,7 @@ def read_huber(catalogdir, cps_list):
     huber_data = ascii.read(os.path.join(catalogdir, HUBER_FILENAME), readme=os.path.join(catalogdir, HUBER_README))
     huber_data = huber_data[huber_data['f_KOI'] != '*']
 
-    stars = pd.DataFrame(columns=LIB_COLS)
+    stars = pd.DataFrame(columns=Library.LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for row in huber_data:
@@ -231,7 +230,7 @@ def read_ramirez(catalogdir, cps_list):
     """
     ramirez_data = pd.read_csv(os.path.join(catalogdir, RAMIREZ_FILENAME))
 
-    stars = pd.DataFrame(columns=LIB_COLS)
+    stars = pd.DataFrame(columns=Library.LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for idx, row in ramirez_data.iterrows():
@@ -271,7 +270,7 @@ def read_casagrande(catalogdir, cps_list):
     """
     c_data = pd.read_csv(os.path.join(catalogdir, CASAGRANDE_FILENAME))
 
-    stars = pd.DataFrame(columns=LIB_COLS)
+    stars = pd.DataFrame(columns=Library.LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for idx, row in c_data.iterrows():
@@ -315,7 +314,7 @@ def read_bruntt(catalogdir, cps_list):
     """
     b_data = ascii.read(os.path.join(catalogdir, BRUNTT_FILENAME), readme=os.path.join(catalogdir, BRUNTT_README))
 
-    stars = pd.DataFrame(columns=LIB_COLS)
+    stars = pd.DataFrame(columns=Library.LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for row in b_data:
@@ -347,7 +346,7 @@ def read_kdwarfs(catalogdir, cps_list):
     """Read in K-Dwarf catalog"""
     kdwarfs = pd.read_csv(os.path.join(catalogdir, KDWARF_FILENAME))
 
-    stars = pd.DataFrame(columns=LIB_COLS)
+    stars = pd.DataFrame(columns=Library.LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
 
     for idx, row in kdwarfs.iterrows():
@@ -395,7 +394,7 @@ def read_catalogs(catalogdir, cpspath):
     cps_list = pd.read_csv(cpspath)
 
     # Create dataframe to store found stars
-    stars = pd.DataFrame(columns=LIB_COLS)
+    stars = pd.DataFrame(columns=Library.LIB_COLS)
 
     # Create dataframe to store stars which have no spectra
     stars_nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
@@ -473,7 +472,7 @@ def main(catalogdir, cpspath, outdir, append):
     mask = pd.DataFrame()
 
     # convert numeric columns
-    for col in STAR_PROPS:
+    for col in Library.STAR_PROPS:
         stars[col] = pd.to_numeric(stars[col], errors='coerce')
         stars['u_'+col] = pd.to_numeric(stars['u_'+col], errors='coerce')
         # Create mask to indicate parameters obtained directly from literature
