@@ -18,6 +18,7 @@ Contents:
    library
    spectrum
    specmatch
+   match
 
 
 Indices and tables

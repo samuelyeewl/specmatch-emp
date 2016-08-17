@@ -4,6 +4,7 @@
 Defines the Match class
 """
 
+import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 import lmfit
@@ -17,18 +18,27 @@ from specmatchemp import plots
 
 
 class Match(object):
+    """The Match class used for matching two spectra
+
+    Attributes:
+        target (Spectrum): Target spectrum
+        reference (Spectrum): Reference spectrum
+        modified (Spectrum): Modified reference, after broadening and fitting a
+            spline to correct for continuum differences
+        spl (np.ndarray): Spline used to fit continuum level
+        best_params (lmfit.Parameters): Parameters used to create the best
+            match.
+        best_chisq (float): Chi-squared from the best match
+
+    Args:
+        target (Spectrum): Target spectrum
+        reference (Spectrum): Reference spectrum
+        mode: default (unnormalized chi-square),
+              normalized (normalized chi-square)
+        opt: lm (Levenberg-Marquadt optimization), nelder (Nelder-Mead)
+    """
     def __init__(self, target, reference, mode='default', opt='nelder'):
-        """
-        The Match class used for matching two spectra
-
-        Args:
-            target (Spectrum): Target spectrum
-            reference (Spectrum): Reference spectrum
-            mode: default (unnormalized chi-square),
-                  normalized (normalized chi-square)
-            opt: lm (Levenberg-Marquadt optimization), nelder (Nelder-Mead)
-        """
-
+        # Ensure target, reference are on common wavelength scale
         if not np.allclose(target.w, reference.w):
             print("Target and reference are on different wavelength scales.")
             raise ValueError
@@ -209,19 +219,105 @@ class Match(object):
                  '-', color='black')
         plots.annotate_spectrum(labels['residuals'], spec_offset=-1)
 
-
-class MatchLincomb(Match):
-    def __init__(self, target, refs, vsini, mode='default'):
-        """
-        Match subclass to find the best match from a linear combination of
-        reference spectra.
+    def to_hdf(self, outfile):
+        """Saves the Match object to an hdf file.
 
         Args:
-            target (Spectrum): Target spectrum
-            refs (list of Spectrum): Array of reference spectra
-            vsini (np.ndarray): array containing vsini broadening for each
-                                reference spectrum
+            outfile (str or h5 file): Output path or file handle.
         """
+        # Allow either a string or h5 file object to be passed.
+        is_path = False
+        if isinstance(outfile, str):
+            outfile = h5py.File(outfile, 'w')
+            is_path = True
+
+        # Save target
+        outfile.create_group('target')
+        self.target.to_hdf(outfile['target'])
+
+        # Save reference
+        outfile.create_group('reference')
+        self.reference.to_hdf(outfile['reference'])
+
+        # Save modified
+        outfile.create_group('modified')
+        self.modified.to_hdf(outfile['modified'])
+
+        # Save best-fit parameters
+        outfile['best_params'] = self.best_params.dumps()
+        outfile['spline'] = self.spl
+        outfile['best_chisq'] = self.best_chisq
+
+        if is_path:
+            outfile.close()
+
+    @classmethod
+    def read_hdf(cls, infile):
+        """Reads the Match object from an HDF file.
+
+        Args:
+            infile (str or h5 file): Input path or file handle.
+        """
+        # Allow either a string or h5 file object to be passed.
+        is_path = False
+        if isinstance(infile, str):
+            infile = h5py.File(infile, 'r')
+            is_path = True
+
+        # Read target
+        target = Spectrum.read_hdf(infile['target'])
+
+        # Read reference
+        reference = Spectrum.read_hdf(infile['reference'])
+
+        # Read modified
+        modified = Spectrum.read_hdf(infile['modified'])
+
+        # Read best-fit parameters
+        best_params = lmfit.Parameters()
+        best_params.loads(infile['best_params'].value)
+        spl = infile['spline'][:]
+        best_chisq = infile['best_chisq'].value
+
+        mt = cls(target, reference)
+        mt.load_params(best_params)
+
+        if not np.allclose(modified.s, mt.modified.s) \
+                or not np.allclose(spl, mt.spl) \
+                or mt.best_chisq != best_chisq:
+            print("Warning: Saved model and recreated model are not " +
+                  "identical. Model may have been created by a different " +
+                  "version of SpecMatch-Emp.")
+
+        if is_path:
+            infile.close()
+
+        return mt
+
+
+class MatchLincomb(Match):
+    """MatchLincomb class used to match a linear combination of spectra to
+    match a target spectrum.
+
+    Attributes:
+        target (Spectrum): Target spectrum
+        refs (list of Spectrum): List of reference spectra
+        vsini (np.ndarray): Array of vsini used to broaden the reference
+            spectra.
+        spl (np.ndarray): Spline used for continuum fitting.
+        modified (Spectrum): Best linear combination of spectra.
+        best_params (lmfit.Parameters): Parameters used to create the best
+            match.
+        best_chisq (floatt): Chi-squared from the best match.
+
+    Args:
+        target (Spectrum): Target spectrum
+        refs (list of Spectrum): Array of reference spectra
+        vsini (np.ndarray): array containing vsini broadening for each
+                            reference spectrum
+    """
+    def __init__(self, target, refs, vsini, mode='default'):
+        # Ensure all references and target are on the same wavelength scale
         for i in range(len(refs)):
             if not np.allclose(target.w, refs[i].w):
                 print("Target and reference {0:d} are on different".format(i) +
@@ -239,9 +335,9 @@ class MatchLincomb(Match):
         self.vsini = vsini
 
         # Broaden reference spectra
-        self.broadened = []
+        self.refs_broadened = []
         for i in range(self.num_refs):
-            self.broadened.append(self.broaden(vsini[i], self.refs[i]))
+            self.refs_broadened.append(self.broaden(vsini[i], self.refs[i]))
 
         self.modified = Spectrum(self.w, name='Linear Combination {0:d}'
                                               .format(self.num_refs))
@@ -272,8 +368,8 @@ class MatchLincomb(Match):
         # create the model from a linear combination of the reference spectra
         coeffs = get_lincomb_coeffs(params)
         for i in range(self.num_refs):
-            self.modified.s += self.broadened[i].s * coeffs[i]
-            self.modified.serr += self.broadened[i].serr * coeffs[i]
+            self.modified.s += self.refs_broadened[i].s * coeffs[i]
+            self.modified.serr += self.refs_broadened[i].serr * coeffs[i]
 
         # Use linear least squares to fit a spline
         spline = LSQUnivariateSpline(self.w, self.target.s / self.modified.s,
@@ -393,6 +489,92 @@ class MatchLincomb(Match):
         minor_ticks = np.arange(ylim[0], ylim[1], 0.5)
         plt.yticks(minor_ticks)
         plt.grid(True, which='both')
+
+    def to_hdf(self, outfile):
+        """Saves the Match object to an hdf file.
+
+        Args:
+            outfile (str or h5 file): Output path or file handle.
+        """
+        # Allow either a string or h5 file object to be passed.
+        is_path = False
+        if isinstance(outfile, str):
+            outfile = h5py.File(outfile, 'w')
+            is_path = True
+
+        # Save target
+        outfile.create_group('target')
+        self.target.to_hdf(outfile['target'])
+
+        # Save references
+        outfile['num_refs'] = self.num_refs
+        outfile.create_group('references')
+        for i in range(self.num_refs):
+            grp = outfile['references'].create_group('{0:d}'.format(i))
+            self.refs[i].to_hdf(grp)
+
+        outfile['vsini'] = self.vsini
+
+        # Save modified
+        outfile.create_group('modified')
+        self.modified.to_hdf(outfile['modified'])
+
+        # Save best-fit parameters
+        outfile['best_params'] = self.best_params.dumps()
+        outfile['spline'] = self.spl
+        outfile['best_chisq'] = self.best_chisq
+
+        if is_path:
+            outfile.close()
+
+    @classmethod
+    def read_hdf(cls, infile):
+        """Reads the Match object from an HDF file.
+
+        Args:
+            infile (str or h5 file): Input path or file handle.
+        """
+        # Allow either a string or h5 file object to be passed.
+        is_path = False
+        if isinstance(infile, str):
+            infile = h5py.File(infile, 'r')
+            is_path = True
+
+        # Read target
+        target = Spectrum.read_hdf(infile['target'])
+
+        # Read reference
+        num_refs = infile['num_refs'].value
+        ref_specs = []
+        for i in range(num_refs):
+            spec = Spectrum.read_hdf(infile['references/{0:d}'.format(i)])
+            ref_specs.append(spec)
+
+        vsini = outfile['vsini'][:]
+
+        # Read modified
+        modified = Spectrum.read_hdf(infile['modified'])
+
+        # Read best-fit parameters
+        best_params = lmfit.Parameters()
+        best_params.loads(infile['best_params'].value)
+        spl = infile['spline'][:]
+        best_chisq = infile['best_chisq'].value
+
+        mt = cls(target, ref_specs, vsini)
+        mt.load_params(best_params)
+
+        if not np.allclose(modified.s, mt.modified.s) \
+                or not np.allclose(spl, mt.spl) \
+                or mt.best_chisq != best_chisq:
+            print("Warning: Saved model and recreated model are not " +
+                  "identical. Model may have been created by a different " +
+                  "version of SpecMatch-Emp.")
+
+        if is_path:
+            infile.close()
+
+        return mt
 
 
 def add_spline_positions(params, knotx):
