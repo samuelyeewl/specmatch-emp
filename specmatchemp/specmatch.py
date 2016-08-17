@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+
+import h5py
 import astropy.io.fits as fits
 
 from time import strftime
@@ -215,8 +217,8 @@ class SpecMatch(object):
         # ensure regions don't exceed either the spectrum or library bounds
         regions[0] = (max(regions[0][0], self.wavlim[0], self.target.w[0]),
                       regions[0][1])
-        regions[-1] = (regions[-1][0], min(regions[-1][1], self.wavlim[1],
-                          self.target.w[-1]))
+        regions[-1] = (regions[-1][0],
+                       min(regions[-1][1], self.wavlim[1], self.target.w[-1]))
 
         # save regions
         self.regions = regions
@@ -326,6 +328,66 @@ class SpecMatch(object):
             for i in range(len(regions)):
                 self.results[p] += self.lincomb_results[i][p] / len(regions)
 
+    def to_hdf(self, outfile):
+        """Saves the current state of the SpecMatch object to an hdf file.
+
+        Args:
+            outfile (str or h5 file): Output path or file handle.
+        """
+        # Allow either a string or h5 file object ot be passed.
+        is_path = False
+        if isinstance(outfile, str):
+            outfile = h5py.File(outfile, 'w')
+            is_path = True
+
+        # Save target spectrum
+        if self.target is not None:
+            outfile.create_group('target')
+            self.target.to_hdf(outfile['target'])
+
+        # ------------------------ Shift results ------------------------
+        # Save unshifted spectrum
+        if self._shifted is True:
+            # (Check if unshifted and shifted targets are different)
+            outfile.create_group('unshifted')
+            self.unshifted.to_hdf(outfile['unshifted'])
+
+        # Save shift reference
+        if self.shift_ref is not None:
+            outfile.create_group('shift_ref')
+            self.shift_ref.to_hdf(outfile['shift_ref'])
+
+        # Save shift data
+        if len(shift.shift_results) > 0:
+            grp = outfile.create_group('shift_data')
+            for k, v in shift.shift_results:
+                grp[k] = v
+
+        # ------------------------ Match results ------------------------
+        # Wavelength regions
+        if self.regions is not None:
+            outfile['regions'] = self.regions
+
+        # Save match results by converting to record array
+        if not self.match_results.empty:
+            match_rec = self.match_results.to_records()
+            dt = match_rec.dtype.descr
+            for i in range(len(dt)):
+                if dt[i][1] == "|O":
+                    # max string length = 1000
+                    dt[i] = (dt[i][0], 'S1000')
+            match_rec = np.array(match_rec, dtype=dt)
+
+            outfile['match_results'] = match_rec
+
+        # ----------------------- Lincomb results -----------------------
+
+
+
+
+        if is_path:
+            outfile.close()
+
     def to_fits(self, outpath):
         """Saves the current state of the SpecMatch object to a fits file.
 
@@ -420,17 +482,6 @@ class SpecMatch(object):
             hdulist.append(match_hdu)
 
         ################# Lincomb Results #################
-        
-
-
-
-
-
-
-
-
-
-
 
     def plot_chi_squared_surface(self, num_best=None):
         """Plot the chi-squared surface from the pairwise matching procedure.
