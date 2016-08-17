@@ -125,9 +125,10 @@ class Match(object):
 
         # Calculate residuals (data - model)
         if self.mode == 'normalized':
-            residuals = (self.target.s-self.modified.s)/np.sqrt(self.target.serr**2+self.modified.serr**2)
+            residuals = ((self.target.s - self.modified.s) /
+                         np.sqrt(self.target.serr**2 + self.modified.serr**2))
         else:
-            residuals = (self.target.s-self.modified.s)
+            residuals = (self.target.s - self.modified.s)
 
         chi_square = np.sum(residuals**2)
 
@@ -145,10 +146,10 @@ class Match(object):
         if params is None:
             params = lmfit.Parameters()
 
-        ### Rotational broadening parameters
+        # Rotational broadening parameters
         params.add('vsini', value=1.0, min=0.0, max=10.0)
 
-        ### Spline parameters
+        # Spline parameters
         params = add_spline_positions(params, self.knot_x)
 
         # Perform fit
@@ -164,15 +165,17 @@ class Match(object):
         return self.best_chisq
 
     def best_residuals(self):
-        """Returns the residuals between the target spectrum and best-fit spectrum
-        
+        """Returns the residuals between the target spectrum and best-fit
+        spectrum.
+
         Returns:
             np.ndarray
         """
         if self.mode == 'normalized':
-            return (self.target.s-self.modified.s)/np.sqrt(self.target.serr**2+self.modified.serr**2)
+            return ((self.target.s - self.modified.s) /
+                    np.sqrt(self.target.serr**2 + self.modified.serr**2))
         else:
-            return (self.target.s-self.modified.s) # data - model
+            return (self.target.s - self.modified.s)  # data - model
 
     def get_spline_positions(self):
         """Wrapper function for getting spline positions
@@ -182,39 +185,47 @@ class Match(object):
         """
         return get_spline_positions(self.best_params)
 
-
     def plot(self, verbose=True):
         if verbose:
-            labels = {'target': 'Target: {0}'.format(self.target.name),\
-                    'reference': 'Reference: {0}'.format(self.reference.name),\
-                    'modified': r'Reference (modified): $v\sin i = {0:.2f}$'.format(self.best_params['vsini'].value),\
-                    'residuals': r'Residuals: $\chi^2 = {0:.3f}$'.format(self.best_chisq)}
+            labels = {'target': 'Target: {0}'.format(self.target.name),
+                    'reference': 'Reference: {0}'.format(self.reference.name),
+                    'modified': r'Reference (modified): $v\sin i = {0:.2f}$'
+                                .format(self.best_params['vsini'].value),
+                    'residuals': r'Residuals: $\chi^2 = {0:.3f}$'
+                                .format(self.best_chisq)}
         else:
-            labels = {'target': 'Target', 'reference': 'Reference', \
-                    'modified': 'Reference (Modified)', 'residuals': 'Residuals'}
+            labels = {'target': 'Target',
+                      'reference': 'Reference',
+                      'modified': 'Reference (Modified)',
+                      'residuals': 'Residuals'}
 
-        self.target.plot(text=labels['target'], plt_kw={'color':'royalblue'})
-        self.modified.plot(offset=1, plt_kw={'color':'forestgreen'}, text=labels['modified'])
-        self.reference.plot(offset=2, plt_kw={'color':'firebrick'}, text=labels['reference'])
+        self.target.plot(text=labels['target'], plt_kw={'color': 'royalblue'})
+        self.modified.plot(offset=1, plt_kw={'color': 'forestgreen'},
+                           text=labels['modified'])
+        self.reference.plot(offset=2, plt_kw={'color': 'firebrick'},
+                            text=labels['reference'])
 
-        plt.plot(self.target.w, self.modified.s-self.target.s, '-', color='black')
+        plt.plot(self.target.w, self.modified.s-self.target.s,
+                 '-', color='black')
         plots.annotate_spectrum(labels['residuals'], spec_offset=-1)
 
 
 class MatchLincomb(Match):
     def __init__(self, target, refs, vsini, mode='default'):
         """
-        Match subclass to find the best match from a linear combination of 
+        Match subclass to find the best match from a linear combination of
         reference spectra.
 
         Args:
             target (Spectrum): Target spectrum
             refs (list of Spectrum): Array of reference spectra
-            vsini (np.ndarray): array containing vsini broadening for each reference spectrum
+            vsini (np.ndarray): array containing vsini broadening for each
+                                reference spectrum
         """
         for i in range(len(refs)):
             if not np.allclose(target.w, refs[i].w):
-                print("Target and reference {0:d} are on different wavelength scales.".format(i))
+                print("Target and reference {0:d} are on different".format(i) +
+                      "wavelength scales.")
                 raise ValueError
 
         self.w = np.copy(target.w)
@@ -224,15 +235,16 @@ class MatchLincomb(Match):
         for i in range(self.num_refs):
             self.refs.append(refs[i].copy())
         self.ref_chisq = None
-        
+
         self.vsini = vsini
 
-        ## Broaden reference spectra
+        # Broaden reference spectra
         self.broadened = []
         for i in range(self.num_refs):
             self.broadened.append(self.broaden(vsini[i], self.refs[i]))
 
-        self.modified = Spectrum(self.w, name='Linear Combination {0:d}'.format(self.num_refs))
+        self.modified = Spectrum(self.w, name='Linear Combination {0:d}'
+                                              .format(self.num_refs))
 
         self.best_params = lmfit.Parameters()
         self.best_chisq = np.NaN
@@ -264,21 +276,21 @@ class MatchLincomb(Match):
             self.modified.serr += self.broadened[i].serr * coeffs[i]
 
         # Use linear least squares to fit a spline
-        spline = LSQUnivariateSpline(self.w, self.target.s/self.modified.s, self.knot_x)
+        spline = LSQUnivariateSpline(self.w, self.target.s / self.modified.s,
+                                     self.knot_x)
         self.spl = spline(self.w)
 
         self.modified.s *= self.spl
         self.modified.serr *= self.spl
 
-
     def objective(self, params):
-        """
-        Objective function evaluating goodness of fit given the passed parameters
+        """Objective function evaluating goodness of fit given the passed
+        parameters.
 
         Args:
             params
         Returns:
-            Reduced chi-squared value between the target spectra and the 
+            Reduced chi-squared value between the target spectra and the
             model spectrum generated by the parameters
         """
         chi_square = super().objective(params)
@@ -287,7 +299,7 @@ class MatchLincomb(Match):
         sum_coeff = np.sum(get_lincomb_coeffs(params))
 
         WIDTH = 1e-2
-        chi_square += (sum_coeff-1)**2/(2*WIDTH**2)
+        chi_square += (sum_coeff - 1)**2 / (2 * WIDTH**2)
 
         return chi_square
 
@@ -299,11 +311,14 @@ class MatchLincomb(Match):
         - rotational broadening
         """
         params = lmfit.Parameters()
-        ### Linear combination parameters
+
+        # Linear combination parameters
         params = add_lincomb_coeffs(params, self.num_refs)
-        ### Spline parameters
+
+        # Spline parameters
         params = add_spline_positions(params, self.knot_x)
-        ### vsini
+
+        # vsini
         params = add_vsini(params, self.vsini)
 
         # Minimize chi-squared
@@ -317,7 +332,7 @@ class MatchLincomb(Match):
 
     def get_vsini(self):
         """Wrapper function to get vsini list from MatchLincomb object
-        
+
         Returns:
             vsini (np.ndarray)
         """
@@ -331,33 +346,49 @@ class MatchLincomb(Match):
         """
         return get_lincomb_coeffs(self.best_params)
 
-
     def plot(self, verbose=True):
+        # create labels
         if verbose:
-            labels = {'target': 'Target: {0}'.format(self.target.name),\
-                    'modified': r'Linear Combination',\
-                    'residuals': r'Residuals: $\chi^2 = {0:.3f}$'.format(self.best_chisq)}
+            labels = {'target': 'Target: {0}'.format(self.target.name),
+                      'modified': r'Linear Combination',
+                      'residuals': r'Residuals: $\chi^2 = {0:.3f}$'
+                                   .format(self.best_chisq)}
+
             coeffs = self.get_lincomb_coeffs()
+
             for i in range(self.num_refs):
                 if self.ref_chisq is None:
-                    labels['ref_{0:d}'.format(i)] = r'Reference: {0}, $v\sin i = {1:.2f}$, $c_{2:d} = {3:.3f}$'.format(
-                        self.refs[i].name, self.vsini[i], i, coeffs[i])
+                    labels['ref_{0:d}'.format(i)] = (
+                        'Reference: {0} '.format(self.refs[i].name) +
+                        r'$v\sin i = {0:.2f}$ '.format(self.vsini[i]) +
+                        r'$c_{0:d} = {1:.3f}$'.format(i, coeffs[i]))
+
                 else:
-                    labels['ref_{0:d}'.format(i)] = r'Reference: {0}, $v\sin i = {1:.2f}$, $\chi^2 = {2:.2f}$, $c_{3:d} = {4:.3f}$'.format(
-                        self.refs[i].name, self.vsini[i], self.ref_chisq[i], i, coeffs[i])
+                    labels['ref_{0:d}'.format(i)] = (
+                        'Reference: {0} '.format(self.refs[i].name) +
+                        r'$v\sin i = {0:.2f}$ '.format(self.vsini[i]) +
+                        r'$\chi^2 = {0:.2f}$'.format(self.ref_chisq[i]) +
+                        r'$c_{0:d} = {1:.3f}$'.format(i, coeffs[i]))
         else:
-            labels = {'target': 'Target', 'modified': 'Reference (Modified)', 'residuals': 'Residuals'}
+            labels = {'target': 'Target', 'modified': 'Reference (Modified)',
+                      'residuals': 'Residuals'}
+
             for i in range(self.num_refs):
                 labels['ref_{0:d}'.format(i)] = 'Reference {0:d}'.format(i)
 
-        self.target.plot(plt_kw={'color':'royalblue'}, text=labels['target'])
-        self.modified.plot(offset=0.5, plt_kw={'color':'forestgreen'}, text=labels['modified'])
-        for i in range(self.num_refs):
-            self.refs[i].plot(offset=1.5+i*0.5, plt_kw={'color':'firebrick'}, \
-                text=labels['ref_{0:d}'.format(i)])
+        # Plot spectra
+        self.target.plot(plt_kw={'color': 'royalblue'}, text=labels['target'])
+        self.modified.plot(offset=0.5, plt_kw={'color': 'forestgreen'},
+                           text=labels['modified'])
 
-        plt.plot(self.target.w, self.modified.s-self.target.s, '-', color='black')
+        for i in range(self.num_refs):
+            self.refs[i].plot(offset=1.5+i*0.5, plt_kw={'color': 'firebrick'},
+                              text=labels['ref_{0:d}'.format(i)])
+
+        plt.plot(self.target.w, self.modified.s-self.target.s,
+                 '-', color='black')
         plots.annotate_spectrum(labels['residuals'], spec_offset=-1)
+
         ylim = plt.ylim(ymin=-0.5)
         minor_ticks = np.arange(ylim[0], ylim[1], 0.5)
         plt.yticks(minor_ticks)
@@ -381,6 +412,7 @@ def add_spline_positions(params, knotx):
 
     return params
 
+
 def get_spline_positions(params):
     """Gets the spline positions from an lmfit parameters object.
 
@@ -398,9 +430,10 @@ def get_spline_positions(params):
 
     return np.array(knotx)
 
+
 def add_vsini(params, vsini):
     """Adds vsini to an lmfit parameter list.
-    
+
     Args:
         params (lmfit.Parameters): parameters
         vsini (np.ndarray): vsini values for each reference spectrum
