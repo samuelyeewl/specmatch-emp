@@ -3,7 +3,7 @@
 
 Defines the Match class
 """
-import pandas as pd
+
 import numpy as np
 import matplotlib.pyplot as plt
 import lmfit
@@ -15,7 +15,8 @@ import specmatchemp.kernels
 from specmatchemp.spectrum import Spectrum
 from specmatchemp import plots
 
-class Match:
+
+class Match(object):
     def __init__(self, target, reference, mode='default', opt='nelder'):
         """
         The Match class used for matching two spectra
@@ -23,7 +24,8 @@ class Match:
         Args:
             target (Spectrum): Target spectrum
             reference (Spectrum): Reference spectrum
-            mode: default (unnormalized chi-square), normalized (normalized chi-square)
+            mode: default (unnormalized chi-square),
+                  normalized (normalized chi-square)
             opt: lm (Levenberg-Marquadt optimization), nelder (Nelder-Mead)
         """
 
@@ -72,7 +74,8 @@ class Match:
         self.modified = self.broaden(vsini, self.modified)
 
         # Use linear least squares to fit a spline
-        spline = LSQUnivariateSpline(self.w, self.target.s/self.modified.s, self.knot_x)
+        spline = LSQUnivariateSpline(self.w, self.target.s / self.modified.s,
+                                     self.knot_x)
         self.spl = spline(self.w)
 
         self.modified.s *= self.spl
@@ -84,8 +87,7 @@ class Match:
         storing it as the best fit model.
         """
         self.best_chisq = self.objective(params)
-        self.best_params = params 
-
+        self.best_params = params
 
     def broaden(self, vsini, spec):
         """
@@ -99,19 +101,19 @@ class Match:
         """
         SPEED_OF_LIGHT = 2.99792e5
         dv = (self.w[1]-self.w[0])/self.w[0]*SPEED_OF_LIGHT
-        n = 151 # fixed number of points in the kernel
+        n = 151     # fixed number of points in the kernel
         varr, kernel = specmatchemp.kernels.rot(n, dv, vsini)
         # broadened = signal.fftconvolve(spec, kernel, mode='same')
-        
+
         spec.s = convolve1d(spec.s, kernel)
         spec.serr = convolve1d(spec.serr, kernel)
 
         return spec
 
-
     def objective(self, params):
         """
-        Objective function evaluating goodness of fit given the passed parameters
+        Objective function evaluating goodness of fit given the passed
+        parameters.
 
         Args:
             params

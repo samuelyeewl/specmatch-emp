@@ -34,28 +34,33 @@ class SpecMatch(object):
         target (spectrum.Spectrum): Target spectrum object
         target_unshifted (spectrum.Spectrum): An unshifted spectrum
         shift_ref (spectrum.Spectrum): Reference used to shift the spectrum
+        regions (list of tuples): List of wavelength regions used for matching.
         shift_results (dict): Dictionary containing results from shifting.
         match_results (pd.DataFrame): Parameter table including chi_squared
             and fit_params from single match routine.
-        mt_lincomb (match.MatchLincomb): MatchLincomb object for final
-            matching to a linear combination of spectra
-        results (dict): Dictionary of final stellar parameters produced
-            by SpecMatch. Keys are elements of library.STAR_PROPS.
+        lincomb_matches (list of match.MatchLincomb): MatchLincomb objects for
+            final matching to a linear combination of spectra
+        lincomb_results (list of dicts):
+            Results from each MatchLincomb fit.
+        results (dict):
+            Dictionary of final stellar parameters produced by SpecMatch.
+            These are derived by taking the average of the detrended
+            parameters from each wavelength region.
+            Keys are elements of library.STAR_PROPS.
 
     Args:
         target (spectrum.Spectrum): Target spectrum and uncertainty
         lib (library.Library): Library object to match against
         wavlim (tuple, optional):
             Wavelength limits to perform matching on.
-        num_best (optional [int]): Number of target spectra to use
-            during linear combination matching stage.
     """
 
-    def __init__(self, target, lib, wavlim=None, num_best=5):
+    def __init__(self, target, lib, wavlim=None):
         if wavlim is None:
             self.wavlim = lib.wavlim
         else:
             self.wavlim = wavlim
+        self.regions = self.wavlim
 
         # truncate target spectrum and library
         if isinstance(target, spectrum.HiresSpectrum):
@@ -67,7 +72,6 @@ class SpecMatch(object):
 
         self.lib = lib.wav_cut(*wavlim)
 
-        self.num_best = num_best
         self.shift_results = {}
         self.match_results = pd.DataFrame()
         self.mt_lincomb = None
@@ -143,7 +147,7 @@ class SpecMatch(object):
 
         return self.target
 
-    def match(self, ignore=None):
+    def match(self, wavlim=None, wavstep=100, ignore=None):
         """Match the target against the library spectra.
 
         Performs a pairwise match between the target spectrum and every
@@ -155,6 +159,19 @@ class SpecMatch(object):
         :py:attr:`specmatchemp.SpecMatch.match_results`
 
         Args:
+            wavlim (tuple or list of tuples, optional):
+                Wavelength region(s) to use in matching process.
+                Defaults to None - use the entire region overlapped by the
+                target spectrum and library, split into sections specified
+                by wavstep.
+                If a tuple is given, it will be split into sections specified
+                by wavstep.
+                If a list of tuples is given, each tuple is a section
+                to be used for matching.
+            wavstep (float, optional):
+                Length of wavelength regions to be used.
+                Defaults to 100 Angstrom regions.
+                If None, uses the entire region specified in wavlims
             ignore (int, optional): A library index to ignore. Useful for
                 n-1 library test.
         """
@@ -166,62 +183,143 @@ class SpecMatch(object):
 
         # Create match results table
         self.match_results = self.lib.library_params.copy()
-        cs_col = 'chi_squared'
-        fit_col = 'fit_params'
-        self.match_results.loc[:, cs_col] = np.nan
-        self.match_results.loc[:, fit_col] = np.nan
 
-        for param_ref, spec_ref in self.lib:
-            # ignore a particular index
-            if ignore is not None and param_ref.name == ignore:
-                continue
+        # Get list of wavelength regions
+        if isinstance(wavlim, list) or isinstance(wavlim, np.ndarray):
+            regions = wavlim
+        elif isinstance(wavlim, tuple) or wavlim is None:
+            if wavlim is None:
+                # If no wavlim is provided, use the library wavlim
+                wavlim = self.wavlim
 
-            # match
-            mt = match.Match(self.target, spec_ref, opt='nelder')
-            mt.best_fit()
+            if wavstep is None:
+                # If no wavstep is provided, use the entire region given
+                regions = [wavlim]
+            else:
+                # Split the region into sections
+                startwl = np.arange(wavlim[0], wavlim[1], wavstep)
+                regions = [(wl, wl + wavstep) for wl in startwl]
+                # ensure final region doesn't exceed given bound
+                regions[-1][1] = wavlim[1]
 
-            # store results
-            ref_idx = param_ref.lib_index
-            self.match_results.loc[ref_idx, cs_col] = mt.best_chisq
-            self.match_results.loc[ref_idx, fit_col] = \
-                mt.best_params.dumps()
+        regions.sort()
+        # ensure regions don't exceed either the spectrum or library bounds
+        regions[0][0] = max(regions[0][0], self.wavlim[0], self.target.w[0])
+        regions[-1][1] = min(regions[-1][1], self.wavlim[1], self.target.w[-1])
 
-        self.match_results.sort_values(by=cs_col, inplace=True)
+        # save regions
+        self.regions = regions
 
-        # if not lincomb:
-        #     best_idx = self.match_results.iloc[0].name
-        #     for p in Library.STAR_PROPS:
-        #         self.results[p] = self.lib.library_params.loc[best_idx, p]
-        #     return
+        for reg in regions:
+            if len(regions) == 1:
+                cs_col = 'chi_squared'
+                fit_col = 'fit_params'
+            else:
+                cs_col = 'chi_squared_{0:.0f}'.format(reg[0])
+                fit_col = 'fit_params_{0:.0f}'.format(reg[0])
 
-        # # Now perform lincomb match
-        # self.ref_idxs = np.array(self.match_results.head(self.num_best).index)
-        # self.spec_refs = self.lib.get_spectrum(self.ref_idxs)
-        # # get vsini
-        # self.vsini = []
-        # for i in range(self.num_best):
-        #     params = lmfit.Parameters()
-        #     params.loads(self.match_results.iloc[i][fit_col])
-        #     self.vsini.append(params['vsini'].value)
-        # self.vsini = np.array(self.vsini)
+            self.match_results.loc[:, cs_col] = np.nan
+            self.match_results.loc[:, fit_col] = np.nan
 
-        # self.mt_lincomb = match.MatchLincomb(self.target, self.spec_refs,
-        #                                      self.vsini)
-        # self.mt_lincomb.best_fit()
+            spec_targ = self.target.cut(*reg)
 
-        # # get derived values
-        # self.coeffs = np.array(self.mt_lincomb.get_lincomb_coeffs())
-        # self.get_derived_values()
+            for param_ref, spec_ref in self.lib:
+                # ignore specified index
+                if ignore is not None and param_ref.name == ignore:
+                    continue
 
-        # return
+                # match
+                mt = match.Match(spec_targ, spec_ref.cut(*reg))
+                mt.best_fit()
 
-    # get derived values
-    def get_derived_values(self):
+                # store results
+                ref_idx = param_ref.lib_index
+                self.match_results.loc[ref_idx, cs_col] = mt.best_chisq
+                self.match_results.loc[ref_idx, fit_col] = \
+                    mt.best_params.dumps()
+
+    def lincomb(self, num_best=5, regions='all'):
+        """Interpolate between library spectra to get more accurate parameters.
+
+        Takes the best `num_best` matches obtained in the match() step and
+        creates linear combinations of their spectra. The respective
+        coefficients for each spectrum will be used to take a weighted average
+        of their parameters for use as the final derived parameters.
+
+        Args:
+            num_best (int, optional): Specify the number of best matches to be
+                used to synthesize the linear combinations.
+            regions (list of tuples, optional): Select wavelength regions to
+                perform the matching procedure on.
+                Defaults to 'all', which uses all the regions used in the
+                previous match() step.
+        """
+        # Ensure matching process has already been run
+        if self.match_results.empty:
+            print("Error: Matching procedure has not yet been performed.\n" +
+                  "Run SpecMatch.match() first.")
+            return
+
+        if regions == 'all':
+            regions = self.regions
+        elif not isinstance(regions, list):
+            raise TypeError("regions should be a list of tuples")
+
+        # Now perform lincomb match
+        self.num_best = num_best
+        self.ref_idxs = []
+        self.spec_refs = []
+        for reg in regions:
+            if len(regions) == 1:
+                cs_col = 'chi_squared'
+                fit_col = 'fit_params'
+            else:
+                cs_col = 'chi_squared_{0:.0f}'.format(reg[0])
+                fit_col = 'fit_params_{0:.0f}'.format(reg[0])
+
+            # get best matches
+            self.match_results.sort_values(by=cs_col, inplace=True)
+            ref_idxs = np.array(self.match_results.head(num_best).index)
+            spec_refs = self.lib.get_spectrum(ref_idxs)
+            spec_refs = [s.cut(*reg) for s in spec_refs]
+
+            vsini = []
+            for i in range(num_best):
+                params = lmfit.Parameters()
+                params.loads(self.match_results.iloc[i][fit_col])
+                vsini.append(params['vsini'].value)
+            vsini = np.array(vsini)
+
+            mt_lincomb = match.MatchLincomb(self.target.cut(*reg),
+                                            spec_refs, vsini)
+            mt_lincomb.best_fit()
+            coeffs = np.array(mt_lincomb.get_lincomb_coeffs())
+
+            # obtain parameters
+            lincomb_results = []
+            lib_params = self.lib.library_params
+            for p in Library.STAR_PROPS:
+                lincomb_results[p] = analysis.lincomb_props(lib_params, p,
+                                                            ref_idxs, coeffs)
+
+            # save lincomb input and results
+            self.ref_idxs.append(ref_idxs)
+            self.spec_refs.append(spec_refs)
+            self.lincomb_matches.append(mt_lincomb)
+            self.lincomb_results.append(lincomb_results)
+
+        # Average over all wavelength regions
         for p in Library.STAR_PROPS:
-            self.results[p] = analysis.lincomb_props(self.lib.library_params,
-                                                p, self.ref_idxs, self.coeffs)
+            self.results[p] = 0
+            for i in range(len(regions)):
+                self.results[p] += self.lincomb_results[i][p] / len(regions)
 
-        return self.results
+    def to_fits(self, outpath):
+        """Saves the current state of the SpecMatch object to a fits file.
+
+        Args:
+            outpath (str): Path to store output file.
+        """
 
     def plot_chi_squared_surface(self, num_best=None):
         """Plot the chi-squared surface from the pairwise matching procedure.
@@ -235,7 +333,7 @@ class SpecMatch(object):
         """
         if self.match_results is None:
             return
-            
+
         cs_col = 'chi_squared'
         if num_best is None:
             num_best = self.num_best
