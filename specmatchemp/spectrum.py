@@ -99,6 +99,26 @@ class Spectrum(object):
         hdulist = fits.HDUList([prihdu, tbhdu])
         hdulist.writeto(outpath, clobber=True)
 
+    def to_hdu(self):
+        """Creates a fits.BinTableHDU object from spectrum data
+
+        Returns:
+            fits.BinTableHDU:
+                A binary table HDU object
+        """
+        hdu = fits.BinTableHDU.from_columns(
+            [fits.Column(name='s', format='D', array=self.s),
+             fits.Column(name='w', format='D', array=self.w),
+             fits.Column(name='serr', format='D', array=self.serr),
+             fits.Column(name='mask', format='L', array=self.mask)])
+
+        # add metadata
+        hdu.header['NAME'] = self.name
+        for k in self.attrs.keys():
+            hdu.header[k[0:8]] = self.attrs[k]
+
+        return hdu
+
     def to_hdf(self, outfile, suffix=""):
         """Saves the spectrum to a hdf file.
 
@@ -335,14 +355,16 @@ def read_fits(infile, wavlim=None):
         mask = data['mask']
     else:
         mask = None
+    name = os.path.splitext(os.path.basename(infile))[0]
     header = hdu[0].header
 
     hdu.close()
 
     if wavlim is None:
-        return Spectrum(w, s, serr, mask=mask, header=header)
+        return Spectrum(w, s, serr, mask=mask, name=name, header=header)
     else:
-        return Spectrum(w, s, serr, mask=mask, header=header).cut(*wavlim)
+        return Spectrum(w, s, serr, mask=mask, name=name, header=header)\
+            .cut(*wavlim)
 
 
 def read_hires_fits(infile, maskfile=None):

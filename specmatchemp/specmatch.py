@@ -3,12 +3,17 @@
 
 Class to carry out the specmatch
 """
+import os
 import lmfit
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import astropy.io.fits as fits
 
+from time import strftime
+
+from specmatchemp import SPECMATCH_VERSION
 from specmatchemp import spectrum
 from specmatchemp.library import Library
 from specmatchemp import shift
@@ -34,8 +39,8 @@ class SpecMatch(object):
         target (spectrum.Spectrum): Target spectrum object
         target_unshifted (spectrum.Spectrum): An unshifted spectrum
         shift_ref (spectrum.Spectrum): Reference used to shift the spectrum
-        regions (list of tuples): List of wavelength regions used for matching.
         shift_results (dict): Dictionary containing results from shifting.
+        regions (list of tuples): List of wavelength regions used for matching.
         match_results (pd.DataFrame): Parameter table including chi_squared
             and fit_params from single match routine.
         lincomb_matches (list of match.MatchLincomb): MatchLincomb objects for
@@ -67,12 +72,15 @@ class SpecMatch(object):
             self.target = None
             self.target_unshifted = target
         else:
-            self.target = target.cut(*wavlim)
+            self.target = target.cut(*self.wavlim)
             self.target_unshifted = target
 
-        self.lib = lib.wav_cut(*wavlim)
+        self.lib = lib.wav_cut(*self.wavlim)
 
+        self._shifted = False
+        self.shift_ref = None
         self.shift_results = {}
+        self.regions = None
         self.match_results = pd.DataFrame()
         self.mt_lincomb = None
         self.results = {}
@@ -145,6 +153,7 @@ class SpecMatch(object):
                                   store=self.shift_results)
         self.shift_ref = best_ref
 
+        self._shifted = True
         return self.target
 
     def match(self, wavlim=None, wavstep=100, ignore=None):
@@ -200,12 +209,14 @@ class SpecMatch(object):
                 startwl = np.arange(wavlim[0], wavlim[1], wavstep)
                 regions = [(wl, wl + wavstep) for wl in startwl]
                 # ensure final region doesn't exceed given bound
-                regions[-1][1] = wavlim[1]
+                regions[-1] = (regions[-1][0], wavlim[1])
 
         regions.sort()
         # ensure regions don't exceed either the spectrum or library bounds
-        regions[0][0] = max(regions[0][0], self.wavlim[0], self.target.w[0])
-        regions[-1][1] = min(regions[-1][1], self.wavlim[1], self.target.w[-1])
+        regions[0] = (max(regions[0][0], self.wavlim[0], self.target.w[0]),
+                      regions[0][1])
+        regions[-1] = (regions[-1][0], min(regions[-1][1], self.wavlim[1],
+                          self.target.w[-1]))
 
         # save regions
         self.regions = regions
@@ -268,6 +279,7 @@ class SpecMatch(object):
         # Now perform lincomb match
         self.num_best = num_best
         self.ref_idxs = []
+        self.vsini = []
         self.spec_refs = []
         for reg in regions:
             if len(regions) == 1:
@@ -320,6 +332,105 @@ class SpecMatch(object):
         Args:
             outpath (str): Path to store output file.
         """
+        if not os.path.exists(os.path.dirname(outpath)):
+            os.mkdir(os.path.dirname(outpath))
+
+        hdulist = fits.HDUList()
+
+        # Create Primary HDU.
+        primhdu = fits.PrimaryHDU()
+        primhdu.header['DATE'] = (strftime('%Y-%m-%d'),
+                                  'File creation date (YYYY-MM-DD)')
+        primhdu.header['VERSION'] = (SPECMATCH_VERSION,
+                                     'SpecMatch-Emp version')
+        primhdu.header['LIBDATE'] = (self.lib.header['date_created'],
+                                     'Library creation date (YYYY-MM-DD)')
+        primhdu.header.add_comment("SpecMatch-Emp Object", before="SIMPLE")
+
+        hdulist.append(primhdu)
+
+        # Save target spectrum
+        if self.target is not None:
+            targ_hdu = self.target.to_hdu()
+            targ_hdu.name = 'TARGET'
+            hdulist.append(targ_hdu)
+
+        ################# Shift results #################
+        # Save unshifted spectrum
+        if self._shifted is True:
+            # (Check if unshifted and shifted targets are different)
+            unshifted_hdu = self.target_unshifted.to_hdu()
+            unshifted_hdu.name = 'UNSHIFTED'
+            hdulist.append(unshifted_hdu)
+
+        # Save shift references
+        if self.shift_ref is not None:
+            shiftref_hdu = self.shift_ref.to_hdu()
+            shiftref_hdu.name = 'SHIFTREF'
+            hdulist.append(shiftref_hdu)
+
+        # Save shift data
+        if len(self.shift_results) > 0:
+            shift_results = self.shift_results.copy()
+            col_list = []
+            num_orders = shift_results.pop('num_orders')
+            col_list.append(fits.Column(name='num_orders', format='J',
+                                        array=[num_orders]))
+
+            num_sects = []
+            for i in range(num_orders):
+                num_sects.append(shift_results.pop('order_{0:d}/num_sections'
+                                               .format(i)))
+            col_list.append(fits.Column(name='num_sects', format='J',
+                                        array=num_sects))
+            n_sec = max(num_sects)
+
+            for k in ['center_pix', 'lag', 'fit']:
+                col_list.append(fits.Column(name=k,
+                                format='{0:d}E'.format(n_sec),
+                                array=shift_results.pop(k)))
+
+            # Save individual fit data
+            for k in shift_results.keys():
+                col_list.append(fits.Column(name=k, format='D',
+                                            array=shift_results[k]))
+
+            shift_hdu = fits.BinTableHDU.from_columns(col_list)
+            shift_hdu.name = 'SHIFTDATA'
+            hdulist.append(shift_hdu)
+
+        ################# Match Results #################
+        if self.regions is not None:
+            reg_hdu = fits.ImageHDU(name='REGIONS',
+                                    data=np.array(self.regions))
+            hdulist.append(reg_hdu)
+
+        # Convert match results to record array
+        if not self.match_results.empty:
+            match_rec = self.match_results.to_records()
+            dt = match_rec.dtype.descr
+            for i in range(len(dt)):
+                if dt[i][1] == "|O":
+                    # max string length = 1000
+                    dt[i] = (dt[i][0], 'S1000')
+            match_rec = np.array(match_rec, dtype=dt)
+
+            match_hdu = fits.BinTableHDU(name='MATCHRES',
+                                         data=match_rec)
+            hdulist.append(match_hdu)
+
+        ################# Lincomb Results #################
+        
+
+
+
+
+
+
+
+
+
+
 
     def plot_chi_squared_surface(self, num_best=None):
         """Plot the chi-squared surface from the pairwise matching procedure.
@@ -331,7 +442,7 @@ class SpecMatch(object):
             num_best (optional [int]): Number of best spectra to highlight.
                 (default: `self.num_best`)
         """
-        if self.match_results is None:
+        if self.match_results.empty:
             return
 
         cs_col = 'chi_squared'

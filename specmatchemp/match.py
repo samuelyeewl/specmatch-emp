@@ -416,6 +416,7 @@ def add_vsini(params, vsini):
 
     return params
 
+
 def get_vsini(params):
     """Gets vsini list from a parameters object.
 

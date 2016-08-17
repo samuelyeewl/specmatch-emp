@@ -378,14 +378,16 @@ class Library(object):
         idxmax = idxwav[-1] + 1  # add 1 to include last index when slicing
 
         if deepcopy:
-            return Library(np.copy(self.wav),
+            return Library(self.wav[idxmin:idxmax],
                            self.library_spectra[:, :, idxmin:idxmax],
                            self.library_params.copy(), self.header.copy(),
-                           (minw, maxw), self.param_mask.copy())
+                           (minw, maxw), self.param_mask.copy(),
+                           self.nso.copy())
         else:
-            return Library(self.wav, self.library_spectra[:, :, idxmin:idxmax],
+            return Library(self.wav[idxmin:idxmax],
+                           self.library_spectra[:, :, idxmin:idxmax],
                            self.library_params, self.header, (minw, maxw),
-                           self.param_mask)
+                           self.param_mask, self.nso)
 
     def plot(self, paramx, paramy, grouped=False, ptlabels=False, plt_kw={}):
         """Create a plot of the library in parameter space
@@ -546,6 +548,7 @@ def read_hdf(path=None, wavlim='all'):
 
         if wavlim == 'all':
             library_spectra = f['library_spectra'][:]
+            wavlim = (wav[0], wav[-1])
         elif wavlim == 'none':
             library_spectra = None
         else:
