@@ -35,6 +35,7 @@ else:
     # download library
     HOMEDIR = os.environ['HOME']
     LIBPATH = "{0}/.specmatchemp/library.h5".format(HOMEDIR)
+
     def reporthook(blocknum, blocksize, totalsize):
         readsofar = blocknum * blocksize
         if totalsize > 0:
@@ -42,12 +43,13 @@ else:
             s = "\r%5.1f%% %*d / %d" % (
                 percent, len(str(totalsize)), readsofar, totalsize)
             sys.stderr.write(s)
-            if readsofar >= totalsize: # near the end
+            if readsofar >= totalsize:  # near the end
                 sys.stderr.write("\n")
-        else: # total size is unknown
+        else:  # total size is unknown
             sys.stderr.write("read %d\n" % (readsofar,))
 
-    liburl = "https://zenodo.org/record/60225/files/library.h5"
+    # liburl = "https://zenodo.org/record/60225/files/library.h5"
+    liburl = "https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5?dl=0"
     if not os.path.exists(os.path.dirname(LIBPATH)):
         os.mkdir(os.path.dirname(LIBPATH))
     if not os.path.exists(LIBPATH):
