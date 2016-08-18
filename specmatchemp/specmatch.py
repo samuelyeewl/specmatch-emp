@@ -16,7 +16,8 @@ import astropy.io.fits as fits
 from time import strftime
 
 from specmatchemp import SPECMATCH_VERSION
-from specmatchemp import spectrum
+from specmatchemp.spectrum import Spectrum
+from specmatchemp.spectrum import HiresSpectrum
 from specmatchemp.library import Library
 from specmatchemp import shift
 from specmatchemp import match
@@ -70,7 +71,7 @@ class SpecMatch(object):
         self.regions = self.wavlim
 
         # truncate target spectrum and library
-        if isinstance(target, spectrum.HiresSpectrum):
+        if isinstance(target, HiresSpectrum):
             self.target = None
             self.target_unshifted = target
         else:
@@ -84,7 +85,8 @@ class SpecMatch(object):
         self.shift_results = {}
         self.regions = None
         self.match_results = pd.DataFrame()
-        self.mt_lincomb = None
+        self.lincomb_matches = []
+        self.lincomb_results = []
         self.results = {}
 
         return
@@ -118,13 +120,12 @@ class SpecMatch(object):
 
         # Try to use the Mg triplet to determine which reference spectrum is
         # best.
-        if isinstance(self.target_unshifted, spectrum.HiresSpectrum):
+        if isinstance(self.target_unshifted, HiresSpectrum):
             # In the HIRES Echelle object, the Mgb triplet is in order 2
             ref_order = 2
             targ = self.target_unshifted
-            targ_cut = spectrum.HiresSpectrum(targ.w[ref_order],
-                                              targ.s[ref_order],
-                                              targ.serr[ref_order])
+            targ_cut = HiresSpectrum(targ.w[ref_order], targ.s[ref_order],
+                                     targ.serr[ref_order])
         else:
             # If we already have a flattened spectrum, use the 5120-5200 A
             # region.
@@ -281,8 +282,6 @@ class SpecMatch(object):
         # Now perform lincomb match
         self.num_best = num_best
         self.ref_idxs = []
-        self.vsini = []
-        self.spec_refs = []
         for reg in regions:
             if len(regions) == 1:
                 cs_col = 'chi_squared'
@@ -318,7 +317,6 @@ class SpecMatch(object):
 
             # save lincomb input and results
             self.ref_idxs.append(ref_idxs)
-            self.spec_refs.append(spec_refs)
             self.lincomb_matches.append(mt_lincomb)
             self.lincomb_results.append(lincomb_results)
 
@@ -381,13 +379,108 @@ class SpecMatch(object):
             outfile['match_results'] = match_rec
 
         # ----------------------- Lincomb results -----------------------
-        
+        outfile['num_best'] = self.num_best
+        if len(self.lincomb_matches) > 0:
+            grp = outfile.create_group('lincomb')
+            for i in range(len(self.regions)):
+                reg = self.regions[i]
+                subgrp = grp.create_group('{0:.0f}'.format(reg[0]))
+                subgrp['ref_idxs'] = self.ref_idxs[i]
+                self.lincomb_matches[i].to_hdf(subgrp)
+                res_grp = subgrp.create_group('results')
+                for k, v in self.lincomb_results[i].items():
+                    res_grp[k] = v
 
-
-
+        # Save averaged results
+        if len(self.results) > 0:
+            res_grp = outfile.create_group('results')
+            for k, v in self.results.items():
+                res_grp[k] = v
 
         if is_path:
             outfile.close()
+
+    @classmethod
+    def read_hdf(cls, infile, lib):
+        """Reads a SpecMatch object from and hdf file.
+
+        Args:
+            infile (str or h5 file): Input path or file handle.
+            lib (library.Library): Library used to create SpecMatch object.
+        """
+        is_path = False
+        if isinstance(infile, str):
+            infile = h5py.File(infile, 'r')
+            is_path = True
+
+        # Read target spectrum
+        target = Spectrum.read_hdf(infile['target'])
+
+        sm = cls(target, lib)
+
+        # ------------------------ Shift results ------------------------
+        if 'unshifted' in infile:
+            sm.unshifted = Spectrum.read_hdf(infile['unshifted'])
+
+        if 'shift_ref' in infile:
+            sm.shift_ref = Spectrum.read_hdf(infile['shift_ref'])
+
+        if 'shift_data' in infile:
+            sm.shift_results = {}
+            for k in infile['shift_data']:
+                sm.shift_results[k] = infile['shift_data'][k].value
+
+        # ------------------------ Match results ------------------------
+        if 'regions' in infile:
+            sm.regions = infile['regions'][:]
+
+        if 'match_results' in infile:
+            match_results = pd.DataFrame.from_records(
+                infile['match_results'][:], index='lib_index')
+            # decode strings
+            for (col_name, dt) in match_results.dtypes.iteritems():
+                if dt == 'object':
+                    match_results[col_name] = match_results[col_name]\
+                        .str.decode('utf-8')
+            sm.match_results = match_results
+
+        # ------------------------ Match results ------------------------
+        if 'num_best' in infile:
+            sm.num_best = infile['num_best'].value
+
+        if 'lincomb' in infile and sm.regions is not None:
+            grp = infile['lincomb']
+            ref_idxs = []
+            lincomb_matches = []
+            lincomb_results = []
+            for i in range(len(sm.regions)):
+                reg = sm.regions[i]
+                subgrp = grp['{0:.0f}'.format(reg[0])]
+                ref_idxs.append(subgrp['ref_idxs'][:])
+
+                mt = match.MatchLincomb.read_hdf(subgrp)
+                lincomb_matches.append(mt)
+
+                res_grp = subgrp['results']
+                reg_results = {}
+                for k in res_grp:
+                    reg_results[k] = res_grp[k].value
+                lincomb_results.append(reg_results)
+
+            sm.ref_idxs = ref_idxs
+            sm.lincomb_matches = lincomb_matches
+            sm.lincomb_results = lincomb_results
+
+        if 'results' in infile:
+            res_grp = infile['results']
+            results = {}
+            for k in res_grp:
+                results[k] = res_grp[k].value
+
+            sm.results = results
+
+        if is_path:
+            infile.close()
 
     def to_fits(self, outpath):
         """Saves the current state of the SpecMatch object to a fits file.
@@ -418,7 +511,7 @@ class SpecMatch(object):
             targ_hdu.name = 'TARGET'
             hdulist.append(targ_hdu)
 
-        ################# Shift results #################
+        # ------------------------ Shift results ------------------------
         # Save unshifted spectrum
         if self._shifted is True:
             # (Check if unshifted and shifted targets are different)
@@ -443,7 +536,7 @@ class SpecMatch(object):
             num_sects = []
             for i in range(num_orders):
                 num_sects.append(shift_results.pop('order_{0:d}/num_sections'
-                                               .format(i)))
+                                                   .format(i)))
             col_list.append(fits.Column(name='num_sects', format='J',
                                         array=num_sects))
             n_sec = max(num_sects)
@@ -462,7 +555,7 @@ class SpecMatch(object):
             shift_hdu.name = 'SHIFTDATA'
             hdulist.append(shift_hdu)
 
-        ################# Match Results #################
+        # ------------------------ Match results ------------------------
         if self.regions is not None:
             reg_hdu = fits.ImageHDU(name='REGIONS',
                                     data=np.array(self.regions))
@@ -482,7 +575,7 @@ class SpecMatch(object):
                                          data=match_rec)
             hdulist.append(match_hdu)
 
-        ################# Lincomb Results #################
+        # ----------------------- Lincomb results -----------------------
 
     def plot_chi_squared_surface(self, num_best=None):
         """Plot the chi-squared surface from the pairwise matching procedure.
