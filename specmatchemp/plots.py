@@ -91,26 +91,37 @@ def annotate_spectrum(text, spec_offset=0, offset_x=10, offset_y=5,
              horizontalalignment=align, **text_kw)
 
 
-def label_axes(param_x, param_y):
+def label_axes(param_x=None, param_y=None, rescale=True):
     """Convenience function for tweaking axes to make plots
 
     Args:
         param_x (str): Parameter to plot on x-axis
         param_y (str): Parameter to plot on y-axis
+        rescale (bool): Whether to rescale
     """
     if param_x is 'Teff':
         reverse_x()
         plt.xlabel('Effective Temperature (K)')
+        if rescale:
+            plt.xticks([3000, 4000, 5000, 6000, 7000])
 
     if param_x is 'feh':
         plt.xlabel('[Fe/H] (dex)')
 
+    if param_x is 'radius':
+        plt.xlabel(r'$R\ (R_\odot)$')
+        if rescale:
+            ax = plt.gca()
+            ax.set_xscale('log')
+
     if param_y is 'radius':
-        ax = plt.gca()
-        ax.set_yscale('log')
-        ax.set_ylabel('Stellar Radius (Solar-radii)')
-        yt = [0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1, 2, 3, 4, 5, 7, 10, 20]
-        ax.set_yticks(yt, yt)
+        plt.ylabel('Stellar Radius (Solar-radii)')
+        if rescale:
+            ax = plt.gca()
+            ax.set_yscale('log')
+            yt = [0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1, 2, 3, 4, 5, 7, 10, 20]
+            ax.set_yticks(yt, yt)
+            ax.set_ylim(0.1, 20)
 
 
 def set_tight_lims(data_x, data_y, center_x=None, center_y=None,

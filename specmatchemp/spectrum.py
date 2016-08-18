@@ -153,52 +153,6 @@ class Spectrum(object):
         if is_path:
             outfile.close()
 
-    @classmethod
-    def read_hdf(cls, infile, suffix=""):
-        """Reads a spectrum from a hdf file
-
-        Args:
-            infile (str or h5 file): Input path or file handle
-            suffix (str, optional): Suffix on h5 keys
-        Returns:
-            spec (Spectrum): Spectrum object
-        """
-        is_path = False
-        if isinstance(infile, str):
-            infile = h5py.File(infile, 'r')
-            is_path = True
-
-        s = infile['s' + suffix][:]
-        serr = infile['serr' + suffix][:]
-        w = infile['w' + suffix][:]
-        if ('mask' + suffix) in infile.keys():
-            mask = infile['mask' + suffix][:]
-        else:
-            mask = None
-
-        attrs = dict(infile.attrs)
-        if ('name' + suffix) in attrs.keys():
-            name = attrs.pop('name' + suffix)
-        else:
-            name = None
-
-        if ('header' + suffix) in attrs.keys():
-            header = attrs.pop('header' + suffix)
-        else:
-            header = None
-
-        if len(suffix) > 0:
-            # strip suffixes from remaining keys
-            for k in attrs.keys():
-                attr = attrs.pop(k)
-                attrs[k[:-len(suffix)]] = attr
-
-        if is_path:
-            infile.close()
-
-        return cls(w, s, serr, mask=mask, name=name,
-                   header=header, attrs=attrs)
-
     def cut(self, minw, maxw):
         """Truncate the spectrum between the given limits
 
@@ -449,4 +403,42 @@ def read_hdf(infile, suffix=""):
     Returns:
         spec (Spectrum): Spectrum object
     """
-    return Spectrum.read_hdf(infile, suffix)
+    is_path = False
+    if isinstance(infile, str):
+        infile = h5py.File(infile, 'r')
+        is_path = True
+
+    s = infile['s' + suffix][:]
+    serr = infile['serr' + suffix][:]
+    w = infile['w' + suffix][:]
+    if ('mask' + suffix) in infile.keys():
+        mask = infile['mask' + suffix][:]
+    else:
+        mask = None
+
+    attrs = dict(infile.attrs)
+    if ('name' + suffix) in attrs.keys():
+        name = attrs.pop('name' + suffix)
+    else:
+        name = None
+
+    if ('header' + suffix) in attrs.keys():
+        header = attrs.pop('header' + suffix)
+    else:
+        header = None
+
+    if len(suffix) > 0:
+        # strip suffixes from remaining keys
+        for k in attrs.keys():
+            attr = attrs.pop(k)
+            attrs[k[:-len(suffix)]] = attr
+
+    if is_path:
+        infile.close()
+
+    if w.ndim > 1:
+        return HiresSpectrum(w, s, serr, mask=mask, name=name,
+                             header=header, attrs=attrs)
+    else:
+        return Spectrum(w, s, serr, mask=mask, name=name,
+                        header=header, attrs=attrs)

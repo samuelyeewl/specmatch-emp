@@ -8,9 +8,10 @@ import numpy as np
 from astropy import constants as c
 from astropy import units as u
 
+
 def calc_logg(radius, u_radius, mass, u_mass):
     """Calculates logg for a star from its mass and radius
-    
+
     Args:
         radius: in Rsun
         u_radius: Uncertainty in radius
@@ -27,6 +28,7 @@ def calc_logg(radius, u_radius, mass, u_mass):
     u_logg = (u_mass/mass + 2*u_radius/radius)*logg
 
     return logg, u_logg
+
 
 def calc_radius(plx, u_plx, theta, u_theta):
     """Calculates stellar radius from parallax and angular diameter
@@ -50,6 +52,7 @@ def calc_radius(plx, u_plx, theta, u_theta):
 
     return radius, u_radius
     
+
 def calc_residuals(s1, w1, s2, w2):
     """Find the residuals between two spectra (s1-s2) when they are on the same
     wavelength scale but not necessarily within the same range
@@ -71,4 +74,3 @@ def calc_residuals(s1, w1, s2, w2):
     resid = s1_masked - s2_masked
 
     return resid, w_masked
-

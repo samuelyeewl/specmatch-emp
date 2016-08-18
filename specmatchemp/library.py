@@ -340,6 +340,7 @@ class Library(object):
             attrs = {}
             for p in Library.STAR_PROPS:
                 attrs[p] = self.library_params.loc[idx, p]
+            attrs['obs'] = self.library_params.loc[idx, 'lib_obs']
 
             spectra.append(Spectrum(w, s, serr, name=name, attrs=attrs))
 
@@ -533,6 +534,7 @@ def read_hdf(path=None, wavlim='all'):
 
         if 'nso' in f:
             nso = spectrum.read_hdf(f['nso'])
+            nso.name = 'NSO'
 
         if 'param_mask' in f:
             param_mask = f['param_mask'][:]

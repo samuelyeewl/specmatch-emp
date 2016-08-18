@@ -13,6 +13,7 @@ from scipy import signal
 from scipy.ndimage.filters import convolve1d
 
 import specmatchemp.kernels
+from specmatchemp import spectrum
 from specmatchemp.spectrum import Spectrum
 from specmatchemp import plots
 
@@ -265,13 +266,13 @@ class Match(object):
             is_path = True
 
         # Read target
-        target = Spectrum.read_hdf(infile['target'])
+        target = spectrum.read_hdf(infile['target'])
 
         # Read reference
-        reference = Spectrum.read_hdf(infile['reference'])
+        reference = spectrum.read_hdf(infile['reference'])
 
         # Read modified
-        modified = Spectrum.read_hdf(infile['modified'])
+        modified = spectrum.read_hdf(infile['modified'])
 
         # Read best-fit parameters
         best_params = lmfit.Parameters()
@@ -316,7 +317,7 @@ class MatchLincomb(Match):
         vsini (np.ndarray): array containing vsini broadening for each
                             reference spectrum
     """
-    def __init__(self, target, refs, vsini, mode='default'):
+    def __init__(self, target, refs, vsini, mode='default', ref_chisq=None):
         # Ensure all references and target are on the same wavelength scale
         for i in range(len(refs)):
             if not np.allclose(target.w, refs[i].w):
@@ -330,17 +331,21 @@ class MatchLincomb(Match):
         self.refs = []
         for i in range(self.num_refs):
             self.refs.append(refs[i].copy())
-        self.ref_chisq = None
+
+        self.ref_chisq = ref_chisq
 
         self.vsini = vsini
 
         # Broaden reference spectra
         self.refs_broadened = []
         for i in range(self.num_refs):
-            self.refs_broadened.append(self.broaden(vsini[i], self.refs[i]))
+            self.refs_broadened.append(self.refs[i].copy())
+            self.refs_broadened[i] = self.broaden(vsini[i],
+                                                  self.refs_broadened[i])
 
-        self.modified = Spectrum(self.w, name='Linear Combination {0:d}'
-                                              .format(self.num_refs))
+        self.modified = Spectrum(self.w, np.zeros_like(self.w),
+                                 name='Linear Combination {0:d}'
+                                 .format(self.num_refs))
 
         self.best_params = lmfit.Parameters()
         self.best_chisq = np.NaN
@@ -455,15 +460,15 @@ class MatchLincomb(Match):
             for i in range(self.num_refs):
                 if self.ref_chisq is None:
                     labels['ref_{0:d}'.format(i)] = (
-                        'Reference: {0} '.format(self.refs[i].name) +
-                        r'$v\sin i = {0:.2f}$ '.format(self.vsini[i]) +
+                        'Reference: {0}, '.format(self.refs[i].name) +
+                        r'$v\sin i = {0:.2f}$, '.format(self.vsini[i]) +
                         r'$c_{0:d} = {1:.3f}$'.format(i, coeffs[i]))
 
                 else:
                     labels['ref_{0:d}'.format(i)] = (
-                        'Reference: {0} '.format(self.refs[i].name) +
-                        r'$v\sin i = {0:.2f}$ '.format(self.vsini[i]) +
-                        r'$\chi^2 = {0:.2f}$'.format(self.ref_chisq[i]) +
+                        'Reference: {0}, '.format(self.refs[i].name) +
+                        r'$v\sin i = {0:.2f}$, '.format(self.vsini[i]) +
+                        r'$\chi^2 = {0:.2f}$, '.format(self.ref_chisq[i]) +
                         r'$c_{0:d} = {1:.3f}$'.format(i, coeffs[i]))
         else:
             labels = {'target': 'Target', 'modified': 'Reference (Modified)',
@@ -541,19 +546,19 @@ class MatchLincomb(Match):
             is_path = True
 
         # Read target
-        target = Spectrum.read_hdf(infile['target'])
+        target = spectrum.read_hdf(infile['target'])
 
         # Read reference
         num_refs = infile['num_refs'].value
         ref_specs = []
         for i in range(num_refs):
-            spec = Spectrum.read_hdf(infile['references/{0:d}'.format(i)])
+            spec = spectrum.read_hdf(infile['references/{0:d}'.format(i)])
             ref_specs.append(spec)
 
-        vsini = outfile['vsini'][:]
+        vsini = infile['vsini'][:]
 
         # Read modified
-        modified = Spectrum.read_hdf(infile['modified'])
+        modified = spectrum.read_hdf(infile['modified'])
 
         # Read best-fit parameters
         best_params = lmfit.Parameters()
@@ -562,6 +567,7 @@ class MatchLincomb(Match):
         best_chisq = infile['best_chisq'].value
 
         mt = cls(target, ref_specs, vsini)
+        print(mt.refs[0].s - mt.refs_broadened[0].s)
         mt.load_params(best_params)
 
         if not np.allclose(modified.s, mt.modified.s) \

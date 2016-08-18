@@ -16,6 +16,8 @@ import astropy.io.fits as fits
 from time import strftime
 
 from specmatchemp import SPECMATCH_VERSION
+from specmatchemp.io import h5plus
+from specmatchemp import spectrum
 from specmatchemp.spectrum import Spectrum
 from specmatchemp.spectrum import HiresSpectrum
 from specmatchemp.library import Library
@@ -81,11 +83,14 @@ class SpecMatch(object):
         self.lib = lib.wav_cut(*self.wavlim)
 
         self._shifted = False
+        self.num_best = 5
         self.shift_ref = None
-        self.shift_results = {}
+        self.shift_data = {}
         self.regions = None
+        self.lincomb_regions = None
         self.match_results = pd.DataFrame()
         self.lincomb_matches = []
+        self.coeffs = None
         self.lincomb_results = []
         self.results = {}
 
@@ -153,7 +158,7 @@ class SpecMatch(object):
 
         # Now shift to the best reference
         self.target = shift.shift(self.target_unshifted, best_ref,
-                                  store=self.shift_results)
+                                  store=self.shift_data)
         self.shift_ref = best_ref
 
         self._shifted = True
@@ -216,10 +221,11 @@ class SpecMatch(object):
 
         regions.sort()
         # ensure regions don't exceed either the spectrum or library bounds
-        regions[0] = (max(regions[0][0], self.wavlim[0], self.target.w[0]),
-                      regions[0][1])
+        regions[0] = (max(regions[0][0], self.wavlim[0],
+                          np.round(self.target.w[0], 2)), regions[0][1])
         regions[-1] = (regions[-1][0],
-                       min(regions[-1][1], self.wavlim[1], self.target.w[-1]))
+                       min(regions[-1][1], self.wavlim[1],
+                           np.round(self.target.w[-1], 2)))
 
         # save regions
         self.regions = regions
@@ -275,15 +281,23 @@ class SpecMatch(object):
             return
 
         if regions == 'all':
-            regions = self.regions
-        elif not isinstance(regions, list):
+            lincomb_regions = self.regions
+        elif isinstance(regions, tuple):
+            lincomb_regions = [regions]
+        elif isinstance(regions, list):
+            lincomb_regions = regions
+        else:
             raise TypeError("regions should be a list of tuples")
 
         # Now perform lincomb match
         self.num_best = num_best
         self.ref_idxs = []
-        for reg in regions:
-            if len(regions) == 1:
+        self.coeffs = []
+        self.lincomb_matches = []
+        self.lincomb_results = []
+        self.lincomb_regions = lincomb_regions
+        for reg in lincomb_regions:
+            if len(self.regions) == 1:
                 cs_col = 'chi_squared'
                 fit_col = 'fit_params'
             else:
@@ -293,6 +307,7 @@ class SpecMatch(object):
             # get best matches
             self.match_results.sort_values(by=cs_col, inplace=True)
             ref_idxs = np.array(self.match_results.head(num_best).index)
+            ref_chisq = np.array(self.match_results.head(num_best)[cs_col])
             spec_refs = self.lib.get_spectrum(ref_idxs)
             spec_refs = [s.cut(*reg) for s in spec_refs]
 
@@ -304,12 +319,13 @@ class SpecMatch(object):
             vsini = np.array(vsini)
 
             mt_lincomb = match.MatchLincomb(self.target.cut(*reg),
-                                            spec_refs, vsini)
+                                            spec_refs, vsini,
+                                            ref_chisq=ref_chisq)
             mt_lincomb.best_fit()
             coeffs = np.array(mt_lincomb.get_lincomb_coeffs())
 
             # obtain parameters
-            lincomb_results = []
+            lincomb_results = {}
             lib_params = self.lib.library_params
             for p in Library.STAR_PROPS:
                 lincomb_results[p] = analysis.lincomb_props(lib_params, p,
@@ -319,12 +335,14 @@ class SpecMatch(object):
             self.ref_idxs.append(ref_idxs)
             self.lincomb_matches.append(mt_lincomb)
             self.lincomb_results.append(lincomb_results)
+            self.coeffs.append(coeffs)
 
         # Average over all wavelength regions
         for p in Library.STAR_PROPS:
             self.results[p] = 0
-            for i in range(len(regions)):
-                self.results[p] += self.lincomb_results[i][p] / len(regions)
+            for i in range(len(lincomb_regions)):
+                self.results[p] += (self.lincomb_results[i][p] /
+                                    len(lincomb_regions))
 
     def to_hdf(self, outfile):
         """Saves the current state of the SpecMatch object to an hdf file.
@@ -348,7 +366,7 @@ class SpecMatch(object):
         if self._shifted is True:
             # (Check if unshifted and shifted targets are different)
             outfile.create_group('unshifted')
-            self.unshifted.to_hdf(outfile['unshifted'])
+            self.target_unshifted.to_hdf(outfile['unshifted'])
 
         # Save shift reference
         if self.shift_ref is not None:
@@ -356,9 +374,9 @@ class SpecMatch(object):
             self.shift_ref.to_hdf(outfile['shift_ref'])
 
         # Save shift data
-        if len(shift.shift_results) > 0:
+        if len(self.shift_data) > 0:
             grp = outfile.create_group('shift_data')
-            for k, v in shift.shift_results:
+            for k, v in self.shift_data.items():
                 grp[k] = v
 
         # ------------------------ Match results ------------------------
@@ -368,6 +386,8 @@ class SpecMatch(object):
 
         # Save match results by converting to record array
         if not self.match_results.empty:
+            if 'lib_index' in self.match_results:
+                self.match_results.drop('lib_index', inplace=True, axis=1)
             match_rec = self.match_results.to_records()
             dt = match_rec.dtype.descr
             for i in range(len(dt)):
@@ -378,12 +398,18 @@ class SpecMatch(object):
 
             outfile['match_results'] = match_rec
 
+            # restore lib_index column
+            self.match_results['lib_index'] = self.match_results.index
+
         # ----------------------- Lincomb results -----------------------
-        outfile['num_best'] = self.num_best
+        if self.num_best is not None:
+            outfile['num_best'] = self.num_best
+        if self.lincomb_regions is not None:
+            outfile['lincomb_regions'] = self.lincomb_regions
         if len(self.lincomb_matches) > 0:
             grp = outfile.create_group('lincomb')
-            for i in range(len(self.regions)):
-                reg = self.regions[i]
+            for i in range(len(self.lincomb_regions)):
+                reg = self.lincomb_regions[i]
                 subgrp = grp.create_group('{0:.0f}'.format(reg[0]))
                 subgrp['ref_idxs'] = self.ref_idxs[i]
                 self.lincomb_matches[i].to_hdf(subgrp)
@@ -414,25 +440,26 @@ class SpecMatch(object):
             is_path = True
 
         # Read target spectrum
-        target = Spectrum.read_hdf(infile['target'])
+        target = spectrum.read_hdf(infile['target'])
 
         sm = cls(target, lib)
 
         # ------------------------ Shift results ------------------------
         if 'unshifted' in infile:
-            sm.unshifted = Spectrum.read_hdf(infile['unshifted'])
+            sm.target_unshifted = spectrum.read_hdf(infile['unshifted'])
 
         if 'shift_ref' in infile:
-            sm.shift_ref = Spectrum.read_hdf(infile['shift_ref'])
+            sm.shift_ref = spectrum.read_hdf(infile['shift_ref'])
 
         if 'shift_data' in infile:
-            sm.shift_results = {}
-            for k in infile['shift_data']:
-                sm.shift_results[k] = infile['shift_data'][k].value
+            sm.shift_data = h5plus.read_dict(infile['shift_data'])
 
         # ------------------------ Match results ------------------------
         if 'regions' in infile:
-            sm.regions = infile['regions'][:]
+            regions = infile['regions'][:]
+            sm.regions = []
+            for i in range(regions.shape[0]):
+                sm.regions.append((regions[i, 0], regions[i, 1]))
 
         if 'match_results' in infile:
             match_results = pd.DataFrame.from_records(
@@ -442,19 +469,27 @@ class SpecMatch(object):
                 if dt == 'object':
                     match_results[col_name] = match_results[col_name]\
                         .str.decode('utf-8')
+            match_results['lib_index'] = match_results.index
             sm.match_results = match_results
 
         # ------------------------ Match results ------------------------
         if 'num_best' in infile:
             sm.num_best = infile['num_best'].value
 
-        if 'lincomb' in infile and sm.regions is not None:
+        if 'lincomb_regions' in infile:
+            lincomb_regions = infile['lincomb_regions'][:]
+            sm.lincomb_regions = []
+            for i in range(lincomb_regions.shape[0]):
+                sm.lincomb_regions.append((lincomb_regions[i, 0],
+                                           lincomb_regions[i, 1]))
+
+        if 'lincomb' in infile and sm.lincomb_regions is not None:
             grp = infile['lincomb']
             ref_idxs = []
             lincomb_matches = []
             lincomb_results = []
-            for i in range(len(sm.regions)):
-                reg = sm.regions[i]
+            for i in range(len(sm.lincomb_regions)):
+                reg = sm.lincomb_regions[i]
                 subgrp = grp['{0:.0f}'.format(reg[0])]
                 ref_idxs.append(subgrp['ref_idxs'][:])
 
@@ -481,6 +516,8 @@ class SpecMatch(object):
 
         if is_path:
             infile.close()
+
+        return sm
 
     def to_fits(self, outpath):
         """Saves the current state of the SpecMatch object to a fits file.
@@ -526,17 +563,17 @@ class SpecMatch(object):
             hdulist.append(shiftref_hdu)
 
         # Save shift data
-        if len(self.shift_results) > 0:
-            shift_results = self.shift_results.copy()
+        if len(self.shift_data) > 0:
+            shift_data = self.shift_data.copy()
             col_list = []
-            num_orders = shift_results.pop('num_orders')
+            num_orders = shift_data.pop('num_orders')
             col_list.append(fits.Column(name='num_orders', format='J',
                                         array=[num_orders]))
 
             num_sects = []
             for i in range(num_orders):
-                num_sects.append(shift_results.pop('order_{0:d}/num_sections'
-                                                   .format(i)))
+                num_sects.append(shift_data.pop('order_{0:d}/num_sections'
+                                                .format(i)))
             col_list.append(fits.Column(name='num_sects', format='J',
                                         array=num_sects))
             n_sec = max(num_sects)
@@ -544,12 +581,12 @@ class SpecMatch(object):
             for k in ['center_pix', 'lag', 'fit']:
                 col_list.append(fits.Column(name=k,
                                 format='{0:d}E'.format(n_sec),
-                                array=shift_results.pop(k)))
+                                array=shift_data.pop(k)))
 
             # Save individual fit data
-            for k in shift_results.keys():
+            for k in shift_data.keys():
                 col_list.append(fits.Column(name=k, format='D',
-                                            array=shift_results[k]))
+                                            array=shift_data[k]))
 
             shift_hdu = fits.BinTableHDU.from_columns(col_list)
             shift_hdu.name = 'SHIFTDATA'
@@ -577,164 +614,339 @@ class SpecMatch(object):
 
         # ----------------------- Lincomb results -----------------------
 
-    def plot_chi_squared_surface(self, num_best=None):
+    # ----------------------------- Shift plots ----------------------------- #
+    def plot_shifted_spectrum(self, wavlim=(5158, 5172)):
+        """Plot a comparison of the shifted, reference and unshifted spectra.
+
+        Args:
+            wavlim (tuple or list of tuples, optional):
+                Wavelength limits to plot.
+        """
+        if not isinstance(wavlim, list) and not isinstance(wavlim, np.ndarray):
+            wavlim = [wavlim]
+
+        num_regions = np.shape(wavlim)[0]
+
+        for i in range(num_regions):
+            plt.subplot(num_regions, 1, i + 1)
+
+            target = self.target.cut(*wavlim[i])
+
+            targid = target.attrs['obs'] if 'obs' in target.attrs \
+                else target.name
+            target.plot(offset=1, text='Target (shifted): {0}'.format(targid))
+
+            target_unshifted = self.target_unshifted.cut(*wavlim[i])
+            target_unshifted.plot(offset=0, normalize=True,
+                                  text='Target (unshifted)',
+                                  plt_kw={'color': 'forestgreen'})
+
+            if self.shift_ref is not None:
+                # Plot shift reference
+                shift_ref = self.shift_ref.cut(*wavlim[i])
+                refid = shift_ref.attrs['obs'] \
+                    if 'obs' in shift_ref.attrs else shift_ref.name
+                shift_ref.plot(offset=1.5, text='Reference: {0}'.format(refid),
+                               plt_kw={'color': 'firebrick'})
+
+                # Plot residuals
+                plt.plot(target.w, shift_ref.s - target.s, '-', color='purple')
+                plots.annotate_spectrum('Residuals', spec_offset=-1)
+
+            if self.lib.nso is not None:
+                nso = self.lib.nso.cut(*wavlim[i])
+                nso.plot(offset=2, text='NSO', plt_kw={'color': 'c'})
+
+            plt.xlim(wavlim[i])
+            plt.ylim(-0.5, 3.5)
+
+    def plot_shift_lags(self, orders='all'):
+        """Plot the lags for each order as a function of pixel number.
+
+        Args:
+            orders (str or int or list of ints):
+                'all' (default): Plot all orders
+                int: Plot only given order
+                list of ints: Plot the orders provided.
+        """
+        lags = self.shift_data['lag']
+        center_pix = self.shift_data['center_pix']
+        fit = self.shift_data['fit']
+
+        total_orders = lags.shape[0]
+        if isinstance(orders, int):
+            orders = [orders]
+        if orders == 'all':
+            orders = np.arange(total_orders)
+
+        colormap = plt.cm.nipy_spectral
+        num_orders = len(orders)
+        for i in range(num_orders):
+            color = colormap(0.9 * (i / num_orders))
+            order = orders[i]
+            plt.plot(center_pix[order], lags[order], 'o', color=color)
+            plt.plot(center_pix[order], fit[order], '-', color=color,
+                     label='Order {0:d}'.format(order))
+
+        plt.xlabel('Pixel number')
+        plt.ylabel('Shift (pixels)')
+        plt.legend(loc='best', ncol=2, fontsize='small')
+
+    def plot_xcorr(self, order=0, highlightpeak=False):
+        """Plot the correlation array for each section of the given order.
+
+        Args:
+            order (int): Order on chip to plot. Defaults to 0.
+            highlightpeak (bool): Whether to highlight the peak value.
+        """
+        num_sects = self.shift_data['order_{0:d}/num_sections'.format(order)]
+        for i in range(num_sects):
+            xcorr = self.shift_data['order_{0:d}/sect_{1:d}/xcorr'
+                                    .format(order, i)]
+            lag_arr = self.shift_data['order_{0:d}/sect_{1:d}/lag_arr'
+                                      .format(order, i)]
+            plt.plot(lag_arr, xcorr, label="Section {0:d}".format(i))
+
+            if highlightpeak:
+                max_corr = np.argmax(xcorr)
+                plt.plot(lag_arr[max_corr], xcorr[max_corr], 'ko')
+
+        plt.legend(loc='upper left', fontsize='small')
+
+    # ----------------------------- Match plots ----------------------------- #
+    def plot_chi_squared_surface(self, region=0, num_best=None):
         """Plot the chi-squared surface from the pairwise matching procedure.
 
         Creates a three-column plot of the best chi-squared obtained with
         each library spectrum as a function of the library parameters.
 
         Args:
+            region (int or tuple): The wavelength region to plot.
+                If an int is given, refers to the index of the region in
+                `self.regions`.
+                If a tuple is given, should be present in `self.regions`.
             num_best (optional [int]): Number of best spectra to highlight.
                 (default: `self.num_best`)
         """
         if self.match_results.empty:
             return
 
-        cs_col = 'chi_squared'
+        if isinstance(region, int):
+            region = self.regions[region]
+        elif isinstance(region, tuple) and region not in self.regions:
+            raise ValueError("Region {0} was not a region.".format(region))
+
+        cs_col = 'chi_squared_{0:.0f}'.format(region[0])
+        self.match_results.sort_values(by=cs_col, inplace=True)
+
         if num_best is None:
             num_best = self.num_best
 
         ax1 = plt.subplot(131)
         plt.semilogy()
-        plt.plot(self.match_results['Teff'], self.match_results[cs_col], '.')
-        plt.plot(self.match_results['Teff'].head(num_best)\
-            , self.match_results[cs_col].head(num_best), 'r.')
+        plt.plot(self.match_results['Teff'], self.match_results[cs_col], '.',
+                 color='blue')
+        plt.plot(self.match_results['Teff'].head(num_best),
+                 self.match_results[cs_col].head(num_best), 'r.')
         plt.ylabel(r'$\chi^2$')
         plt.xlabel(r'$T_{eff}$ (K)')
-        plt.xticks([3000,4000,5000,6000,7000])
-        plots.reverse_x()
+        plots.label_axes(param_x='Teff')
 
-        ax2 = plt.subplot(132, sharey=ax1)
+        plt.subplot(132, sharey=ax1)
         plt.semilogy()
-        plt.plot(self.match_results['radius'], self.match_results[cs_col], '.')
-        plt.plot(self.match_results['radius'].head(num_best)\
-            , self.match_results[cs_col].head(num_best), 'r.')
-        ax2.set_xscale('log')
-        plt.xlabel(r'$R\ (R_\odot)$')
+        plt.plot(self.match_results['radius'], self.match_results[cs_col], '.',
+                 color='blue')
+        plt.plot(self.match_results['radius'].head(num_best),
+                 self.match_results[cs_col].head(num_best), 'r.')
+        plots.label_axes(param_x='radius')
 
-        ax3 = plt.subplot(133, sharey=ax1)
+        plt.subplot(133, sharey=ax1)
         plt.semilogy()
-        plt.plot(self.match_results['feh'], self.match_results[cs_col], '.')
-        plt.plot(self.match_results['feh'].head(num_best)\
-            , self.match_results[cs_col].head(num_best), 'r.')
-        plt.xlabel(r'$[Fe/H]$ (dex)')
+        plt.plot(self.match_results['feh'], self.match_results[cs_col], '.',
+                 color='blue')
+        plt.plot(self.match_results['feh'].head(num_best),
+                 self.match_results[cs_col].head(num_best), 'r.')
+        plots.label_axes(param_x='feh')
 
-    def plot_best_matches(self, num_best=None):
+    def plot_best_match_spectra(self, region=0, wavlim='all', num_best=None):
         """Plots the reference, modified reference and residuals for each of the
         best matches.
 
         Args:
+            region (int or tuple): The region used in matching.
+                If an int is given, refers to the index of the region in
+                `self.regions`.
+                If a tuple is given, should be present in `self.regions`.
+            wavlim (str or tuple): The wavelength limits to plot.
+                If 'all' is given, plots the entire `region`.
             num_best (optional [int]): Number of best spectra to highlight.
                 (default: `self.num_best`)
         """
-        if self.match_results is None:
+        if self.match_results.empty:
             return
 
+        # get region
+        if isinstance(region, int):
+            region = self.regions[region]
+        elif isinstance(region, tuple) and region not in self.regions:
+            raise ValueError("Region {0} was not a region.".format(region))
+
+        fit_col = 'fit_params_{0:.0f}'.format(region[0])
+        cs_col = 'chi_squared_{0:.0f}'.format(region[0])
+        self.match_results.sort_values(by=cs_col, inplace=True)
+
+        # get wavlength region to plot
+        if isinstance(wavlim, tuple):
+            # cannot exceed region
+            plotwavlim = (max(wavlim[0], region[0]), min(wavlim[1], region[1]))
+            if plotwavlim[0] >= plotwavlim[1]:
+                raise ValueError("Wavlim {0} is not within region {1}".format(
+                    wavlim, region))
+        else:
+            plotwavlim = region
+
+        # get num_best
         if num_best is None:
             num_best = self.num_best
-
-        fit_col = 'fit_params'
 
         shared_ax = None
         for i in range(num_best):
             if shared_ax is None:
-                ax = plt.subplot(num_best, 1, i+1)
+                ax = plt.subplot(num_best, 1, i + 1)
                 shared_ax = ax
             else:
-                ax = plt.subplot(num_best, 1, i+1, sharex=shared_ax)
-            ref_idx = self.match_results.iloc[i]['lib_index.1']
+                ax = plt.subplot(num_best, 1, i + 1, sharex=shared_ax)
+            ref_idx = self.match_results.iloc[i]['lib_index']
             ref = self.lib.get_spectrum(ref_idx)
             params = lmfit.Parameters()
             params.loads(self.match_results.iloc[i][fit_col])
-            mt = match.Match(self.target, ref)
+            mt = match.Match(self.target.cut(*region), ref.cut(*region))
             mt.load_params(params)
             mt.plot()
-            if i != num_best-1:
+            if i != num_best - 1:
                 plt.setp(ax.get_xticklabels(), visible=False)
             ax.set_xlabel('')
             ax.set_ylabel('')
+            plt.xlim(plotwavlim)
 
         # Label
         fig = plt.gcf()
         axes = fig.axes
         axes[-1].set_xlabel('Wavelength (Angstroms)', fontsize='large')
-        fig.text(0.05, 0.5, 'Normalized Flux (Arbitrary Offset)', \
-            ha='center', va='center', rotation='vertical', fontsize='large')
-        plt.tight_layout(rect=[0.04,0,1,0.95])
+        fig.text(0.05, 0.5, 'Normalized Flux (Arbitrary Offset)',
+                 ha='center', va='center', rotation='vertical',
+                 fontsize='large')
+        plt.tight_layout(rect=[0.05, 0, 1, 0.95])
 
-    def plot_references(self, verbose=True, num_best=None):
+    def plot_references(self, region=0, num_best=None, verbose=True):
         """Plots the location of the best references used in the linear
         combination step.
 
         Args:
-            verbose (optional [bool]): Whether to annotate the points with
-                the lincomb coefficients
+            region (int or tuple): The region used in matching.
+                If an int is given, refers to the index of the region in
+                `self.regions`.
+                If a tuple is given, should be present in `self.regions`.
             num_best (optional [int]): Number of best spectra to highlight.
                 (default: `self.num_best`)
+            verbose (optional [bool]): Whether to annotate the points with
+                the lincomb coefficients
         """
         if self.match_results is None:
             return
+
+        # get region
+        if isinstance(region, int):
+            region_num = region
+            region = self.regions[region_num]
+        elif isinstance(region, tuple):
+            if region in self.regions:
+                region_num = self.regions.index(region)
+            else:
+                # Raise exception of region was not found.
+                raise ValueError("Region {0} was not a region.".format(region))
+
+        cs_col = 'chi_squared_{0:.0f}'.format(region[0])
+        self.match_results.sort_values(by=cs_col, inplace=True)
 
         if num_best is None:
             num_best = self.num_best
 
         def _plot_ref_params(paramx, paramy, zoom=False):
-            plt.plot(self.match_results[paramx], self.match_results[paramy], \
-                '.', alpha=0.6, label='_nolegend_')
-            plt.plot(self.match_results.head(num_best)[paramx], \
-                self.match_results.head(num_best)[paramy], '^', color='forestgreen', label='Best Matches')
+            plt.plot(self.match_results[paramx], self.match_results[paramy],
+                     '.', alpha=0.6, label='_nolegend_')
+            plt.plot(self.match_results.head(num_best)[paramx],
+                     self.match_results.head(num_best)[paramy], '^',
+                     color='forestgreen', label='Best Matches')
             if zoom:
-                plots.set_tight_lims(self.match_results.head(num_best)[paramx], \
-                    self.match_results.head(num_best)[paramy])
-                if verbose: 
+                plots.set_tight_lims(self.match_results.head(num_best)[paramx],
+                                     self.match_results.head(num_best)[paramy])
+                if verbose and self.coeffs is not None:
                     for i in range(self.num_best):
                         p = self.match_results.iloc[i]
-                        plots.annotate_point(p[paramx], p[paramy], '{0:.3f}'.format(self.coeffs[i]))
+                        plots.annotate_point(p[paramx], p[paramy],
+                                             '{0:.3f}'.format(
+                                             self.coeffs[region_num][i]))
 
-
-        gs = gridspec.GridSpec(2,2)
+        gs = gridspec.GridSpec(2, 2)
         plt.subplot(gs[0])
-        _plot_ref_params('Teff','radius')
-        plt.plot(self.results['Teff'], self.results['radius'], 's', color='purple', label='Derived Parameters')
-        ax = plt.gca()
-        ax.set_yscale('log')
-        plt.ylim((0.1, 16))
-        plots.reverse_x()
-        plt.xlabel(r'$T_{eff}$ (K)')
-        plt.ylabel(r'$R\ (R_\odot)$')
+        _plot_ref_params('Teff', 'radius')
+        if len(self.results) > 0:
+            plt.plot(self.results['Teff'], self.results['radius'], 's',
+                     color='purple', label='Derived Parameters')
+        plots.label_axes('Teff', 'radius')
 
         plt.subplot(gs[1])
         _plot_ref_params('Teff', 'radius', zoom=True)
-        plt.plot(self.results['Teff'], self.results['radius'], 's', color='purple', label='Derived Parameters')
-        ax = plt.gca()
-        plots.reverse_x()
-        plt.xlabel(r'$T_{eff}$ (K)')
-        plt.ylabel(r'$R\ (R_\odot)$')
+        if len(self.results) > 0:
+            plt.plot(self.results['Teff'], self.results['radius'], 's',
+                     color='purple', label='Derived Parameters')
+        plots.label_axes('Teff', 'radius', rescale=False)
 
         plt.subplot(gs[2])
-        _plot_ref_params('feh','radius')
-        plt.plot(self.results['feh'], self.results['radius'], 's', color='purple', label='Derived Parameters')
-        ax = plt.gca()
-        ax.set_yscale('log')
-        plt.ylim((0.1, 16))
-        plt.xlabel(r'$[Fe/H]$ (dex)')
-        plt.ylabel(r'$R\ (R_\odot)$')
+        _plot_ref_params('feh', 'radius')
+        if len(self.results) > 0:
+            plt.plot(self.results['feh'], self.results['radius'], 's',
+                     color='purple', label='Derived Parameters')
+        plots.label_axes('feh', 'radius')
 
         plt.subplot(gs[3])
         _plot_ref_params('feh', 'radius', zoom=True)
-        plt.plot(self.results['feh'], self.results['radius'], 's', color='purple', label='Derived Parameters')
-        ax = plt.gca()
-        plt.xlabel(r'$[Fe/H]$ (dex)')
-        plt.ylabel(r'$R\ (R_\odot)$')
+        if len(self.results) > 0:
+            plt.plot(self.results['feh'], self.results['radius'], 's',
+                     color='purple', label='Derived Parameters')
+        plots.label_axes('feh', 'radius', rescale=False)
 
-
-    def plot_lincomb(self):
+    def plot_lincomb(self, region=0, wavlim='all'):
         """Plots the spectra used to synthesize the linear combination,
         the synthesized spectrum, and residuals.
         """
-        if self.mt_lincomb is None:
+        if len(self.lincomb_matches) == 0:
             return
 
-        self.mt_lincomb.plot()
-        
+        # get region
+        if isinstance(region, int):
+            region_num = region
+            region = self.lincomb_regions[region_num]
+            print(region)
+        elif isinstance(region, tuple):
+            if region in self.lincomb_regions:
+                region_num = self.lincomb_regions.index(region)
+            else:
+                # Raise exception of region was not found.
+                raise ValueError("Region {0} was not a region.".format(region))
 
+        # get wavlength region to plot
+        if isinstance(wavlim, tuple):
+            # cannot exceed region
+            plotwavlim = (max(wavlim[0], region[0]), min(wavlim[1], region[1]))
+            if plotwavlim[0] >= plotwavlim[1]:
+                raise ValueError("Wavlim {0} is not within region {1}".format(
+                    wavlim, region))
+        else:
+            plotwavlim = region
+
+        mt_lincomb = self.lincomb_matches[region_num]
+
+        mt_lincomb.plot()
+        plt.xlim(plotwavlim)
