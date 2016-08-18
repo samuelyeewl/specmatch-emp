@@ -19,7 +19,7 @@ from specmatchemp import spectrum
 
 WAVLIM = (4990, 6410)
 
-def main(parampath, specdir, outpath, maskpath):
+def main(parampath, specdir, outpath, maskpath, shiftpath, nsopath):
     libparams = pd.read_csv(parampath, index_col=0)
     wav = None
     spectra = None
@@ -50,6 +50,19 @@ def main(parampath, specdir, outpath, maskpath):
 
     # save as library object
     lib = library.Library(wav, spectra, libparams, wavlim=WAVLIM, param_mask=param_mask)
+    # read in allowed shift references
+    if shiftpath is not None and os.path.exists(shiftpath):
+        f = open(shiftpath, 'r')
+        shift_refs = []
+        for line in f:
+            shift_refs.append(line[0:-1])
+        lib.header['shift_refs'] = shift_refs
+
+    # read in nso
+    if nsopath is not None and os.path.exists(nsopath):
+        nso = spectrum.read_fits(nsopath).cut(*lib.wavlim)
+        lib.nso = nso
+
     lib.to_hdf(outpath)
 
 
@@ -60,6 +73,8 @@ if __name__ == '__main__':
     psr.add_argument('specdir', type=str, help="Directory containing shifted spectra")
     psr.add_argument('outpath', type=str, help="Path to save library")
     psr.add_argument('-m', '--maskpath', type=str, default=None, help="Path to mask file")
+    psr.add_argument('-s', '--shiftrefs', type=str, default=None, help="Path to shift reference")
+    psr.add_argument('-n', '--nsopath', type=str, default=None, help="Path to NSO spectrum")
     args = psr.parse_args()
 
-    main(args.parampath, args.specdir, args.outpath, args.maskpath)
+    main(args.parampath, args.specdir, args.outpath, args.maskpath, args.shiftpath, args.nsopath)
