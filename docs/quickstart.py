@@ -2,8 +2,7 @@
 import pandas as pd
 from pylab import *
 import specmatchemp.library
-import specmatchemp.plotting.plots as smplot
-
+import specmatchemp.plots as smplot
 # code-stop-imports
 rc('savefig',dpi=160)
 
@@ -87,96 +86,136 @@ fig.set_tight_layout(True)
 fig.savefig('quickstart-spectra-selected-stars.png')
 
 
-
-
-
-# code-start-specmatch-load
-lib = specmatchemp.library.read_hdf(wavlim=[5300,5400])
-
+# code-start-pop-library
 idx1 = lib.get_index('190406')
 G_star = lib.pop(idx1)
 idx2 = lib.get_index('GL699')
 M_star = lib.pop(idx2)
-# code-stop-specmatch-load
+# code-stop-pop-library
 
 
+# code-start-read-spectrum-G
+from specmatchemp import spectrum
+G_spectrum = spectrum.read_hires_fits('../samples/rj59.1923.fits').cut(5130,5210)
+G_spectrum.name = 'HD190406'
+# code-stop-read-spectrum-G
 
 
-# code-start-specmatch-match
+# code-start-shift-spectrum-G
 from specmatchemp.specmatch import SpecMatch
-match_G = SpecMatch(G_star[1], lib, (5300,5400))
-match_G.match()
-# code-stop-specmatch-match
+sm_G = SpecMatch(G_spectrum, lib)
+sm_G.shift()
+# code-stop-shift-spectrum-G
 
 
+# code-start-plot-shifts-G
+fig = plt.figure(figsize=(10,5))
+sm_G.target_unshifted.plot(normalize=True, plt_kw={'color':'forestgreen'}, text='Target (unshifted)')
+sm_G.target.plot(offset=0.5, plt_kw={'color':'royalblue'}, text='Target (shifted): HD190406')
+sm_G.shift_ref.plot(offset=1, plt_kw={'color':'firebrick'}, text='Reference: '+sm_G.shift_ref.name)
+plt.xlim(5160,5200)
+plt.ylim(0,2.2)
+# code-stop-plot-shifts-G
+fig.set_tight_layout(True)
+fig.savefig('quickstart-Gstar-shifts.png')
 
-# code-start-specmatch-print
-print('Derived Parameters: ')
-print('Teff: {0:.0f}, Radius: {1:.2f}, [Fe/H]: {2:.2f}'.format(\
-        match_G.results['Teff'], match_G.results['radius'], match_G.results['feh']))
-print('Library Parameters: ')
-print('Teff: {0:.0f}, Radius: {1:.2f}, [Fe/H]: {2:.2f}'.format(\
-        G_star[0]['Teff'], G_star[0]['radius'], G_star[0]['feh']))
-# code-stop-specmatch-print
+
+# code-start-shift-spectrum-M
+# Load spectrum
+M_spectrum = spectrum.read_hires_fits('../samples/rj130.2075.fits').cut(5130,5210)
+M_spectrum.name = 'GL699'
+
+# Shift spectrum
+sm_M = SpecMatch(M_spectrum, lib)
+sm_M.shift()
+
+# Plot shifts
+fig = plt.figure(figsize=(10,5))
+sm_M.plot_shifted_spectrum(wavlim=(5160,5200))
+# code-stop-shift-spectrum-M
+fig.set_tight_layout(True)
+fig.savefig('quickstart-Mstar-shifts.png')
 
 
-# code-start-plot-chisquared
+# code-start-match-G
+sm_G.match()
+
+# Plot chi-squared surfaces
 fig = figure(figsize=(12,8))
-match_G.plot_chi_squared_surface()
+sm_G.plot_chi_squared_surface()
 # Indicate library parameters for target star.
 axes = fig.axes
 axes[0].axvline(G_star[0]['Teff'], color='k')
 axes[1].axvline(G_star[0]['radius'], color='k')
 axes[2].axvline(G_star[0]['feh'], color='k')
-# code-stop-plot-chisquared
+# code-stop-match-G
 
 fig.set_tight_layout(True)
 fig.savefig('quickstart-Gstar-chisquared-surface.png')
 
 
-# code-start-plot-references
-fig = figure(figsize=(12,10))
-match_G.plot_references(verbose=True)
+# code-start-lincomb-G
+sm_G.lincomb()
+
+print('Derived Parameters: ')
+print('Teff: {0:.0f}, Radius: {1:.2f}, [Fe/H]: {2:.2f}'.format(
+    sm_G.results['Teff'], sm_G.results['radius'], sm_G.results['feh']))
+print('Library Parameters: ')
+print('Teff: {0:.0f}, Radius: {1:.2f}, [Fe/H]: {2:.2f}'.format(
+    G_star[0]['Teff'], G_star[0]['radius'], G_star[0]['feh']))
+# code-stop-lincomb-G
+
+
+# code-start-plot-lincomb-G
+# Plot HR diagram
+fig1 = figure(figsize=(12,10))
+sm_G.plot_references(verbose=True)
 # plot target onto HR diagram
-axes = fig.axes
+axes = fig1.axes
 axes[0].plot(G_star[0]['Teff'], G_star[0]['radius'], '*', ms=15, color='red', label='Target')
 axes[1].plot(G_star[0]['Teff'], G_star[0]['radius'], '*', ms=15, color='red')
 axes[2].plot(G_star[0]['feh'], G_star[0]['radius'], '*', ms=15, color='red')
 axes[3].plot(G_star[0]['feh'], G_star[0]['radius'], '*', ms=15, color='red')
 axes[0].legend(numpoints=1, fontsize='small', loc='best')
-# code-stop-plot-references
 
-fig.savefig('quickstart-Gstar-lincomb-references.png')
 
-# code-start-plot-lincomb-spectra
-fig = plt.figure(figsize=(12,6))
-match_G.plot_lincomb()
-# code-end-plot-lincomb-spectra
+# Plot reference spectra and linear combinations
+fig2 = plt.figure(figsize=(12,6))
+sm_G.plot_lincomb()
+# code-stop-plot-lincomb-G  
+fig1.set_tight_layout(True)
+fig1.savefig('quickstart-Gstar-lincomb-references.png')
+fig2.set_tight_layout(True)
+fig2.savefig('quickstart-Gstar-lincomb-spectra.png')
 
-fig.set_tight_layout(True)
-fig.savefig('quickstart-Gstar-lincomb-spectra.png')
+
 
 # code-start-mstar
-match_M = SpecMatch(M_star[1], lib, (5300,5400))
-match_M.match()
+# Perform match
+sm_M.match()
 
-print('Derived Parameters: ')
-print('Teff: {0:.0f}, Radius: {1:.2f}, [Fe/H]: {2:.2f}'.format(\
-        match_M.results['Teff'], match_M.results['radius'], match_M.results['feh']))
-print('Library Parameters: ')
-print('Teff: {0:.0f}, Radius: {1:.2f}, [Fe/H]: {2:.2f}'.format(\
-        M_star[0]['Teff'], M_star[0]['radius'], M_star[0]['feh']))
-
+# Plot chi-squared surfaces
 fig1 = figure(figsize=(12,8))
-match_M.plot_chi_squared_surface()
+sm_M.plot_chi_squared_surface()
 # Indicate library parameters for target star.
 axes = fig1.axes
 axes[0].axvline(M_star[0]['Teff'], color='k')
 axes[1].axvline(M_star[0]['radius'], color='k')
 axes[2].axvline(M_star[0]['feh'], color='k')
 
+# Perform lincomb
+sm_M.lincomb()
+
+print('Derived Parameters: ')
+print('Teff: {0:.0f}, Radius: {1:.2f}, [Fe/H]: {2:.2f}'.format(
+    sm_M.results['Teff'], sm_M.results['radius'], sm_M.results['feh']))
+print('Library Parameters: ')
+print('Teff: {0:.0f}, Radius: {1:.2f}, [Fe/H]: {2:.2f}'.format(
+    M_star[0]['Teff'], M_star[0]['radius'], M_star[0]['feh']))
+
+# Plot HR diagram
 fig2 = figure(figsize=(12,10))
-match_M.plot_references(verbose=True)
+sm_M.plot_references(verbose=True)
 # plot target onto HR diagram
 axes = fig2.axes
 axes[0].plot(M_star[0]['Teff'], M_star[0]['radius'], '*', ms=15, color='red', label='Target')
@@ -185,12 +224,14 @@ axes[2].plot(M_star[0]['feh'], M_star[0]['radius'], '*', ms=15, color='red')
 axes[3].plot(M_star[0]['feh'], M_star[0]['radius'], '*', ms=15, color='red')
 axes[0].legend(numpoints=1, fontsize='small', loc='best')
 
+# Plot reference spectra and linear combinations
 fig3 = plt.figure(figsize=(12,6))
-match_M.plot_lincomb()
-# code-end-mstar
+sm_M.plot_lincomb()
+# code-stop-mstar
 
 fig1.set_tight_layout(True)
 fig1.savefig('quickstart-Mstar-chisquared-surface.png')
+fig2.set_tight_layout(True)
 fig2.savefig('quickstart-Mstar-lincomb-references.png')
 fig3.set_tight_layout(True)
 fig3.savefig('quickstart-Mstar-lincomb-spectra.png')

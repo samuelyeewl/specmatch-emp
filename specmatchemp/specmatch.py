@@ -125,7 +125,8 @@ class SpecMatch(object):
 
         # Try to use the Mg triplet to determine which reference spectrum is
         # best.
-        if isinstance(self.target_unshifted, HiresSpectrum):
+        if isinstance(self.target_unshifted, HiresSpectrum) \
+                and self.target_unshifted.w.ndim == 2:
             # In the HIRES Echelle object, the Mgb triplet is in order 2
             ref_order = 2
             targ = self.target_unshifted
@@ -632,8 +633,7 @@ class SpecMatch(object):
 
             target = self.target.cut(*wavlim[i])
 
-            targid = target.attrs['obs'] if 'obs' in target.attrs \
-                else target.name
+            targid = target.name
             target.plot(offset=1, text='Target (shifted): {0}'.format(targid))
 
             target_unshifted = self.target_unshifted.cut(*wavlim[i])
@@ -644,12 +644,14 @@ class SpecMatch(object):
             if self.shift_ref is not None:
                 # Plot shift reference
                 shift_ref = self.shift_ref.cut(*wavlim[i])
-                refid = shift_ref.attrs['obs'] \
-                    if 'obs' in shift_ref.attrs else shift_ref.name
+                refid = shift_ref.name
                 shift_ref.plot(offset=1.5, text='Reference: {0}'.format(refid),
                                plt_kw={'color': 'firebrick'})
 
                 # Plot residuals
+                if (target.w[0] > shift_ref.w[0]) \
+                        or (target.w[-1] < shift_ref.w[-1]):
+                    target = target.extend(shift_ref.w)
                 plt.plot(target.w, shift_ref.s - target.s, '-', color='purple')
                 plots.annotate_spectrum('Residuals', spec_offset=-1)
 
@@ -736,7 +738,10 @@ class SpecMatch(object):
         elif isinstance(region, tuple) and region not in self.regions:
             raise ValueError("Region {0} was not a region.".format(region))
 
-        cs_col = 'chi_squared_{0:.0f}'.format(region[0])
+        if len(self.regions) == 1:
+            cs_col = 'chi_squared'
+        else:
+            cs_col = 'chi_squared_{0:.0f}'.format(region[0])
         self.match_results.sort_values(by=cs_col, inplace=True)
 
         if num_best is None:
@@ -791,8 +796,13 @@ class SpecMatch(object):
         elif isinstance(region, tuple) and region not in self.regions:
             raise ValueError("Region {0} was not a region.".format(region))
 
-        fit_col = 'fit_params_{0:.0f}'.format(region[0])
-        cs_col = 'chi_squared_{0:.0f}'.format(region[0])
+        if len(self.regions) == 1:
+            fit_col = 'fit_params'
+            cs_col = 'chi_squared'
+        else:
+            fit_col = 'fit_params_{0:.0f}'.format(region[0])
+            cs_col = 'chi_squared_{0:.0f}'.format(region[0])
+
         self.match_results.sort_values(by=cs_col, inplace=True)
 
         # get wavlength region to plot
@@ -866,7 +876,10 @@ class SpecMatch(object):
                 # Raise exception of region was not found.
                 raise ValueError("Region {0} was not a region.".format(region))
 
-        cs_col = 'chi_squared_{0:.0f}'.format(region[0])
+        if len(self.regions) == 1:
+            cs_col = 'chi_squared'
+        else:
+            cs_col = 'chi_squared_{0:.0f}'.format(region[0])
         self.match_results.sort_values(by=cs_col, inplace=True)
 
         if num_best is None:
@@ -928,7 +941,6 @@ class SpecMatch(object):
         if isinstance(region, int):
             region_num = region
             region = self.lincomb_regions[region_num]
-            print(region)
         elif isinstance(region, tuple):
             if region in self.lincomb_regions:
                 region_num = self.lincomb_regions.index(region)

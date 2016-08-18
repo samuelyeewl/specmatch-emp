@@ -173,6 +173,27 @@ class Spectrum(object):
         return type(self)(w_trunc, s_trunc, serr_trunc, mask_trunc,
                           name=self.name, attrs=self.attrs.copy())
 
+    def extend(self, w):
+        """Extend the spectrum onto a new wavelength scale, placing np.nan
+        for points which do not exist on the old scale.
+
+        Args:
+            w (np.ndarray): New wavlength array.
+        """
+        wavmap = np.searchsorted(w, self.w)
+        s_extend = np.empty_like(w, dtype=np.float)
+        s_extend.fill(np.nan)
+        s_extend[wavmap] = self.s
+        serr_extend = np.empty_like(w, dtype=np.float)
+        serr_extend.fill(np.nan)
+        serr_extend[wavmap] = self.serr
+        mask_extend = np.empty_like(w, dtype=bool)
+        mask_extend.fill(False)
+        mask_extend[wavmap] = self.mask
+
+        return type(self)(w, s_extend, serr_extend, mask_extend,
+                          name=self.name, attrs=self.attrs.copy())
+
     def plot(self, offset=0, label='_nolegend_', showmask=False,
              plt_kw={'color': 'RoyalBlue'}, text='', text_kw={}):
         """Plots the spectrum.

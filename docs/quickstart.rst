@@ -65,99 +65,145 @@ Plot the Mgb region for the spectra sorted by effective temperature
 .. image:: quickstart-spectra-selected-stars.png
 
 
+Shifting
+--------
+
+In the rest of this document, we will look at two example stars:
+HD 190406 (spectral class G0V), and Barnard's star (GL 699), an M dwarf.
+Both of these stars are already in our library, so we will remove them
+from the library.
+
+
+.. literalinclude:: quickstart.py 
+   :start-after: code-start-pop-library
+   :end-before: code-stop-pop-library
+
+
+To begin using SpecMatch, we first load in a spectrum and shift it onto
+the library wavelength scale. The raw HIRES spectra have been provided in
+the samples folder. 
+
+We read in the spectrum of HD 190406, in the same wavelength region as the
+library.
+
+
+.. literalinclude:: quickstart.py 
+   :start-after: code-start-read-spectrum-G
+   :end-before: code-stop-read-spectrum-G
+
+
+To shift the spectrum, we create the SpecMatch object and run shift().
+
+This method runs a cross-correlation between the target spectrum and
+several reference spectra in the library for a select region of the
+spectrum. The reference spectrum which gives the largest cross-correlation
+peak is then used to shift the entire spectrum.
+
+
+.. literalinclude:: quickstart.py
+   :start-after: code-start-shift-spectrum-G
+   :end-before: code-stop-shift-spectrum-G
+
+
+We can see the results of the shifting process. In this case, the code
+chose to use the NSO spectrum as the reference. We make use of the 
+`spectrum.Spectrum.plot()` method to quickly plot each of the unshifted,
+shifted and reference spectra.
+
+
+.. literalinclude:: quickstart.py
+   :start-after: code-start-plot-shifts-G
+   :end-before: code-stop-plot-shifts-G
+
+
+.. image:: quickstart-Gstar-shifts.png
+
+
+We repeat the same process for the M star spectrum. In this case, we see
+that the code chose to shift the spectrum to a different reference: HD216899,
+which is another M dwarf in our library. We have used the convenience
+function :meth:`SpecMatch.plot_shifted_spectrum` to easily plot
+the shift results.
+
+
+.. literalinclude:: quickstart.py
+   :start-after: code-start-shift-spectrum-M
+   :end-before: code-stop-shift-spectrum-M
+
+
+.. image:: quickstart-Mstar-shifts.png
+
+
 Matching
 --------
 
-To see how to perform a match with SpecMatch, we will look at how to
-perform the matching on two example stars - HD 190406, a G0V star, as
-well as Barnard's Star (GL 699), an M dwarf.
+Now, we can perform the match. We first run :meth:`SpecMatch.match`, which
+performs a match between the target and every other star in the library,
+allowing v sin i to float and fitting a spline to the continuum.
 
-This time, we import the library module with spectra from 5300-5400 A.
-We obtain our two target spectra from the library and remove them from
-the library as a test of our matching process.
-
-
-.. literalinclude:: quickstart.py
-   :start-after: code-start-specmatch-load
-   :end-before: code-stop-specmatch-load
-
-
-To perform SpecMatch, we import the specmatch module and create a 
-SpecMatch object, then run SpecMatch.match().
-
-The match method first compares the target spectrum against each of
-the library spectra. It then synthesizes linear combinations of the
-best matching spectra, using the respective weights to generate
-the target parameters.
+We can then plot the chi-squared surfaces to see where the best matches
+lie in parameter space.
 
 
 .. literalinclude:: quickstart.py
-   :start-after: code-start-specmatch-match
-   :end-before: code-stop-specmatch-match    
-    
-
-The final derived parameters can be found in the results attribute.
-
-
-.. literalinclude:: quickstart.py
-   :start-after: code-start-specmatch-print
-   :end-before: code-stop-specmatch-print 
-
-
-::
-
-    Derived Parameters: 
-    Teff: 5855, Radius: 1.36, [Fe/H]: 0.06
-    Library Parameters: 
-    Teff: 5763, Radius: 1.12, [Fe/H]: 0.03
-
-
-We can take a closer look at the workings of the matching process. First,
-examine the chi-squared surfaces of the match with the library spectra, 
-to see that the best matches do indeed come from stars with similar parameters.
-
-
-.. literalinclude:: quickstart.py
-   :start-after: code-start-plot-chisquared
-   :end-before: code-stop-plot-chisquared
-
+   :start-after: code-start-match-G
+   :end-before: code-stop-match-G
 
 .. image:: quickstart-Gstar-chisquared-surface.png
 
 
-The 5 closest matches, which were used to synthesize the linear combinations,
-have been highlighted. We can plot the position of these stars in the HR 
-diagram together with the coefficients found in the linear combination step.
+We see that the code does a good job in finding the library stars which
+are close to parameter space to the target star.
+
+Next, running :meth:`SpecMatch.lincomb()`, the code synthesizes linear
+combinations of the best matching spectra to obtain an even better match
+to the target. 
+
+The respective coefficients will be used to form a weighted
+average of the library parameters, which are taken to be the derived
+properties of the target. These are stored in the results attribute.
 
 
 .. literalinclude:: quickstart.py
-   :start-after: code-start-plot-references
-   :end-before: code-stop-plot-references
+   :start-after: code-start-lincomb-G
+   :end-before: code-stop-lincomb-G
 
-
-.. image:: quickstart-Gstar-lincomb-references.png
-
-Finally, we can view the spectra used to synthesize the final library spectrum.
-
-.. literalinclude:: quickstart.py
-    :start-after: code-start-plot-lincomb-spectra
-    :end-before: code-end-plot-lincomb-spectra
-
-.. image:: quickstart-Gstar-lincomb-spectra.png
-
-
-We can repeat the entire process for Barnard's star.
-
-.. literalinclude:: quickstart.py
-    :start-after: code-start-mstar
-    :end-before: code-end-mstar
 
 ::
 
     Derived Parameters:
-  Teff: 3261, Radius: 0.24, [Fe/H]: -0.26
-  Library Parameters:
-  Teff: 3222, Radius: 0.19, [Fe/H]: -0.39
+    Teff: 5844, Radius: 1.33, [Fe/H]: 0.04
+    Library Parameters:
+    Teff: 5763, Radius: 1.12, [Fe/H]: 0.03
+
+
+We can take a closer look at the workings of this process by plotting
+the positions of the best matching library stars in a HR diagram, as
+well as their spectra.
+
+
+.. literalinclude:: quickstart.py
+   :start-after: code-start-plot-lincomb-G
+   :end-before: code-stop-plot-lincomb-G
+
+
+.. image:: quickstart-Gstar-lincomb-references.png
+
+.. image:: quickstart-Gstar-lincomb-spectra.png
+
+
+Finally, we can repeat the whole process with Barnard's star.
+
+.. literalinclude:: quickstart.py
+    :start-after: code-start-mstar
+    :end-before: code-stop-mstar
+
+::
+
+    Derived Parameters:
+    Teff: 3181, Radius: 0.19, [Fe/H]: -0.29
+    Library Parameters:
+    Teff: 3222, Radius: 0.19, [Fe/H]: -0.39
 
 .. image:: quickstart-Mstar-chisquared-surface.png
 
