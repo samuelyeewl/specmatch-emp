@@ -405,6 +405,8 @@ def read_hires_fits(infile, maskfile=None):
     header = hdu[0].header
     hdu.close()
 
+    name = os.path.splitext(os.path.basename(infile))[0]
+
     mask_table = None
     if maskfile is not None:
         mask_table = pd.read_csv(maskfile)
@@ -412,7 +414,8 @@ def read_hires_fits(infile, maskfile=None):
         chip = os.path.basename(infile)[0:2]
         mask_table = mask_table[mask_table.chip.str.contains(chip)]
 
-    return HiresSpectrum(w, s, serr, mask_table=mask_table, header=header)
+    return HiresSpectrum(w, s, serr, name=name, mask_table=mask_table,
+                         header=header)
 
 
 def read_hdf(infile, suffix=""):

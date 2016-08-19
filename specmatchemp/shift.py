@@ -3,10 +3,80 @@
 
 Shift a target spectrum onto a reference spectrum.
 """
+from __future__ import print_function
+
 import numpy as np
 from scipy.optimize import least_squares
 
-from specmatchemp.spectrum import Spectrum
+from specmatchemp import spectrum
+
+
+def bootstrap_shift(targ, ref_list, store=None):
+    """Shift a target spectrum using a bootstrapping approach.
+    
+    First performs a cross-correlation of the target spectrum in a fixed
+    wavelength region against each of the provided references. The reference
+    spectrum which gives the highest median cross-correlation peak is used
+    to shift the rest of the target spectrum.
+
+    Args:
+        targ (spectrum.Spectrum): Target spectrum
+        ref_list (list of spectrum.Spectrum): List of reference spectra
+        store (dict-like object, optional): h5 file or dict to record
+            diagnostic data.
+
+    Returns:
+        shifted (Spectrum): Shifted and flattened spectrum.
+    """
+    # Try to use the Mg triplet to determine which reference spectrum is
+    # best.
+    if isinstance(targ, spectrum.HiresSpectrum) and targ.w.ndim == 2:
+        # In the HIRES echelle object, the Mgb triplet is in order 2
+        ref_order = 2
+        targ_cut = spectrum.HiresSpectrum(targ.w[ref_order], targ.s[ref_order],
+                                          targ.serr[ref_order])
+    else:
+        # If we already have a flattened spectrum, use the 5120-5200 A
+        # region.
+        targ_cut = targ.cut(5120, 5200)
+        if len(targ_cut) == 0:
+            # if 5120-5200 A region is missing, use the entire spectrum
+            targ_cut = targ
+
+    # Find the height of the correlation peak with each reference.
+    median_peaks = []
+    for i in range(len(ref_list)):
+        ref = ref_list[i]
+        shift_data = {}
+        shift.shift(targ_cut, ref, store=shift_data)
+
+        # get correlation peaks
+        num_sects = shift_data['order_0/num_sections']
+        peaks = []
+        for sect in range(num_sects):
+            xcorr = shift_data['order_0/sect_{0:d}/xcorr'.format(sect)]
+            peaks.append(max(xcorr))
+
+        med_peak = np.median(peaks)
+
+        median_peaks.append(med_peak)
+
+        print("Attempting shift to spectrum {0}, ".format(ref.name) +
+              "median cross-correlation peak = {0:.2f}".format(med_peak))
+
+        if store is not None:
+            store['median_peaks/{0:d}'.format(i)] = med_peak
+
+    if store is not None:
+        store['shift_reference'] = np.argmax(median_peaks)
+
+    best_ref = ref_list[np.argmax(median_peaks)]
+    print("Best reference for shifting: {0}".format(best_ref.name))
+
+    # Now shift to the best reference
+    shifted = shift(targ, best_ref, store=store)
+
+    return shifted
 
 
 def shift(targ, ref, store=None):
@@ -173,8 +243,9 @@ def shift(targ, ref, store=None):
     w_flat, s_flat, serr_flat, mask_flat = \
         flatten(ws, s_shifted, serr_shifted, mask_shifted, w_ref=w_ref_trunc)
 
-    return Spectrum(w_flat, s_flat, serr_flat, name=targ.name, mask=mask_flat,
-                    header=targ.header, attrs=targ.attrs)
+    return spectrum.Spectrum(w_flat, s_flat, serr_flat, name=targ.name,
+                             mask=mask_flat, header=targ.header,
+                             attrs=targ.attrs)
 
 
 def _isclose(a, b, abs_tol=1e-6):

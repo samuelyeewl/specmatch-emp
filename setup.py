@@ -34,7 +34,9 @@ else:
 
     # download library
     HOMEDIR = os.environ['HOME']
-    LIBPATH = "{0}/.specmatchemp/library.h5".format(HOMEDIR)
+    SPECMATCHDIR = "{0}/.specmatchemp/".format(HOMEDIR)
+    if not os.path.exists(SPECMATCHDIR):
+        os.mkdir(SPECMATCHDIR)
 
     def reporthook(blocknum, blocksize, totalsize):
         readsofar = blocknum * blocksize
@@ -50,10 +52,22 @@ else:
 
     # liburl = "https://zenodo.org/record/60225/files/library.h5"
     liburl = "https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#"
-    if not os.path.exists(os.path.dirname(LIBPATH)):
-        os.mkdir(os.path.dirname(LIBPATH))
+    LIBPATH = os.path.join(SPECMATCHDIR+"library.h5")
     if not os.path.exists(LIBPATH):
         os.system("wget --no-check-certificate --output-document=${HOME}/.specmatchemp/library.h5 https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#")
+
+    specdir = os.path.join(SPECMATCHDIR, 'spectra')
+    if not os.path.exists(specdir):
+        os.mkdir(specdir)
+        # download references
+        ref_urls = ["https://www.dropbox.com/s/i397kkebdm2b5ez/nso.fits#",
+                    "https://www.dropbox.com/s/6oim1suxnu3mci8/rj26.532.fits#",
+                    "https://www.dropbox.com/s/la0ojduaz5sf6pm/rj55.1872.fits#",
+                    "https://www.dropbox.com/s/9pe7pwae489mjdw/rj59.1926.fits#"]
+        for ref in ref_urls:
+            os.system("wget --no-check-certificate -P " + specdir + " " +
+                      ref)
+
 #        from six.moves import urllib
 #        print("Downloading library.h5")
 #        urllib.request.urlretrieve(liburl, LIBPATH, reporthook)
