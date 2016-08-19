@@ -4,19 +4,21 @@ Building the Library
 The SpecMatch libary is stored as a monolithic HDF5 file and is
 downloaded upon installation of the code. It's is constructed from a
 number of different data files. For simplicity, we do not make all the
-source files public. This document serves as a cookbook for CPS.
+source files public. This document serves as a recipe for the
+``specmatchemp`` developers.
 
 Establish Wavelength References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Raw spectra from CPS are not wavelength-calibrated. They are stored as
 a list of intensities and pixel values. Spectra are resampled onto the
-rest-wavelength scale using the NSO solar spectrum by
-cross-correlating segments of spectrum. Cross-correlating spectra that
-are dissimilar from solar produce ratty peaks. We have implemented a
-bootstrapping approach to accomodate different spectral types. We
-establish a ladder of spectra seperated in effective temperature by
-500--1000 K. These spectra are:
+rest wavelength scale using the NSO solar spectrum by
+cross-correlating spectral segments of ~500 HIRES pixels. When the
+spectra are significantly different from solar, the cross-correlation
+peak is not well-defined. We have implemented a bootstrapping approach
+to accomodate a range of spectral types. We establish a ladder of
+spectra seperated in effective temperature by 500--1000 K. These
+spectra are:
 
 ::
 
@@ -26,8 +28,7 @@ establish a ladder of spectra seperated in effective temperature by
    rj26.532.fits # ~3700 K
    rj59.1926.fits # ~6200 K
 
-Shift the spectra by running ``  `` which places
-spectra in this directory:
+We shift the spectra using by
 
 ::
 
@@ -36,6 +37,10 @@ spectra in this directory:
    Shifting spectrum rj55.1872 onto reference nso
    Shifting spectrum rj26.532 onto reference nso
    Shifting spectrum rj59.1926 onto reference rj55.1872
+
+Which leaves the wavelength calibrated spectra here:
+
+::
    
    $ ls ${SMEMP_WKDIR}/shifted_spectra/
    nso_adj.fits
@@ -71,7 +76,7 @@ wavelength scale with the following command.
 
    $ script.py 
 
-Build HDF5 file
+Build Library HDF5 File
 ~~~~~~~~~~~~~~~
 
 Finally, we assemble all the intermediate files into a monolithic HDF5
