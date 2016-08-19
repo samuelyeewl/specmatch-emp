@@ -94,7 +94,7 @@ class Spectrum(object):
             [fits.Column(name='s', format='D', array=self.s),
              fits.Column(name='w', format='D', array=self.w),
              fits.Column(name='serr', format='D', array=serr),
-             fits.Column(name='mask', format='L', array=self.mask)])
+             fits.Column(name='mask', format='B', array=self.mask)])
 
         hdulist = fits.HDUList([prihdu, tbhdu])
         hdulist.writeto(outpath, clobber=True)
