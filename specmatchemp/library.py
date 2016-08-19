@@ -390,7 +390,8 @@ class Library(object):
                            self.library_params, self.header, (minw, maxw),
                            self.param_mask, self.nso)
 
-    def plot(self, paramx, paramy, grouped=False, ptlabels=False, plt_kw={}):
+    def plot(self, paramx, paramy, grouped=False, marker='.',
+             ptlabels=False, plt_kw={}):
         """Create a plot of the library in parameter space
 
         Args:
@@ -406,10 +407,10 @@ class Library(object):
 
             for source in g.groups:
                 cut = self.library_params.ix[g.groups[source]]
-                plt.plot(cut[paramx], cut[paramy], '.', label=source)
+                plt.plot(cut[paramx], cut[paramy], marker, label=source)
         else:
             plt.plot(self.library_params[paramx], self.library_params[paramy],
-                     '.', **plt_kw)
+                     marker, **plt_kw)
 
         if ptlabels is not False:
             self.library_params.apply(lambda x: plots.annotate_point(x[paramx],
@@ -442,6 +443,9 @@ class Library(object):
         self.__it_counter = 0
 
         return self
+
+    def next(self):
+        return self.__next__()
 
     def __next__(self):
         """
