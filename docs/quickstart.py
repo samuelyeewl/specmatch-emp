@@ -63,7 +63,6 @@ fig.savefig('quickstart-library-selected-stars.png')
 
 
 
-
 # code-start-spectra-selected-stars
 from matplotlib.transforms import blended_transform_factory
 fig,ax = subplots(figsize=(8,4))
@@ -96,7 +95,8 @@ M_star = lib.pop(idx2)
 
 # code-start-read-spectrum-G
 from specmatchemp import spectrum
-G_spectrum = spectrum.read_hires_fits('../samples/rj59.1923.fits').cut(5130,5210)
+G_spectrum = spectrum.read_hires_fits('../samples/rj59.1923.fits').\
+             cut(5130,5210)
 G_spectrum.name = 'HD190406'
 # code-stop-read-spectrum-G
 
@@ -136,7 +136,7 @@ sm_M.plot_shifted_spectrum(wavlim=(5160,5200))
 fig.set_tight_layout(True)
 fig.savefig('quickstart-Mstar-shifts.png')
 
-
+print "Running brute-force match, G-star"
 # code-start-match-G
 sm_G.match()
 
@@ -153,7 +153,7 @@ axes[2].axvline(G_star[0]['feh'], color='k')
 fig.set_tight_layout(True)
 fig.savefig('quickstart-Gstar-chisquared-surface.png')
 
-
+print "Running linear combinations, G-star"
 # code-start-lincomb-G
 sm_G.lincomb()
 
@@ -165,7 +165,7 @@ print('Teff: {0:.0f}, Radius: {1:.2f}, [Fe/H]: {2:.2f}'.format(
     G_star[0]['Teff'], G_star[0]['radius'], G_star[0]['feh']))
 # code-stop-lincomb-G
 
-
+print "Running linear combinations, G-star"
 # code-start-plot-lincomb-G
 # Plot HR diagram
 fig1 = figure(figsize=(12,10))
@@ -187,7 +187,6 @@ fig1.set_tight_layout(True)
 fig1.savefig('quickstart-Gstar-lincomb-references.png')
 fig2.set_tight_layout(True)
 fig2.savefig('quickstart-Gstar-lincomb-spectra.png')
-
 
 
 # code-start-mstar
