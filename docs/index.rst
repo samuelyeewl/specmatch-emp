@@ -13,8 +13,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   quickstart
    installation
+   quickstart
+   build-library
    library
    spectrum
    specmatch
