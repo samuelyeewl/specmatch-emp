@@ -106,10 +106,12 @@ peak is then used to shift the entire spectrum.
 
 
 We can see the results of the shifting process. In this case, the code
-chose to use the NSO spectrum as the reference. We make use of the 
-`spectrum.Spectrum.plot()` method to quickly plot each of the unshifted,
-shifted and reference spectra.
-
+chose to use the NSO spectrum as the reference. We make use of the
+`spectrum.Spectrum.plot()` method to quickly plot each of the
+unshifted, shifted and reference spectra. Note that HIRES has
+overlapping orders so some spectral lines appear twice. In the final
+resampled spectrum, the small segments of overlapping orders are
+averaged.
 
 .. literalinclude:: quickstart.py
    :start-after: code-start-plot-shifts-G
@@ -123,7 +125,7 @@ We repeat the same process for the M star spectrum. In this case, we see
 that the code chose to shift the spectrum to a different reference: HD216899,
 which is another M dwarf in our library. We have used the convenience
 function :meth:`SpecMatch.plot_shifted_spectrum` to easily plot
-the shift results.
+the shift results. 
 
 
 .. literalinclude:: quickstart.py
