@@ -16,24 +16,32 @@ cross-correlating segments of spectrum. Cross-correlating spectra that
 are dissimilar from solar produce ratty peaks. We have implemented a
 bootstrapping approach to accomodate different spectral types. We
 establish a ladder of spectra seperated in effective temperature by
-~XXX K. These spectra are:
+500--1000 K. These spectra are:
 
 ::
 
-    ${SMEMP_WKDIR}/spectra/
-        rjXXX.fits
-	rjXXX.fits
+   $ ls ${SMEMP_WKDIR}/spectra/
+   nso.fits # solar spectrum, ~5800 K
+   rj55.1872.fits # ~4800 K
+   rj26.532.fits # ~3700 K
+   rj59.1926.fits # ~6200 K
 
-
-Shift the spectra by running ``python create_wavref.py`` which places
+Shift the spectra by running ``  `` which places
 spectra in this directory:
 
 ::
 
-    ${SMEMP_WKDIR}/spectra_restwav/
-        rjXXX_restwav.fits
-	rjXXX_restwav.fits
 
+   $ python specmatchemp/buildlib/shift_references.py
+   Shifting spectrum rj55.1872 onto reference nso
+   Shifting spectrum rj26.532 onto reference nso
+   Shifting spectrum rj59.1926 onto reference rj55.1872
+   
+   $ ls ${SMEMP_WKDIR}/shifted_spectra/
+   nso_adj.fits
+   rj26.532_adj.fits
+   rj55.1872_adj.fits
+   rj59.1926_adj.fits
 
 Build Table of Library Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -44,14 +52,32 @@ parameters into a master csv file. The library sources are
 heterogeneous, giving (some have logg while others give stellar
 radius). Missing values are given as nans.
 
-The missing values are filled in with Dartmouth isochrones. The once filled in, the parameters are stored in this file:
+The missing values are filled in with Dartmouth isochrones. The once
+filled in, the parameters are stored in this file:
 
 ::
 
-   ${SMEMP_WKDIR}/
+   ${SMEMP_WKDIR}/xxx.csv
 
 
+Shift Library Spectra onto Rest Wavelength Scale
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We shift the remainder of the library spectra onto the rest
+wavelength scale with the following command.
 
 
+::
 
+   $ script.py 
 
+Build HDF5 file
+~~~~~~~~~~~~~~~
+
+Finally, we assemble all the intermediate files into a monolithic HDF5
+file that contains the spectra and their associated parameters using
+the following script.
+
+::
+
+   $ script.py
