@@ -53,7 +53,9 @@ else:
     if not os.path.exists(os.path.dirname(LIBPATH)):
         os.mkdir(os.path.dirname(LIBPATH))
     if not os.path.exists(LIBPATH):
-        from six.moves import urllib
-        print("Downloading library.h5")
-        urllib.request.urlretrieve(liburl, LIBPATH, reporthook)
+        os.system("wget --no-check-certificate --output-document=${HOME}/.specmatchemp/library.h5 https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#")
+#        from six.moves import urllib
+#        print("Downloading library.h5")
+#        urllib.request.urlretrieve(liburl, LIBPATH, reporthook)
+
 
