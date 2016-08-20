@@ -356,6 +356,21 @@ class HiresSpectrum(Spectrum):
         plt.xlabel('Wavelength (Angstroms)')
         plt.ylabel('Flux')
 
+    def to_hdu(self):
+        """Creates a list of fits.ImageHDU to store HIRES spectrum.
+
+        Returns:
+            list of fits.ImageHDU:
+                l[0] = spectrum
+                l[1] = spectrum error
+                l[2] = wavelength
+        """
+        s_hdu = fits.ImageHDU(data=self.s, header=self.header)
+        serr_hdu = fits.ImageHDU(data=self.serr)
+        w_hdu = fits.ImageHDU(data=self.w)
+
+        return [s_hdu, serr_hdu, w_hdu]
+
 
 def read_fits(infile, wavlim=None):
     """Reads a spectrum from a fits file

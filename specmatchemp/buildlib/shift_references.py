@@ -14,10 +14,7 @@ from specmatchemp import spectrum
 from specmatchemp import shift
 
 # List of reference spectra, cps name, teff, and previous reference
-REFERENCES = [['nso', 'NSO', 5777, None],
-              ['rj55.1872', '202751', 4800, 'nso'],
-              ['rj26.532', '222368', 6200, 'nso'],
-              ['rj59.1926', '216899', 3700, 'rj55.1872']]
+from specmatchemp import SHIFT_REFERENCES as REFERENCES
 
 
 def main():
