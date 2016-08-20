@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+from argparse import ArgumentParser
+
+def main():
+    psr = ArgumentParser()
+    subpsr = psr.add_subparsers(title="subcommands", dest="subparser_name")
+
+    psr_shift = subpsr.add_parser("shift")
+    psr_shift.add_argument("obs", type=str, help="cps id of target spectrum")
+    
+    args = psr.parse_args()
+    if args.subparser_name=="shift":
+        obs = args.obs
+	bootstrap_shift(obs)
+
+if __name__=="__main__":
+   main()
