@@ -35,7 +35,7 @@ if on_rtd:
     'astropy.io', 'astropy.io.fits', 'astroquery.simbad',
     'isochrones', 'lmfit',
     'matplotlib', 'matplotlib.pyplot', 'matplotlib.gridspec',
-    'matplotlib.transforms', 'matplotlib.patches'
+    'matplotlib.transforms', 'matplotlib.patches',
     'scipy', 'scipy.interpolate', 'scipy.ndimage', 'scipy.ndimage.filters',
     'scipy.special', 'scipy.optimize']
     sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
