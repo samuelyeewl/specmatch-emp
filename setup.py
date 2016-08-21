@@ -30,7 +30,11 @@ else:
             "isochrones",
         ],
         include_package_data=True,
-        scripts=['bin/smemp']
+        entry_points={
+            'console_scripts': [
+                'smemp=specmatchemp.cli:main'
+            ],
+        },
     )
 
     # download library

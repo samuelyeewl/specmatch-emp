@@ -5,67 +5,11 @@ Shift a target spectrum onto a reference spectrum.
 """
 from __future__ import print_function
 
-import os.path
 import numpy as np
 from astropy.io import fits
 from scipy.optimize import least_squares
 
-from specmatchemp import SPECMATCHDIR
-from specmatchemp import SHIFT_REFERENCES
 from specmatchemp import spectrum
-
-
-def shift_spectrum(obs):
-    """Shift a target spectrum given an observation code.
-
-    Saves the shifted spectrum in a fits file.
-    """
-    targ_path = os.path.join(SPECMATCHDIR, 'spectra/r'+obs+'.fits')
-    targ_spec = spectrum.read_hires_fits(targ_path)
-
-    ref_specs = [spectrum.read_fits(os.path.join(SPECMATCHDIR,
-                'shifted_spectra/'+r+'_adj.fits')) for r in SHIFT_REFERENCES]
-
-    shift_data = {}
-
-    shifted = bootstrap_shift(targ_spec, ref_specs, store=shift_data)
-
-    prihdu = fits.PrimaryHDU(header=shifted.header)
-    shifted_hdu = shifted.to_hdu()
-    unshifted_hdus = targ_spec.to_hdu()
-
-    # save shift data
-    if len(shift_data) > 0:
-        col_list = []
-        num_orders = shift_data.pop('num_orders')
-        col_list.append(fits.Column(name='num_orders', format='J',
-                                    array=[num_orders]))
-
-        num_sects = []
-        for i in range(num_orders):
-            num_sects.append(shift_data.pop('order_{0:d}/num_sections'
-                                            .format(i)))
-        col_list.append(fits.Column(name='num_sects', format='J',
-                                    array=num_sects))
-        n_sec = max(num_sects)
-
-        for k in ['center_pix', 'lag', 'fit']:
-            col_list.append(fits.Column(name=k,
-                            format='{0:d}E'.format(n_sec),
-                            array=shift_data.pop(k)))
-
-        # Save individual fit data
-        for k in shift_data.keys():
-            col_list.append(fits.Column(name=k, format='D',
-                                        array=shift_data[k]))
-
-        shift_hdu = fits.BinTableHDU.from_columns(col_list)
-        shift_hdu.name = 'SHIFTDATA'
-
-    hdulist = fits.HDUList([prihdu, shifted_hdu, shift_hdu]+unshifted_hdus)
-
-    outpath = os.path.join(SPECMATCHDIR, 'shifted_spectra/r'+obs+'_adj.fits')
-    hdulist.writeto(outpath)
 
 
 def bootstrap_shift(targ, ref_list, store=None):
@@ -105,7 +49,7 @@ def bootstrap_shift(targ, ref_list, store=None):
     for i in range(len(ref_list)):
         ref = ref_list[i]
         shift_data = {}
-        shift.shift(targ_cut, ref, store=shift_data)
+        shift(targ_cut, ref, store=shift_data)
 
         # get correlation peaks
         num_sects = shift_data['order_0/num_sections']
@@ -476,3 +420,42 @@ def rescale_w(s, serr, w, m, w_ref):
     mnew = np.interp(w_ref, w, m).astype(bool)
 
     return snew, serrnew, mnew
+
+
+def shift_data_to_hdu(shift_data):
+    """Saves the shift data to a BinTableHDU.
+
+    Args:
+        shift_data (dict): Shift data output from shift()
+    """
+    col_list = []
+    num_orders = shift_data.pop('num_orders')
+    col_list.append(fits.Column(name='num_orders', format='J',
+                                array=[num_orders]))
+
+    num_sects = []
+    for i in range(num_orders):
+        num_sects.append(shift_data.pop('order_{0:d}/num_sections'
+                                        .format(i)))
+    col_list.append(fits.Column(name='num_sects', format='J',
+                                array=num_sects))
+    n_sec = max(num_sects)
+
+    for k in ['center_pix', 'lag', 'fit']:
+        col_list.append(fits.Column(name=k,
+                        format='{0:d}E'.format(n_sec),
+                        array=shift_data.pop(k)))
+
+    # Save individual fit data
+    for k in shift_data.keys():
+        if np.ndim(shift_data[k]) == 0:
+            arr = [shift_data[k]]
+        else:
+            arr = shift_data[k]
+        col_list.append(fits.Column(name=k, format='D',
+                                    array=arr))
+
+    shift_hdu = fits.BinTableHDU.from_columns(col_list)
+    shift_hdu.name = 'SHIFTDATA'
+
+    return shift_hdu

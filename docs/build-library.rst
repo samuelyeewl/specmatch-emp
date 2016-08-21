@@ -77,7 +77,7 @@ wavelength scale with the following command.
    $ script.py 
 
 Build Library HDF5 File
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Finally, we assemble all the intermediate files into a monolithic HDF5
 file that contains the spectra and their associated parameters using
