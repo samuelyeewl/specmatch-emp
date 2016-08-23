@@ -405,6 +405,8 @@ class SpecMatch(object):
         # ----------------------- Lincomb results -----------------------
         if self.num_best is not None:
             outfile['num_best'] = self.num_best
+        if self.coeffs is not None:
+            outfile['coeffs'] = self.coeffs
         if self.lincomb_regions is not None:
             outfile['lincomb_regions'] = self.lincomb_regions
         if len(self.lincomb_matches) > 0:
@@ -476,6 +478,9 @@ class SpecMatch(object):
         # ------------------------ Match results ------------------------
         if 'num_best' in infile:
             sm.num_best = infile['num_best'].value
+
+        if 'coeffs' in infile:
+            sm.coeffs = infile['coeffs'][:]
 
         if 'lincomb_regions' in infile:
             lincomb_regions = infile['lincomb_regions'][:]
@@ -714,6 +719,8 @@ class SpecMatch(object):
                 plt.plot(lag_arr[max_corr], xcorr[max_corr], 'ko')
 
         plt.legend(loc='upper left', fontsize='small')
+        plt.xlabel('Shift (pixels)')
+        plt.ylabel('Correlation')
 
     # ----------------------------- Match plots ----------------------------- #
     def plot_chi_squared_surface(self, region=0, num_best=None):
@@ -894,6 +901,7 @@ class SpecMatch(object):
             if zoom:
                 plots.set_tight_lims(self.match_results.head(num_best)[paramx],
                                      self.match_results.head(num_best)[paramy])
+
                 if verbose and self.coeffs is not None:
                     for i in range(self.num_best):
                         p = self.match_results.iloc[i]
@@ -905,28 +913,32 @@ class SpecMatch(object):
         plt.subplot(gs[0])
         _plot_ref_params('Teff', 'radius')
         if len(self.results) > 0:
-            plt.plot(self.results['Teff'], self.results['radius'], 's',
+            plt.plot(self.lincomb_results[region_num]['Teff'],
+                     self.lincomb_results[region_num]['radius'], 's',
                      color='purple', label='Derived Parameters')
         plots.label_axes('Teff', 'radius')
 
         plt.subplot(gs[1])
         _plot_ref_params('Teff', 'radius', zoom=True)
         if len(self.results) > 0:
-            plt.plot(self.results['Teff'], self.results['radius'], 's',
+            plt.plot(self.lincomb_results[region_num]['Teff'],
+                     self.lincomb_results[region_num]['radius'], 's',
                      color='purple', label='Derived Parameters')
         plots.label_axes('Teff', 'radius', rescale=False)
 
         plt.subplot(gs[2])
         _plot_ref_params('feh', 'radius')
         if len(self.results) > 0:
-            plt.plot(self.results['feh'], self.results['radius'], 's',
+            plt.plot(self.lincomb_results[region_num]['feh'],
+                     self.lincomb_results[region_num]['radius'], 's',
                      color='purple', label='Derived Parameters')
         plots.label_axes('feh', 'radius')
 
         plt.subplot(gs[3])
         _plot_ref_params('feh', 'radius', zoom=True)
         if len(self.results) > 0:
-            plt.plot(self.results['feh'], self.results['radius'], 's',
+            plt.plot(self.lincomb_results[region_num]['feh'],
+                     self.lincomb_results[region_num]['radius'], 's',
                      color='purple', label='Derived Parameters')
         plots.label_axes('feh', 'radius', rescale=False)
 

@@ -10,6 +10,7 @@ from astropy.io import fits
 from scipy.optimize import least_squares
 
 from specmatchemp import spectrum
+from specmatchemp.utils import utils
 
 
 def bootstrap_shift(targ, ref_list, store=None):
@@ -226,10 +227,20 @@ def shift(targ, ref, store=None):
         lag_data.append(lags)
         center_pix_data.append(center_pix)
         fitted = fit[0]*center_pix+fit[1]
-        fit_data.append(fitted)
+        fit_data.append(np.array(fitted))
 
     # save diagnostic data
     if store is not None:
+        # convert jagged array to rectangular one
+        lengths = []
+        for l in lag_data:
+            lengths.append(len(l))
+        ml = max(lengths)
+
+        lag_data = [utils.extend_array(l, ml) for l in lag_data]
+        center_pix_data = [utils.extend_array(l, ml) for l in center_pix_data]
+        fit_data = [utils.extend_array(l, ml) for l in fit_data]
+
         store['lag'] = np.asarray(lag_data)
         store['center_pix'] = np.asarray(center_pix_data)
         store['fit'] = np.asarray(fit_data)

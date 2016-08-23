@@ -517,7 +517,7 @@ class MatchLincomb(Match):
         for i in range(self.num_refs):
             grp = outfile['references'].create_group('{0:d}'.format(i))
             self.refs[i].to_hdf(grp)
-
+        outfile['ref_chisq'] = self.ref_chisq
         outfile['vsini'] = self.vsini
 
         # Save modified
@@ -554,7 +554,10 @@ class MatchLincomb(Match):
         for i in range(num_refs):
             spec = spectrum.read_hdf(infile['references/{0:d}'.format(i)])
             ref_specs.append(spec)
-
+        if 'ref_chisq' in infile:
+            ref_chisq = infile['ref_chisq'][:]
+        else:
+            ref_chisq = None
         vsini = infile['vsini'][:]
 
         # Read modified
@@ -567,8 +570,8 @@ class MatchLincomb(Match):
         best_chisq = infile['best_chisq'].value
 
         mt = cls(target, ref_specs, vsini)
-        print(mt.refs[0].s - mt.refs_broadened[0].s)
         mt.load_params(best_params)
+        mt.ref_chisq = ref_chisq
 
         if not np.allclose(modified.s, mt.modified.s) \
                 or not np.allclose(spl, mt.spl) \

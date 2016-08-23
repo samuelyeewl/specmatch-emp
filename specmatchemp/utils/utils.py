@@ -74,3 +74,24 @@ def calc_residuals(s1, w1, s2, w2):
     resid = s1_masked - s2_masked
 
     return resid, w_masked
+
+
+def extend_array(arr, length, fill=np.nan):
+    """Extends a numpy array to the given length, filling with provided fill
+    value.
+
+    Args:
+        arr (np.ndarray): Array
+        length (int): New length to extend to
+        fill (float, optional): Fill value
+    Returns:
+        np.ndarray
+    """
+    new_arr = np.empty(length)
+    if length < len(arr):
+        new_arr[0:length] = arr[0:length]
+    else:
+        new_arr[0:len(arr)] = arr
+        new_arr[len(arr):-1] = fill
+
+    return new_arr
