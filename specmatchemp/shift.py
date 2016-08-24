@@ -470,3 +470,29 @@ def shift_data_to_hdu(shift_data):
     shift_hdu.name = 'SHIFTDATA'
 
     return shift_hdu
+
+
+def save_shift_to_fits(outpath, shifted, unshifted, shift_data):
+    """Saves the complete shift data to a FITS file.
+
+    Args:
+        outpath (str): Path to save output file
+        shifted (Spectrum): Shifted spectrum
+        unshifted (HiresSpectrum): Raw spectrum
+        shift_data (dict): Shift data
+    """
+    # Create primary HDU
+    prihdu = fits.PrimaryHDU(header=shifted.header)
+    # Save shifted spectrum
+    shifted_hdu = shifted.to_hdu()
+
+    # Save unshifted spectrum
+    unshifted_hdus = unshifted.to_hdu()
+
+    # Save shift data
+    shift_data_hdu = shift_data_to_hdu(shift_data)
+
+    hdulist = fits.HDUList([prihdu, shifted_hdu, shift_data_hdu] +
+                           unshifted_hdus)
+
+    hdulist.writeto(outpath)

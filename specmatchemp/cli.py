@@ -11,8 +11,6 @@ from argparse import ArgumentParser
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 
-from astropy.io import fits
-
 from specmatchemp import SPECMATCHDIR
 from specmatchemp import SHIFT_REFERENCES
 from specmatchemp import spectrum
@@ -24,6 +22,9 @@ def shift_spectrum(args):
     """Shift a target spectrum given an observation code.
 
     Saves the shifted spectrum in a fits file.
+
+    Returns:
+        shifted, unshifted, shift_data
     """
     # if a different directory is provided, copy the file into specmatchemp
     # working directory
@@ -44,16 +45,8 @@ def shift_spectrum(args):
     shifted = shift.bootstrap_shift(targ_spec, ref_specs, store=shift_data)
 
     # Save shifted spectrum
-    prihdu = fits.PrimaryHDU(header=shifted.header)
-    shifted_hdu = shifted.to_hdu()
-    unshifted_hdus = targ_spec.to_hdu()
-    shift_data_hdu = shift.shift_data_to_hdu(shift_data)
-
-    hdulist = fits.HDUList([prihdu, shifted_hdu, shift_data_hdu] +
-                           unshifted_hdus)
-
     outpath = os.path.join(shiftedspecdir, 'r'+args.obs+'_adj.fits')
-    hdulist.writeto(outpath, clobber=True)
+    shift.save_shift_to_fits(outpath, shifted, targ_spec, shift_data)
 
     # Generate plots
     if args.plots:
@@ -85,6 +78,8 @@ def shift_spectrum(args):
             plt.tight_layout()
             pdf.savefig(fig)
             plt.close()
+
+    return shifted, targ_spec, shift_data
 
 
 def main():

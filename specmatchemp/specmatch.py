@@ -123,44 +123,11 @@ class SpecMatch(object):
                 idx = self.lib.get_index(obs)
                 shift_specs.append(self.lib.get_spectrum(idx))
 
-        # Try to use the Mg triplet to determine which reference spectrum is
-        # best.
-        if isinstance(self.target_unshifted, HiresSpectrum) \
-                and self.target_unshifted.w.ndim == 2:
-            # In the HIRES Echelle object, the Mgb triplet is in order 2
-            ref_order = 2
-            targ = self.target_unshifted
-            targ_cut = HiresSpectrum(targ.w[ref_order], targ.s[ref_order],
-                                     targ.serr[ref_order])
-        else:
-            # If we already have a flattened spectrum, use the 5120-5200 A
-            # region.
-            targ_cut = self.target_unshifted.cut(5120, 5200)
-            if len(targ_cut) == 0:
-                # if 5120-5200 A region is missing, use the entire spectrum
-                targ_cut = self.target_unshifted
+        # Use the bootstrap shift approach
+        self.target = shift.bootstrap_shift(self.target_unshifted, shift_specs,
+                                            store=self.shift_data)
 
-        # Find the height of the correlation peak with each reference.
-        median_peak = []
-        for ref_spec in shift_specs:
-            shift_data = {}
-            shift.shift(targ_cut, ref_spec, store=shift_data)
-
-            # get correlation peaks
-            num_sects = shift_data['order_0/num_sections']
-            peaks = []
-            for sect in range(num_sects):
-                xcorr = shift_data['order_0/sect_{0:d}/xcorr'.format(sect)]
-                peaks.append(max(xcorr))
-
-            median_peak.append(np.median(peaks))
-
-        best_ref = shift_specs[np.argmax(median_peak)]
-
-        # Now shift to the best reference
-        self.target = shift.shift(self.target_unshifted, best_ref,
-                                  store=self.shift_data)
-        self.shift_ref = best_ref
+        self.shift_ref = shift_specs[self.shift_data['shift_reference']]
 
         self._shifted = True
         return self.target
