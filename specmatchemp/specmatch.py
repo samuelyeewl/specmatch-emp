@@ -65,7 +65,7 @@ class SpecMatch(object):
             Wavelength limits to perform matching on.
     """
 
-    def __init__(self, target, lib, wavlim=None):
+    def __init__(self, target, lib, wavlim=(5100,5900)):
         if wavlim is None:
             self.wavlim = lib.wavlim
         else:
