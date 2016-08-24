@@ -62,7 +62,7 @@ filled in, the parameters are stored in this file:
 
 ::
 
-   ${SMEMP_WKDIR}/xxx.csv
+   ${SMEMP_WKDIR}/libstars.csv
 
 
 Shift Library Spectra onto Rest Wavelength Scale
@@ -81,8 +81,11 @@ Build Library HDF5 File
 
 Finally, we assemble all the intermediate files into a monolithic HDF5
 file that contains the spectra and their associated parameters using
-the following script.
+the following script. This requires that the parameter table is contained
+in ${SMEMP_WKDIR}/libstars.csv, and their corresponding spectra, specified
+in the column lib_obs, are located as fits files in
+${SMEMP_WKDIR}/shifted_spectra/. 
 
 ::
 
-   $ script.py
+   $ combine_library.py
