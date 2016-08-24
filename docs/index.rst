@@ -8,6 +8,20 @@ Welcome to specmatch-emp's documentation!
 
 SpecMatch-Emp is a package to extract stellar parameters from their spectra, by matching the target spectrum against empirically observed spectra from stars with known properties.
 
+
+Basic Usage
+~~~~~~~~~~~
+The most basic method of using SpecMatch-Emp is to run the command line script:
+
+::
+   smemp specmatch rjXXX.XXXX.fits
+
+This performs the shifting and matching process, prints the results and
+saves it into a .h5 file which can be read by ``SpecMatch.read_hdf()`` in 
+python.
+
+For more details, check out the Quickstart page.
+
 Contents:
 
 .. toctree::
