@@ -86,7 +86,8 @@ class Library(object):
             self.library_params = pd.DataFrame(columns=Library.LIB_COLS)
             self.wav = wav
             self.library_spectra = np.empty((0, 3, len(wav)))
-            self.header = {'date_created': str(datetime.date.today())}
+            self.header = {'date_created': _timestamp(),
+                           'last_modified': _timestamp()}
             self.wavlim = wavlim if wavlim is not None else (wav[0], wav[-1])
             self.nso = nso
             return
@@ -101,7 +102,8 @@ class Library(object):
             self.library_params = library_params
             self.wav = None
             self.library_spectra = np.empty((0, 3, len(wav)))
-            self.header = {'date_created': str(datetime.date.today())}
+            self.header = {'date_created': _timestamp(),
+                           'last_modified': _timestamp()}
             self.wavlim = None
             self.nso = nso
             return
@@ -134,7 +136,9 @@ class Library(object):
         self.library_params = library_params
         self.library_spectra = library_spectra
         self.header = header
-        header['date_created'] = str(datetime.date.today())
+        header['date_created'] = _timestamp()
+        header['last_modified'] = _timestamp()
+
         self.wavlim = wavlim if wavlim is not None else (wav[0], wav[-1])
         self.param_mask = param_mask
         self.nso = nso
@@ -156,60 +160,123 @@ class Library(object):
         return Library(wav, library_spectra, library_params, header,
                        wavlim, param_mask, nso)
 
-    def append(self, params, spectrum=None):
+    def append(self, params, spectra=None, param_mask=None):
         """Adds spectrum and associated stellar parameters into library.
 
         Args:
-            params (pd.Series): A row to be added to the library array. It
-                should have the fields specified in Library.LIB_COLS.
-            spectrum (Spectrum): Spectrum object. Spectrum should have been
-                shifted and interpolated onto the same wavelength scale as
-                the library.
+            params (pd.Series or pd.DataFrame): Row(s) to be added to the
+                parameter table. It should have the fields specified in
+                Library.LIB_COLS.
+            spectra (Spectrum, list of Spectrum, or np.ndarray):
+                Spectra to be added.
+                - If Spectrum objects are provided, they
+                will be interpolated onto the library wavelength scale if not
+                already on it.
+                - If np.ndarray is provided, it must be of shape
+                (len(params), 3, len(library.wav)) and should have already
+                been shifted onto the library wavelength scale.
+            param_mask (pd.Series or pd.DataFrame, optional):
+                Parameter mask. Must be same length as params.
         """
-        if self.library_spectra is None and spectrum is not None:
-            raise ValueError("Error: Cannot append to library with no spectra")
+        # Input argument checking
+        if isinstance(params, pd.Series):
+            # convert series to dataframe
+            params = pd.DataFrame(params).T
+        elif not isinstance(params, pd.DataFrame):
+            raise TypeError("params is not a pd.Series or pd.DataFrame")
 
-        # ensure that parameter row has the right columns
+        # Check DataFrame columns
+        # Missing columns will be filled with NaN
         for col in params.columns:
             if col not in Library.LIB_COLS:
                 raise KeyError("{0} is not an allowed column".format(col))
 
-        # ensure that the provided spectrum has the same number of elements
-        # as the wavelength array
-        if len(spectrum.w) != len(self.wav) \
-                or not np.allclose(spectrum.w, self.wav):
-            raise ValueError("Spectrum should be shifted and interpolated " +
-                             "onto library wavelength scale.")
+        if spectra is not None:
+            if self.library_spectra is None:
+                raise ValueError("Library has no spectra")
+            # Check spectra
+            if isinstance(spectra, spectrum.Spectrum):
+                spectra = [spectra]
+            # Make sure same number of spectra as parameters
+            if len(spectra) != len(params):
+                raise ValueError("Different number of spectra and parameters")
+            if isinstance(spectra, np.ndarray):
+                if np.shape(spectra)[1] != 3 \
+                        or np.shape(spectra)[2] != self.wav:
+                    raise ValueError("spectra should be an np.ndarray of " +
+                                     "shape ({0:d}, 3, {1:d})"
+                                     .format(len(params), len(self.wav)))
+        else:
+            if self.library_spectra is not None:
+                raise ValueError("Error: No spectrum provided")
 
-        # add new star to library
-        params.lib_index = len(self.library_spectra)
-        self.library_params = pd.concat((self.library_params, params),
-                                        ignore_index=True)
-        if spectrum is not None:
-            new_spec = [spectrum.s, spectrum.serr, spectrum.mask]
-            self.library_spectra = np.vstack((self.library_spectra, new_spec))
+        # Check param_mask
+        if param_mask is not None:
+            if isinstance(param_mask, pd.Series):
+                param_mask = pd.DataFrame(param_mask).T
+            elif not isinstance(param_mask, pd.DataFrame):
+                raise TypeError("param_mask is not pd.Series or pd.DataFrame")
+
+            if len(param_mask) != len(params):
+                raise ValueError("param_mask not the same length as params")
+
+            for col in param_mask.columns:
+                if col not in self.param_mask.columns:
+                    raise ValueError(col + " is not an allowed column")
+
+        # Finally, append spectra
+        if spectra is not None:
+            cur_length = len(self.library_spectra)
+            params['lib_obs'] = np.arange(cur_length, cur_length+len(spectra))
+
+            if isinstance(spectra, np.ndarray):
+                self.library_spectra = np.vstack((self.library_spectra,
+                                                  spectra))
+            else:
+                for spec in spectra:
+                    if not spec.on_scale(self.wav):
+                        spec = spec.rescale(self.wav)
+                    new_spec = [spec.s, spec.serr, spec.mask]
+                    self.library_spectra = np.vstack((self.library_spectra,
+                                                      new_spec))
+        # Append params
+        self.library_params = pd.concat((self.library_params, params))
+        # Append param_mask
+        self.param_mask = pd.concat((self.param_mask, params))
+
         self.library_params.set_index('lib_index', inplace=True, drop=False)
+        self.header['last_modified'] = _timestamp()
 
-    def remove(self, index):
+    def remove(self, indices):
         """Removes the spectrum and parameters with the given index from
         the library.
 
         Args:
             index (int of array of ints): Indices of spectra to remove.
         """
-        if not self.__contains__(index):
-            raise KeyError
+        if isinstance(indices, int):
+            indices = [indices]
+
+        # remove None
+        indices = [index for index in indices if index is not None]
+        indices.sort()
+
+        for index in indices:
+            if not self.__contains__(index):
+                raise KeyError("Library does not contain {0}".format(index))
 
         if self.library_spectra is not None:
-            self.library_spectra = np.delete(self.library_spectra, index,
+            self.library_spectra = np.delete(self.library_spectra, indices,
                                              axis=0)
-        self.library_params = self.library_params[self.library_params.
-                                                  lib_index != index]
+        self.library_params = self.library_params.drop(indices)
 
         # reset index
-        self.library_params.lib_index = self.library_params.lib_index. \
-            apply(lambda i: i - 1 if i > index else i)
+        for index in indices:
+            self.library_params['lib_index'] = self.library_params.lib_index.\
+                apply(lambda i: i-1 if i > index else i)
         self.library_params.set_index('lib_index', inplace=True, drop=False)
+
+        self.header['last_modified'] = _timestamp()
 
     def pop(self, index):
         """Removes the spectrum and parameters with the given index from the library.
@@ -235,39 +302,57 @@ class Library(object):
         else:
             return params
 
-    def get_index(self, searchstr):
+    def get_index(self, searchlist):
         """Searches the library for the given search string. Checks columns
         lib_obs, cps_name, source_name in order.
 
         Args:
-            searchstr (str): String to search for.
+            searchlist (str or list of str): String to search for.
 
         Returns:
             int: Library index of the found star.
             Returns None if no object found.
         """
-        pattern = '^' + searchstr + '$'
-        lib_params = self.library_params
-        # Search columns in order
-        res = lib_params[lib_params.lib_obs.str.match(pattern)]
-        if len(res) == 1:
-            return res.iloc[0].lib_index
-        elif len(res) > 1:
-            return np.array(res.iloc[:].lib_index)
+        if isinstance(searchlist, str):
+            searchlist = [searchlist]
 
-        res = lib_params[lib_params.cps_name.str.match(pattern)]
-        if len(res) == 1:
-            return res.iloc[0].lib_index
-        elif len(res) > 1:
-            return np.array(res.iloc[:].lib_index)
+        indices = []
+        for searchstr in searchlist:
+            pattern = '^' + searchstr + '$'
+            lib_params = self.library_params
+            # Search columns in order
+            res = lib_params[lib_params.lib_obs.str.match(pattern)]
+            if len(res) == 1:
+                indices.append(res.iloc[0].lib_index)
+                continue
+            elif len(res) > 1:
+                indices.append(np.array(res.iloc[:].lib_index))
+                continue
 
-        res = lib_params[lib_params.source_name.str.match(pattern)]
-        if len(res) == 1:
-            return res.iloc[0].lib_index
-        elif len(res) > 1:
-            return np.array(res.iloc[:].lib_index)
+            res = lib_params[lib_params.cps_name.str.match(pattern)]
+            if len(res) == 1:
+                indices.append(res.iloc[0].lib_index)
+                continue
+            elif len(res) > 1:
+                indices.append(np.array(res.iloc[:].lib_index))
+                continue
 
-        return None
+            res = lib_params[lib_params.source_name.str.match(pattern)]
+            if len(res) == 1:
+                indices.append(res.iloc[0].lib_index)
+                continue
+            elif len(res) > 1:
+                indices.append(np.array(res.iloc[:].lib_index))
+                continue
+
+            # Pattern was not found
+            indices.append(None)
+
+        self.header['last_modified'] = _timestamp()
+        if len(indices) == 1:
+            return indices[0]
+        else:
+            return indices
 
     def to_hdf(self, path):
         """
@@ -567,3 +652,7 @@ def read_hdf(path=None, wavlim='all'):
     lib = Library(wav, library_spectra, library_params, header=header,
                   wavlim=wavlim, param_mask=param_mask, nso=nso)
     return lib
+
+
+def _timestamp():
+    return '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())

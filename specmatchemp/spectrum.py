@@ -194,6 +194,27 @@ class Spectrum(object):
         return type(self)(w, s_extend, serr_extend, mask_extend,
                           name=self.name, attrs=self.attrs.copy())
 
+    def rescale(self, w):
+        """Puts the spectrum onto a new wavelength scale, interpolating between
+        points if necessary. Places np.nan for points beyond existing range.
+
+        Args:
+            w (np.ndarray): New wavelength scale.
+        """
+        snew = np.interp(w, self.w, self.s, left=np.nan, right=np.nan)
+        serrnew = np.interp(w, self.w, self.serr, left=np.nan, right=np.nan)
+        masknew = np.interp(w, self.w, self.mask, left=0, right=0).astype(bool)
+        return type(self)(w, snew, serrnew, masknew,
+                          name=self.name, attrs=self.attrs.copy())
+
+    def on_scale(self, w):
+        """Checks if spectrum is on the given wavelength scale
+
+        Args:
+            w (np.ndarray): Wavelength scale to check against
+        """
+        return np.allclose(w, self.w)
+
     def plot(self, offset=0, label='_nolegend_', showmask=False,
              plt_kw={'color': 'RoyalBlue'}, text='', text_kw={}):
         """Plots the spectrum.

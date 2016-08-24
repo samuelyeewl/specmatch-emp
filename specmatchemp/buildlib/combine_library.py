@@ -10,7 +10,6 @@ from __future__ import print_function
 import os
 from argparse import ArgumentParser
 
-import h5py
 import numpy as np
 import pandas as pd
 
@@ -22,9 +21,8 @@ from specmatchemp import spectrum
 WAVLIM = (4990, 6410)
 
 
-def main(paramdir, specdir, outdir):
-    library_params = pd.read_csv(os.path.join(paramdir, 'libstars.csv'),
-                                 index_col=0)
+def main(append, parampath, specdir, outdir):
+    library_params = pd.read_csv(parampath, index_col=0)
 
     library_params['lib_index'] = None
     library_params['lib_obs'] = None
@@ -66,7 +64,14 @@ def main(paramdir, specdir, outdir):
         library_params.loc[idx, 'snr'] = np.nanpercentile(1/spec.serr, 90)
 
     # Read in parameter mask
-    param_mask = pd.read_csv(os.path.join(paramdir, 'libstars_mask.csv'))
+    maskpath = parampath[:-4] + '_mask.csv'
+    if os.path.exists(maskpath):
+        param_mask = pd.read_csv(maskpath, index_col=0)
+    else:
+        param_mask = pd.DataFrame()
+        for p in library.Library.STAR_PROPS:
+            param_mask[p] = np.isfinite(library_params[p])
+            param_mask['u_'+p] = np.isfinite(library_params[p])
 
     # Drop stars with missing spectra
     missing_spectra = pd.isnull(library_params.lib_obs)
@@ -74,21 +79,28 @@ def main(paramdir, specdir, outdir):
     library_params.drop(missing_indices, inplace=True)
     param_mask.drop(missing_indices, inplace=True)
 
-    lib = library.Library(wav, spectra, library_params, wavlim=WAVLIM,
-                          param_mask=param_mask, nso=nso)
+    libpath = os.path.join(outdir, 'library.h5')
+    if append:
+        lib = library.read_hdf(libpath)
+        lib.append(library_params, spectra, param_mask)
+    else:
+        lib = library.Library(wav, spectra, library_params, wavlim=WAVLIM,
+                              param_mask=param_mask, nso=nso)
+        # Get allowed shift references
+        shift_obs = [row[0] for r in SHIFT_REFERENCES]
+        lib.header['shift_refs'] = shift_obs
 
-    # Get allowed shift references
-    shift_obs = [row[0] for r in SHIFT_REFERENCES]
-    lib.header['shift_refs'] = shift_obs
-
-    outpath = os.path.join(outdir, 'library.h5')
-    lib.to_hdf(outpath)
+    # Save library
+    lib.to_hdf(libpath)
 
 
 if __name__ == '__main__':
     psr = ArgumentParser(description="Combine the library parameters and " +
                          "spectra into a library object.")
-    psr.add_argument('-p', '--paramdir', type=str, default=SPECMATCHDIR,
+    psr.add_argument('-a', '--append', action='store_true',
+                     help="Append to an existing library in outdir.")
+    psr.add_argument('-p', '--parampath', type=str,
+                     default=os.path.join(SPECMATCHDIR, 'libstars.csv'),
                      help="Directory to check for parameter file")
     psr.add_argument('-s', '--specdir', type=str,
                      default=os.path.join(SPECMATCHDIR, 'shifted_spectra/'),
@@ -97,4 +109,4 @@ if __name__ == '__main__':
                      help="Directory to save output")
     args = psr.parse_args()
 
-    main(args.paramdir, args.specdir, args.outdir)
+    main(args.append, args.parampath, args.specdir, args.outdir)

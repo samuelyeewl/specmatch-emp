@@ -2,9 +2,9 @@
 """
 @filename read_catalogs.py
 
-Builds the parameter table of the SpecMatch-Emp library by reading in the various catalogs, checking
-for spectra in the CPS database.
-Saves the parameters as a DataFrame in 
+Builds the parameter table of the SpecMatch-Emp library by reading in the
+various catalogs, checking for spectra in the CPS database.
+Saves the parameters as a DataFrame in a csv file.
 """
 
 from __future__ import print_function
@@ -12,7 +12,6 @@ from __future__ import print_function
 import os
 from argparse import ArgumentParser
 
-import numpy as np
 import pandas as pd
 
 from astropy.io import ascii
@@ -38,8 +37,6 @@ CPS_SPECTRA_DIR = "iodfitsdb/"
 
 NOSPECTRA_COLS = ['name', 'source']
 
-MIN_PERCENTILE = 0.05
-MAX_PERCENTILE = 0.95
 
 def read_brewer(catalogdir, cps_list):
     """Read in Brewer (2016) catalog
@@ -82,6 +79,7 @@ def read_brewer(catalogdir, cps_list):
 
     return stars, nospectra
 
+
 def read_mann(catalogdir, cps_list):
     """Read in Mann (2015) catalog
 
@@ -93,7 +91,8 @@ def read_mann(catalogdir, cps_list):
         stars (pd.DataFrame): Stars in source which have CPS spectra
         nospec (pd.DataFrame): Stars in source which don't have CPS spectra
     """
-    mann_data = ascii.read(os.path.join(catalogdir, MANN_FILENAME), readme=os.path.join(catalogdir, MANN_README))
+    mann_data = ascii.read(os.path.join(catalogdir, MANN_FILENAME),
+                           readme=os.path.join(catalogdir, MANN_README))
 
     mann_data = mann_data[~mann_data['CNS3'].mask]
 
@@ -117,7 +116,8 @@ def read_mann(catalogdir, cps_list):
             new_row['source'] = 'Mann'
             new_row['source_name'] = row['CNS3']
             # Calculate logg from radius and mass
-            logg, u_logg = utils.calc_logg(row['R'], row['e_R'], row['M'], row['e_M'])
+            logg, u_logg = utils.calc_logg(row['R'], row['e_R'],
+                                           row['M'], row['e_M'])
             new_row['logg'] = logg
             new_row['u_logg'] = u_logg
 
@@ -129,6 +129,7 @@ def read_mann(catalogdir, cps_list):
             nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
 
     return stars, nospectra
+
 
 def read_vonbraun(catalogdir, cps_list):
     """Read in Von Braun (2013) catalog
@@ -170,6 +171,7 @@ def read_vonbraun(catalogdir, cps_list):
 
     return stars, nospectra
 
+
 def read_huber(catalogdir, cps_list):
     """Read in Huber (2013) catalog
 
@@ -181,7 +183,8 @@ def read_huber(catalogdir, cps_list):
         stars (pd.DataFrame): Stars in source which have CPS spectra
         nospec (pd.DataFrame): Stars in source which don't have CPS spectra
     """
-    huber_data = ascii.read(os.path.join(catalogdir, HUBER_FILENAME), readme=os.path.join(catalogdir, HUBER_README))
+    huber_data = ascii.read(os.path.join(catalogdir, HUBER_FILENAME),
+                            readme=os.path.join(catalogdir, HUBER_README))
     huber_data = huber_data[huber_data['f_KOI'] != '*']
 
     stars = pd.DataFrame(columns=Library.LIB_COLS)
@@ -204,7 +207,8 @@ def read_huber(catalogdir, cps_list):
             new_row['source'] = 'Huber'
             new_row['source_name'] = 'KOI'+str(row['KOI'])
             # Calculate logg from radius and mass
-            logg, u_logg = utils.calc_logg(row['Rad'], row['e_Rad'], row['Mass'], row['e_Mass'])
+            logg, u_logg = utils.calc_logg(row['Rad'], row['e_Rad'],
+                                           row['Mass'], row['e_Mass'])
             new_row['logg'] = logg
             new_row['u_logg'] = u_logg
 
@@ -216,6 +220,7 @@ def read_huber(catalogdir, cps_list):
             nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
 
     return stars, nospectra
+
 
 def read_ramirez(catalogdir, cps_list):
     """Read in Ramirez (2005) catalog
@@ -254,8 +259,9 @@ def read_ramirez(catalogdir, cps_list):
             new_row['name'] = row['name']
             new_row['source'] = 'Ramirez'
             nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
-        
+
     return stars, nospectra
+
 
 def read_casagrande(catalogdir, cps_list):
     """Read in Casagrande (2006) catalog
@@ -277,7 +283,8 @@ def read_casagrande(catalogdir, cps_list):
         query_result = cpsutils.find_spectra(row['Name'], cps_list)
         if not query_result.empty:
             # Calculate stellar radius from angular diameter and parallax
-            radius, u_radius = utils.calc_radius(row['Plx'], row['e_Plx'], row['Diam'], row['e_Diam'])
+            radius, u_radius = utils.calc_radius(row['Plx'], row['e_Plx'],
+                                                 row['Diam'], row['e_Diam'])
             # Exclude stars with u_Teff > 100 or u_R/R > 0.07
             if row['e_Teff'] > 100 or u_radius/radius > 0.07:
                 continue
@@ -298,8 +305,9 @@ def read_casagrande(catalogdir, cps_list):
             new_row['name'] = row['Name']
             new_row['source'] = 'Casagrande'
             nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
-        
+
     return stars, nospectra
+
 
 def read_bruntt(catalogdir, cps_list):
     """Read in Bruntt (2012) catalog
@@ -312,7 +320,8 @@ def read_bruntt(catalogdir, cps_list):
         stars (pd.DataFrame): Stars in source which have CPS spectra
         nospec (pd.DataFrame): Stars in source which don't have CPS spectra
     """
-    b_data = ascii.read(os.path.join(catalogdir, BRUNTT_FILENAME), readme=os.path.join(catalogdir, BRUNTT_README))
+    b_data = ascii.read(os.path.join(catalogdir, BRUNTT_FILENAME),
+                        readme=os.path.join(catalogdir, BRUNTT_README))
 
     stars = pd.DataFrame(columns=Library.LIB_COLS)
     nospectra = pd.DataFrame(columns=NOSPECTRA_COLS)
@@ -341,6 +350,7 @@ def read_bruntt(catalogdir, cps_list):
             nospectra = nospectra.append(pd.Series(new_row), ignore_index=True)
 
     return stars, nospectra
+
 
 def read_kdwarfs(catalogdir, cps_list):
     """Read in K-Dwarf catalog"""
@@ -379,6 +389,7 @@ def read_kdwarfs(catalogdir, cps_list):
 
     return stars, nospectra
 
+
 def read_catalogs(catalogdir, cpspath):
     """Reads in the catalogs
 
@@ -404,61 +415,72 @@ def read_catalogs(catalogdir, cpspath):
     brewer_stars, brewer_nospec = read_brewer(catalogdir, cps_list)
     stars = pd.concat((stars, brewer_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(brewer_nospec)
-    print("\t{0:d} stars with spectra from Brewer catalog".format(len(brewer_stars)))
+    print("\t{0:d} stars with spectra from Brewer catalog"
+          .format(len(brewer_stars)))
 
     print("Reading Mann catalog")
     mann_stars, mann_nospec = read_mann(catalogdir, cps_list)
     stars = pd.concat((stars, mann_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(mann_nospec)
-    print("\t{0:d} stars with spectra from Mann catalog".format(len(mann_stars)))
+    print("\t{0:d} stars with spectra from Mann catalog"
+          .format(len(mann_stars)))
 
     print("Reading von Braun catalog")
     vonbraun_stars, vonbraun_nospec = read_vonbraun(catalogdir, cps_list)
     stars = pd.concat((stars, vonbraun_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(vonbraun_nospec)
-    print("\t{0:d} stars with spectra from von Braun catalog".format(len(vonbraun_stars)))
+    print("\t{0:d} stars with spectra from von Braun catalog"
+          .format(len(vonbraun_stars)))
 
     # print("Reading Huber catalog")
     # huber_stars, huber_nospec = read_huber(catalogdir, cps_list)
     # stars = pd.concat((stars, huber_stars), ignore_index=True)
     # stars_nospectra = stars_nospectra.append(huber_nospec)
-    # print("\t{0:d} stars with spectra from Huber catalog".format(len(huber_stars)))
+    # print("\t{0:d} stars with spectra from Huber catalog"
+    #       .format(len(huber_stars)))
 
-    print("Reading Ramirez catalog")
-    ramirez_stars, ramirez_nospec = read_ramirez(catalogdir, cps_list)
-    stars = pd.concat((stars, ramirez_stars), ignore_index=True)
-    stars_nospectra = stars_nospectra.append(ramirez_nospec)
-    print("\t{0:d} stars with spectra from Ramirez catalog".format(len(ramirez_stars)))
+    # print("Reading Ramirez catalog")
+    # ramirez_stars, ramirez_nospec = read_ramirez(catalogdir, cps_list)
+    # stars = pd.concat((stars, ramirez_stars), ignore_index=True)
+    # stars_nospectra = stars_nospectra.append(ramirez_nospec)
+    # print("\t{0:d} stars with spectra from Ramirez catalog"
+    #       .format(len(ramirez_stars)))
 
-    print("Reading Casagrande catalog")
-    c_stars, c_nospec = read_casagrande(catalogdir, cps_list)
-    stars = pd.concat((stars, c_stars), ignore_index=True)
-    stars_nospectra = stars_nospectra.append(c_nospec)
-    print("\t{0:d} stars with spectra from Casagrande catalog".format(len(c_stars)))
+    # print("Reading Casagrande catalog")
+    # c_stars, c_nospec = read_casagrande(catalogdir, cps_list)
+    # stars = pd.concat((stars, c_stars), ignore_index=True)
+    # stars_nospectra = stars_nospectra.append(c_nospec)
+    # print("\t{0:d} stars with spectra from Casagrande catalog"
+    #       .format(len(c_stars)))
 
     print("Reading Bruntt catalog")
     b_stars, b_nospec = read_bruntt(catalogdir, cps_list)
     stars = pd.concat((stars, b_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(b_nospec)
-    print("\t{0:d} stars with spectra from Bruntt catalog".format(len(b_stars)))
+    print("\t{0:d} stars with spectra from Bruntt catalog"
+          .format(len(b_stars)))
 
     print("Reading K Dwarfs catalog")
     k_stars, k_nospec = read_kdwarfs(catalogdir, cps_list)
     stars = pd.concat((stars, k_stars), ignore_index=True)
     stars_nospectra = stars_nospectra.append(k_nospec)
-    print("\t{0:d} stars with spectra from K Dwarf catalog".format(len(b_stars)))
+    print("\t{0:d} stars with spectra from K Dwarf catalog"
+          .format(len(b_stars)))
 
-    dups = stars[stars.duplicated(subset='cps_name', keep=False)].sort_values(by='cps_name')
-    dups_vb = dups[~dups.source.str.contains('Von Braun|Bruntt|Casagrande')]
+    dups = stars[stars.duplicated(subset='cps_name', keep=False)].sort_values(
+        by='cps_name')
+    dups_vb = dups[~dups.source.str.contains('Von Braun|Bruntt')]
     idxs = dups_vb.index
     stars.drop(idxs, inplace=True)
 
-    print("Removing {0:d} duplicates, favoring von Braun, Bruntt and Casagrande data".format(len(idxs)))
+    print("Removing {0:d} duplicates, favoring von Braun and Bruntt data"
+          .format(len(idxs)))
 
     idxs = stars.query('Teff > 7000 | feh < -1.0').index
     stars.drop(idxs, inplace=True)
 
-    print("Removing {0:d} stars on edge of our parameter space".format(len(idxs)))
+    print("Removing {0:d} stars outside our parameter space"
+          .format(len(idxs)))
 
     print("Total of {0:d} stars read".format(len(stars)))
 
@@ -466,32 +488,29 @@ def read_catalogs(catalogdir, cpspath):
 
 
 def main(catalogdir, cpspath, outdir, append):
-    ### Read in the stars with known stellar parameters and check for those with CPS spectra
+    """Read in the stars with known stellar parameters and check for those
+    with CPS spectra"""
     print("Reading catalogs...")
     stars, stars_nospectra = read_catalogs(catalogdir, cpspath)
-    mask = pd.DataFrame()
 
     # convert numeric columns
     for col in Library.STAR_PROPS:
         stars[col] = pd.to_numeric(stars[col], errors='coerce')
         stars['u_'+col] = pd.to_numeric(stars['u_'+col], errors='coerce')
-        # Create mask to indicate parameters obtained directly from literature
-        mask[col] = np.isfinite(stars[col])
-        mask['u_'+col] = np.isfinite(stars['u_'+col])
 
     if append:
-        mode='a'
-        header=False
+        mode = 'a'
+        header = False
     else:
-        mode='w'
-        header=True
+        mode = 'w'
+        header = True
 
     stars.reset_index(drop=True, inplace=True)
     stars_nospectra.reset_index(drop=True, inplace=True)
-    mask.reset_index(drop=True, inplace=True)
-    stars.to_csv(os.path.join(outdir, "libstars_kd.csv"), mode=mode, header=header)
-    stars_nospectra.to_csv(os.path.join(outdir, "nospectra.csv"), mode=mode, header=header)
-    mask.to_csv(os.path.join(outdir, "libstars_mask_kd.csv"), mode=mode, header=header)
+    stars.to_csv(os.path.join(outdir, "libstars.csv"), mode=mode,
+                 header=header)
+    stars_nospectra.to_csv(os.path.join(outdir, "nospectra.csv"), mode=mode,
+                           header=header)
 
 
 if __name__ == '__main__':
@@ -499,7 +518,8 @@ if __name__ == '__main__':
     psr.add_argument('catalogdir', type=str, help="Path to catalogs")
     psr.add_argument('cpslist', type=str, help="Path to CPS spectrum list")
     psr.add_argument('outdir', type=str, help="Path to output directory")
-    psr.add_argument('-a', '--append', action='store_true', help="Append to existing library in outdir")
+    psr.add_argument('-a', '--append', action='store_true',
+                     help="Append to existing library in outdir")
     args = psr.parse_args()
 
     main(args.catalogdir, args.cpslist, args.outdir, args.append)
