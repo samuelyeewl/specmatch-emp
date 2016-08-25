@@ -313,7 +313,8 @@ class Library(object):
             int: Library index of the found star.
             Returns None if no object found.
         """
-        if isinstance(searchlist, str):
+        # Put strings into length 1 lists
+        if not isinstance(searchlist, list):
             searchlist = [searchlist]
 
         indices = []
