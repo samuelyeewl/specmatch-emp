@@ -24,7 +24,7 @@ def match_spectrum(args):
     if not os.path.exists(args.spectrum):
         raise ValueError(args.spectrum + " does not exist!")
 
-    target = specmatch.read_hires_fits(args.spectrum)
+    target = spectrum.read_hires_fits(args.spectrum)
     lib = library.read_hdf()
     sm = specmatch.SpecMatch(target, lib)
     sm.shift()
