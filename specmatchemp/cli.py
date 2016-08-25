@@ -179,7 +179,7 @@ def main():
     args = sys.argv[1:]
 
     psr = ArgumentParser(description="SpecMatch-Emp: A tool for extracting " +
-                         "fundamental stellar parameters from spectra",
+                         "fundamental stellar parameters from spectra, updated",
                          prog='smemp')
     subpsr = psr.add_subparsers(title="subcommands", dest='subcommand',
                 description="specmatch: Perform the entire SpecMatch " +

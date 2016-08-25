@@ -8,9 +8,26 @@ Generate script lines for shifting spectra
 from __future__ import print_function
 
 import os
-import re
 import pandas as pd
 from argparse import ArgumentParser
+
+from specmatchemp import SPECMATCHDIR
+
+if __name__ == '__main__':
+    psr = ArgumentParser(description="Generate script for shifting")
+    psr.add_argument('-l', '--libpath', type=str,
+                     default=os.path.join(SPECMATCHDIR, 'libstars.csv'),
+                     help="Path to parameters csv file")
+    psr.add_argument('-o', '--outpath', type=str,
+                     default='./shift_script.txt',
+                     help="Path to output shift script")
+    args = psr.parse_args()
+
+    params = pd.read_csv(args.libpath)
+
+    with open(args.outpath, 'w') as f:
+        
+
 
 EXECPATH = '/home/syee/specmatchemp-working/specmatchemp/buildlib/shift_spectrum.py'
 LIBPATH = '/home/syee/specmatchemp-working/specmatchemp/lib/libstars.csv'
