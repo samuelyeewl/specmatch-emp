@@ -25,6 +25,7 @@ from specmatchemp import shift
 from specmatchemp import match
 from specmatchemp import analysis
 from specmatchemp import plots
+from specmatchemp import detrend
 
 
 class SpecMatch(object):
@@ -65,7 +66,7 @@ class SpecMatch(object):
             Wavelength limits to perform matching on.
     """
 
-    def __init__(self, target, lib, wavlim=(5100,5900)):
+    def __init__(self, target, lib, wavlim=(5000, 5200)):
         if wavlim is None:
             self.wavlim = lib.wavlim
         else:
@@ -80,7 +81,7 @@ class SpecMatch(object):
             self.target = target.cut(*self.wavlim)
             self.target_unshifted = target
 
-        self.lib = lib.wav_cut(*self.wavlim)
+        self.lib = lib
 
         self._shifted = False
         self.num_best = 5
@@ -92,6 +93,7 @@ class SpecMatch(object):
         self.lincomb_matches = []
         self.coeffs = None
         self.lincomb_results = []
+        self.results_nodetrend = {}
         self.results = {}
 
         return
@@ -111,6 +113,7 @@ class SpecMatch(object):
             spectrum.Spectrum: The shifted spectrum, which is also stored in
                 self.target
         """
+        print("Shifting spectrum")
         shift_refs = self.lib.header['shift_refs']
         if 'nso' in shift_refs and self.lib.nso is None:
             raise ValueError("Error: Library did not contain NSO spectrum.")
@@ -166,6 +169,7 @@ class SpecMatch(object):
                   "library wavelength scale. Run SpecMatch.shift() first.")
             return
 
+        print("Matching spectrum")
         # Create match results table
         self.match_results = self.lib.library_params.copy()
 
@@ -199,6 +203,7 @@ class SpecMatch(object):
         self.regions = regions
 
         for reg in regions:
+            print("Matching region {0}".format(reg))
             if len(regions) == 1:
                 cs_col = 'chi_squared'
                 fit_col = 'fit_params'
@@ -242,6 +247,7 @@ class SpecMatch(object):
                 Defaults to 'all', which uses all the regions used in the
                 previous match() step.
         """
+        print("Creating linear combinations")
         # Ensure matching process has already been run
         if self.match_results.empty:
             print("Error: Matching procedure has not yet been performed.\n" +
@@ -265,6 +271,7 @@ class SpecMatch(object):
         self.lincomb_results = []
         self.lincomb_regions = lincomb_regions
         for reg in lincomb_regions:
+            print("Linear combinations in region {0}".format(reg))
             if len(self.regions) == 1:
                 cs_col = 'chi_squared'
                 fit_col = 'fit_params'
@@ -307,10 +314,17 @@ class SpecMatch(object):
 
         # Average over all wavelength regions
         for p in Library.STAR_PROPS:
-            self.results[p] = 0
+            self.results_nodetrend[p] = 0
             for i in range(len(lincomb_regions)):
-                self.results[p] += (self.lincomb_results[i][p] /
-                                    len(lincomb_regions))
+                self.results_nodetrend[p] += (self.lincomb_results[i][p] /
+                                              len(lincomb_regions))
+
+        # Detrend parameters
+        d = detrend.Detrend()
+        for p in Library.STAR_PROPS:
+            self.results[p] = d.detrend(p, self.results_nodetrend[p])
+            # TODO: Add uncertainties
+            self.results['u_'+p] = 0.0
 
     def to_hdf(self, outfile):
         """Saves the current state of the SpecMatch object to an hdf file.
@@ -318,6 +332,7 @@ class SpecMatch(object):
         Args:
             outfile (str or h5 file): Output path or file handle.
         """
+        print("Saving SpecMatch object to HDF file")
         # Allow either a string or h5 file object ot be passed.
         is_path = False
         if isinstance(outfile, str):
@@ -388,6 +403,11 @@ class SpecMatch(object):
                     res_grp[k] = v
 
         # Save averaged results
+        if len(self.results_nodetrend) > 0:
+            res_grp = outfile.create_group('results_nodetrend')
+            for k, v in self.results_nodetrend.items():
+                res_grp[k] = v
+
         if len(self.results) > 0:
             res_grp = outfile.create_group('results')
             for k, v in self.results.items():
@@ -478,6 +498,14 @@ class SpecMatch(object):
             sm.ref_idxs = ref_idxs
             sm.lincomb_matches = lincomb_matches
             sm.lincomb_results = lincomb_results
+
+        if 'results_nodetrend' in infile:
+            res_grp = infile['results_nodetrend']
+            results_nodetrend = {}
+            for k in res_grp:
+                results_nodetrend[k] = res_grp[k].value
+
+            sm.results_nodetrend = results_nodetrend
 
         if 'results' in infile:
             res_grp = infile['results']

@@ -63,7 +63,7 @@ def bootstrap_shift(targ, ref_list, store=None):
 
         median_peaks.append(med_peak)
 
-        print("Attempting shift to spectrum {0}, ".format(ref.name) +
+        print("Attempting shift to spectrum {0}, ".format(ref.attrs['obs']) +
               "median cross-correlation peak = {0:.2f}".format(med_peak))
 
         if store is not None:
@@ -73,9 +73,10 @@ def bootstrap_shift(targ, ref_list, store=None):
         store['shift_reference'] = np.argmax(median_peaks)
 
     best_ref = ref_list[np.argmax(median_peaks)]
-    print("Best reference for shifting: {0}".format(best_ref.name))
+    print("Best reference for shifting: {0}".format(best_ref.attrs['obs']))
 
     # Now shift to the best reference
+    print("Shifting entire spectrum")
     shifted = shift(targ, best_ref, store=store)
 
     return shifted

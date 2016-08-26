@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 from specmatchemp import plots
+from specmatchemp import detrend
 from specmatchemp.library import Library
 
 
@@ -44,7 +45,7 @@ def library_comparison(params, param_x, param_y, suffix='_sm', ptlabels=False):
 
 
 def library_difference(params, prop, suffix='_sm', ptlabels=False,
-                       plt_kw={'color':'blue'}):
+                       plt_kw={'color': 'blue'}):
     """Plot the residuals (library-derived) for each star in the library.
 
     Args:
@@ -75,9 +76,12 @@ def library_difference(params, prop, suffix='_sm', ptlabels=False,
     plots.label_axes(param_x=prop)
 
 
-def five_pane(params, suffix, trend=None, ptlabels=False):
+def five_pane(params, suffix, trend=False, ptlabels=False):
     """Five panel diagnostic plot
     """
+    if trend:
+        d = detrend.Detrend()
+
     gs = gridspec.GridSpec(6, 2)
 
     plt.subplot(gs[0:3, 0])
@@ -88,12 +92,30 @@ def five_pane(params, suffix, trend=None, ptlabels=False):
 
     plt.subplot(gs[0:2, 1])
     library_difference(params, 'Teff', suffix=suffix, ptlabels=ptlabels)
+    if trend:
+        xlim = plt.xlim()
+        ylim = plt.ylim()
+        d.plot('Teff')
+        plt.xlim(xlim)
+        plt.ylim(ylim)
     plt.ylabel(r'$\Delta\ T_{eff} (K)$')
 
     plt.subplot(gs[2:4, 1])
     library_difference(params, 'radius', suffix=suffix, ptlabels=ptlabels)
+    if trend:
+        xlim = plt.xlim()
+        ylim = plt.ylim()
+        d.plot('radius')
+        plt.xlim(xlim)
+        plt.ylim(ylim)
     plt.ylabel(r'$\Delta R/R$')
 
     plt.subplot(gs[4:6, 1])
     library_difference(params, 'feh', suffix=suffix, ptlabels=ptlabels)
+    if trend:
+        xlim = plt.xlim()
+        ylim = plt.ylim()
+        d.plot('feh')
+        plt.xlim(xlim)
+        plt.ylim(ylim)
     plt.ylabel(r'$\Delta [Fe/H] (dex)$')

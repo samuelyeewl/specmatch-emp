@@ -6,7 +6,9 @@ Class to carry out detrending of parameters
 
 import os
 import csv
+import matplotlib.pyplot as plt
 from specmatchemp import SPECMATCHDIR
+
 
 class Detrend(object):
     """Class to carry out detrending of parameters.
@@ -17,7 +19,7 @@ class Detrend(object):
     uncal_1 and uncal_2 provide the range for which the particular trendline
     can be applied.
 
-    Suppose a given parameter is given as u, such that 
+    Suppose a given parameter is given as u, such that \
     :math:`uncal_1 \leq u \lt uncal_2.`
     Then the detrended parameter is given by
 
@@ -92,3 +94,12 @@ class Detrend(object):
                 return ((value - uncal_1) *
                         ((cal_2 - cal_1) / (uncal_2 - uncal_1)) +
                         cal_1)
+
+    def plot(self, param):
+        """Plot the trendline(s) for the given parameter.
+
+        Args:
+            param (str): Name of parameter to plot
+        """
+        for row in self._detrendtable[param]:
+            plt.plot([row[0], row[2]], [row[1], row[3]], 'r-')

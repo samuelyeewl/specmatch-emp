@@ -625,6 +625,7 @@ def read_hdf(path=None, wavlim='all'):
         if 'nso' in f:
             nso = spectrum.read_hdf(f['nso'])
             nso.name = 'NSO'
+            nso.attrs['obs'] = 'nso'
 
         if 'param_mask' in f:
             param_mask = f['param_mask'][:]

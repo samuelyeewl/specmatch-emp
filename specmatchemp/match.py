@@ -428,6 +428,7 @@ class MatchLincomb(Match):
         # Save best fit parameters
         self.best_params = out.params
         self.best_chisq = self.objective(self.best_params)
+        self.coeffs = self.get_lincomb_coeffs()
 
         return self.best_chisq
 
