@@ -3,6 +3,8 @@
 
 Class to carry out the specmatch
 """
+from six import string_types
+
 import os
 import lmfit
 import numpy as np
@@ -326,96 +328,6 @@ class SpecMatch(object):
             # TODO: Add uncertainties
             self.results['u_'+p] = 0.0
 
-    def to_hdf(self, outfile):
-        """Saves the current state of the SpecMatch object to an hdf file.
-
-        Args:
-            outfile (str or h5 file): Output path or file handle.
-        """
-        print("Saving SpecMatch object to HDF file")
-        # Allow either a string or h5 file object ot be passed.
-        is_path = False
-        if isinstance(outfile, str):
-            outfile = h5py.File(outfile, 'w')
-            is_path = True
-
-        # Save target spectrum
-        if self.target is not None:
-            outfile.create_group('target')
-            self.target.to_hdf(outfile['target'])
-
-        # ------------------------ Shift results ------------------------
-        # Save unshifted spectrum
-        if self._shifted is True:
-            # (Check if unshifted and shifted targets are different)
-            outfile.create_group('unshifted')
-            self.target_unshifted.to_hdf(outfile['unshifted'])
-
-        # Save shift reference
-        if self.shift_ref is not None:
-            outfile.create_group('shift_ref')
-            self.shift_ref.to_hdf(outfile['shift_ref'])
-
-        # Save shift data
-        if len(self.shift_data) > 0:
-            grp = outfile.create_group('shift_data')
-            for k, v in self.shift_data.items():
-                grp[k] = v
-
-        # ------------------------ Match results ------------------------
-        # Wavelength regions
-        if self.regions is not None:
-            outfile['regions'] = self.regions
-
-        # Save match results by converting to record array
-        if not self.match_results.empty:
-            if 'lib_index' in self.match_results:
-                self.match_results.drop('lib_index', inplace=True, axis=1)
-            match_rec = self.match_results.to_records()
-            dt = match_rec.dtype.descr
-            for i in range(len(dt)):
-                if dt[i][1] == "|O":
-                    # max string length = 1000
-                    dt[i] = (dt[i][0], 'S1000')
-            match_rec = np.array(match_rec, dtype=dt)
-
-            outfile['match_results'] = match_rec
-
-            # restore lib_index column
-            self.match_results['lib_index'] = self.match_results.index
-
-        # ----------------------- Lincomb results -----------------------
-        if self.num_best is not None:
-            outfile['num_best'] = self.num_best
-        if self.coeffs is not None:
-            outfile['coeffs'] = self.coeffs
-        if self.lincomb_regions is not None:
-            outfile['lincomb_regions'] = self.lincomb_regions
-        if len(self.lincomb_matches) > 0:
-            grp = outfile.create_group('lincomb')
-            for i in range(len(self.lincomb_regions)):
-                reg = self.lincomb_regions[i]
-                subgrp = grp.create_group('{0:.0f}'.format(reg[0]))
-                subgrp['ref_idxs'] = self.ref_idxs[i]
-                self.lincomb_matches[i].to_hdf(subgrp)
-                res_grp = subgrp.create_group('results')
-                for k, v in self.lincomb_results[i].items():
-                    res_grp[k] = v
-
-        # Save averaged results
-        if len(self.results_nodetrend) > 0:
-            res_grp = outfile.create_group('results_nodetrend')
-            for k, v in self.results_nodetrend.items():
-                res_grp[k] = v
-
-        if len(self.results) > 0:
-            res_grp = outfile.create_group('results')
-            for k, v in self.results.items():
-                res_grp[k] = v
-
-        if is_path:
-            outfile.close()
-
     @classmethod
     def read_hdf(cls, infile, lib):
         """Reads a SpecMatch object from and hdf file.
@@ -425,7 +337,7 @@ class SpecMatch(object):
             lib (library.Library): Library used to create SpecMatch object.
         """
         is_path = False
-        if isinstance(infile, str):
+        if isinstance(infile, string_types):
             infile = h5py.File(infile, 'r')
             is_path = True
 
@@ -519,6 +431,146 @@ class SpecMatch(object):
             infile.close()
 
         return sm
+
+    def to_hdf(self, outfile):
+        """Saves the current state of the SpecMatch object to an hdf file.
+
+        Args:
+            outfile (str or h5 file): Output path or file handle.
+        """
+        print("Saving SpecMatch object to HDF file")
+        # Allow either a string or h5 file object ot be passed.
+        is_path = False
+        if isinstance(outfile, string_types):
+            outfile = h5py.File(outfile, 'w')
+            is_path = True
+
+        # Save target spectrum
+        if self.target is not None:
+            outfile.create_group('target')
+            self.target.to_hdf(outfile['target'])
+
+        # ------------------------ Shift results ------------------------
+        # Save unshifted spectrum
+        if self._shifted is True:
+            # (Check if unshifted and shifted targets are different)
+            outfile.create_group('unshifted')
+            self.target_unshifted.to_hdf(outfile['unshifted'])
+
+        # Save shift reference
+        if self.shift_ref is not None:
+            outfile.create_group('shift_ref')
+            self.shift_ref.to_hdf(outfile['shift_ref'])
+
+        # Save shift data
+        if len(self.shift_data) > 0:
+            grp = outfile.create_group('shift_data')
+            for k, v in self.shift_data.items():
+                grp[k] = v
+
+        # ------------------------ Match results ------------------------
+        # Wavelength regions
+        if self.regions is not None:
+            outfile['regions'] = self.regions
+
+        # Save match results by converting to record array
+        if not self.match_results.empty:
+            if 'lib_index' in self.match_results:
+                self.match_results.drop('lib_index', inplace=True, axis=1)
+            match_rec = self.match_results.to_records()
+            dt = match_rec.dtype.descr
+            for i in range(len(dt)):
+                if dt[i][1] == "|O":
+                    # max string length = 1000
+                    dt[i] = (dt[i][0], 'S1000')
+            match_rec = np.array(match_rec, dtype=dt)
+
+            outfile['match_results'] = match_rec
+
+            # restore lib_index column
+            self.match_results['lib_index'] = self.match_results.index
+
+        # ----------------------- Lincomb results -----------------------
+        if self.num_best is not None:
+            outfile['num_best'] = self.num_best
+        if self.coeffs is not None:
+            outfile['coeffs'] = self.coeffs
+        if self.lincomb_regions is not None:
+            outfile['lincomb_regions'] = self.lincomb_regions
+        if len(self.lincomb_matches) > 0:
+            grp = outfile.create_group('lincomb')
+            for i in range(len(self.lincomb_regions)):
+                reg = self.lincomb_regions[i]
+                subgrp = grp.create_group('{0:.0f}'.format(reg[0]))
+                subgrp['ref_idxs'] = self.ref_idxs[i]
+                self.lincomb_matches[i].to_hdf(subgrp)
+                res_grp = subgrp.create_group('results')
+                for k, v in self.lincomb_results[i].items():
+                    res_grp[k] = v
+
+        # Save averaged results
+        if len(self.results_nodetrend) > 0:
+            res_grp = outfile.create_group('results_nodetrend')
+            for k, v in self.results_nodetrend.items():
+                res_grp[k] = v
+
+        if len(self.results) > 0:
+            res_grp = outfile.create_group('results')
+            for k, v in self.results.items():
+                res_grp[k] = v
+
+        if is_path:
+            outfile.close()
+
+    def results_to_txt(self, outfile, verbose=False):
+        """Save final results to text.
+
+        Args:
+            outfile (str or file object): Output file
+            verbose (bool): Whether to only print the final derived results
+                or to also include not-detrended results and list of best
+                matching spectra for each region
+        """
+        if isinstance(outfile, string_types):
+            f = open(outfile, 'w')
+        else:
+            f = outfile
+
+        f.write('Derived Parameters\n')
+        f.write('------------------\n')
+        f.write('Teff: {0:.0f} +/- {1:.0f} K\n'.format(
+            self.results['Teff'], self.results['u_Teff']))
+        f.write('Radius: {0:.3f} +/- {1:.3f} Rsun\n'.format(
+            self.results['radius'], self.results['u_radius']))
+        f.write('[Fe/H]: {0:.2f} +/- {1:.2f} dex\n'.format(
+            self.results['feh'], self.results['u_feh']))
+
+        if verbose:
+            f.write('\n')
+            f.write('Parameters before detrending\n')
+            f.write('----------------------------\n')
+            f.write('Teff: {0:.0f} +/- {1:.0f} K\n'.format(
+                self.results_nodetrend['Teff'],
+                self.results_nodetrend['u_Teff']))
+            f.write('Radius: {0:.3f} +/- {1:.3f} Rsun\n'.format(
+                self.results_nodetrend['radius'],
+                self.results_nodetrend['u_radius']))
+            f.write('[Fe/H]: {0:.2f} +/- {1:.2f} dex\n'.format(
+                self.results_nodetrend['feh'],
+                self.results_nodetrend['u_feh']))
+
+            f.write('\n')
+            f.write('Best Matching Spectra\n')
+            f.write('---------------------\n')
+            for i in range(len(self.regions)):
+                f.write('Region {0}:\n'.format(self.regions[i]))
+                mt = self.lincomb_matches[i]
+                for j in range(mt.num_refs):
+                    ref = mt.refs[j]
+                    f.write('\t#{0:d}: {1}, '.format(j, ref.name))
+                    f.write('chi^2 = {0:.3f}, '.format(mt.ref_chisq[j]))
+                    f.write('c_{0:d} = {1:.3f}\n'.format(j, mt.coeffs[j]))
+                f.write('Final chi^2 = {0:.3f}'.format(mt.best_chisq))
 
     def to_fits(self, outpath):
         """Saves the current state of the SpecMatch object to a fits file.
