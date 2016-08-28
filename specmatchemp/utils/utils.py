@@ -51,7 +51,6 @@ def calc_radius(plx, u_plx, theta, u_theta):
     u_radius = (u_plx/plx + u_theta/theta) * radius
 
     return radius, u_radius
-    
 
 def calc_residuals(s1, w1, s2, w2):
     """Find the residuals between two spectra (s1-s2) when they are on the same

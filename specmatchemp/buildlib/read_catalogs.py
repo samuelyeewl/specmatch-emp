@@ -31,7 +31,7 @@ RAMIREZ_FILENAME = "ramirez_2005_cut.csv"
 CASAGRANDE_FILENAME = "Casagrande2006/table1_cut.csv"
 BRUNTT_FILENAME = "Bruntt2012/table3.dat"
 BRUNTT_README = "Bruntt2012/ReadMe.txt"
-KDWARF_FILENAME = "kdwarfs_cut.csv"
+KDWARF_FILENAME = "kdwarfs.csv"
 CPS_INDEX = "cps_templates.csv"
 CPS_SPECTRA_DIR = "iodfitsdb/"
 
