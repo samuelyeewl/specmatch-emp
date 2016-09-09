@@ -68,7 +68,7 @@ class SpecMatch(object):
             Wavelength limits to perform matching on.
     """
 
-    def __init__(self, target, lib, wavlim=(5000, 5200)):
+    def __init__(self, target, lib=None, wavlim=(5000, 5900)):
         if wavlim is None:
             self.wavlim = lib.wavlim
         else:
@@ -83,7 +83,10 @@ class SpecMatch(object):
             self.target = target.cut(*self.wavlim)
             self.target_unshifted = target
 
-        self.lib = lib
+        if lib is None:
+            self.lib = Library()
+        else:
+            self.lib = lib
 
         self._shifted = False
         self.num_best = 5
@@ -710,9 +713,11 @@ class SpecMatch(object):
             if self.lib.nso is not None:
                 nso = self.lib.nso.cut(*wavlim[i])
                 nso.plot(offset=2, text='NSO', plt_kw={'color': 'c'})
+                plt.ylim(-0.5, 3.5)
+            else:
+                plt.ylim(-0.5, 2.7)
 
             plt.xlim(wavlim[i])
-            plt.ylim(-0.5, 3.5)
 
     def plot_shift_lags(self, orders='all'):
         """Plot the lags for each order as a function of pixel number.

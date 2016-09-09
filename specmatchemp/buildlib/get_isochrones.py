@@ -107,7 +107,7 @@ def get_isochrone_params(stars, modeldir, overwrite=False):
 def main(libpath, modeldir, overwrite):
     ext = os.path.splitext(libpath)[-1].lower()
     if ext == '.csv':
-        params = pd.read_csv(libpath, index_col=0)
+        params = pd.read_csv(libpath)
         maskpath = libpath[:-4] + '_mask.csv'
         # Create mask dataframe
         param_mask = pd.DataFrame()

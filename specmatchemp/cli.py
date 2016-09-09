@@ -31,7 +31,7 @@ def lincomb_spectrum(args):
 
 def shift_spectrum(args):
     core.shift_spectrum(args.obs, indir=args.directory, plot_level=args.plots,
-                        outdir=args.outdir, suffix=args.suffix)
+                        outdir=args.outdir, name=args.name, suffix=args.suffix)
 
 
 def main():
@@ -78,6 +78,8 @@ def main():
                            default=os.path.join(SPECMATCHDIR,
                            'shifted_spectra'),
                            help="Directory to store output files.")
+    psr_shift.add_argument("-n", "--name", type=str, default="",
+                           help="Name to use as target ID")
     psr_shift.add_argument("-s", "--suffix", type=str, default="",
                         help="Suffix to append to results files")
     psr_shift.set_defaults(func=shift_spectrum)

@@ -63,7 +63,7 @@ def bootstrap_shift(targ, ref_list, store=None):
 
         median_peaks.append(med_peak)
 
-        print("Attempting shift to spectrum {0}, ".format(ref.attrs['obs']) +
+        print("Attempting shift to spectrum {0}, ".format(ref.name) +
               "median cross-correlation peak = {0:.2f}".format(med_peak))
 
         if store is not None:
@@ -73,7 +73,7 @@ def bootstrap_shift(targ, ref_list, store=None):
         store['shift_reference'] = np.argmax(median_peaks)
 
     best_ref = ref_list[np.argmax(median_peaks)]
-    print("Best reference for shifting: {0}".format(best_ref.attrs['obs']))
+    print("Best reference for shifting: {0}".format(best_ref.name))
 
     # Now shift to the best reference
     print("Shifting entire spectrum")
@@ -440,6 +440,7 @@ def shift_data_to_hdu(shift_data):
     Args:
         shift_data (dict): Shift data output from shift()
     """
+    shift_data = shift_data.copy()
     col_list = []
     num_orders = shift_data.pop('num_orders')
     col_list.append(fits.Column(name='num_orders', format='J',
@@ -473,7 +474,7 @@ def shift_data_to_hdu(shift_data):
     return shift_hdu
 
 
-def save_shift_to_fits(outpath, shifted, unshifted, shift_data):
+def save_shift_to_fits(outpath, shifted, unshifted, shift_data, clobber=False):
     """Saves the complete shift data to a FITS file.
 
     Args:
@@ -481,6 +482,7 @@ def save_shift_to_fits(outpath, shifted, unshifted, shift_data):
         shifted (Spectrum): Shifted spectrum
         unshifted (HiresSpectrum): Raw spectrum
         shift_data (dict): Shift data
+        clobber (bool): Overwrite existing file at destination
     """
     # Create primary HDU
     prihdu = fits.PrimaryHDU(header=shifted.header)
@@ -496,4 +498,4 @@ def save_shift_to_fits(outpath, shifted, unshifted, shift_data):
     hdulist = fits.HDUList([prihdu, shifted_hdu, shift_data_hdu] +
                            unshifted_hdus)
 
-    hdulist.writeto(outpath)
+    hdulist.writeto(outpath, clobber=clobber)

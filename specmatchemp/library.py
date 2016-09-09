@@ -85,10 +85,15 @@ class Library(object):
         if library_params is None:
             self.library_params = pd.DataFrame(columns=Library.LIB_COLS)
             self.wav = wav
-            self.library_spectra = np.empty((0, 3, len(wav)))
+            if wav is not None:
+                self.library_spectra = np.empty((0, 3, len(wav)))
+                self.wavlim = wavlim if wavlim is not None \
+                                     else (wav[0], wav[-1])
+            else:
+                self.library_spectra = np.empty((0, 3, 0))
+                self.wavlim = None
             self.header = {'date_created': _timestamp(),
                            'last_modified': _timestamp()}
-            self.wavlim = wavlim if wavlim is not None else (wav[0], wav[-1])
             self.nso = nso
             return
 

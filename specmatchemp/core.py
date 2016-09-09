@@ -122,7 +122,7 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
     return sm
 
 
-def plot_shifts(sm, pdf, order, wavlim='all'):
+def plot_shifts(sm, pdf, order, wavlim='all', singleorder=False):
     """Create shift plots
 
     Args:
@@ -130,6 +130,7 @@ def plot_shifts(sm, pdf, order, wavlim='all'):
         pdf: Pdf file object
         order (int): HIRES order to plot
         wavlim: A specific wavelength range to plot spectrum
+        singleorder (bool): Whether to plot lags as a single order
     """
     name = sm.target.name
     if wavlim == 'all':
@@ -140,7 +141,7 @@ def plot_shifts(sm, pdf, order, wavlim='all'):
     # Shifted spectrum
     fig = plt.figure(figsize=(10, 5))
     sm.plot_shifted_spectrum(wavlim=wavlim)
-    plt.title('{0} shift results'.format(name))
+    plt.title('Shift results for star {0}'.format(name))
     fig.set_tight_layout(True)
     pdf.savefig()
     plt.close()
@@ -156,11 +157,37 @@ def plot_shifts(sm, pdf, order, wavlim='all'):
 
     # Lags
     fig = plt.figure(figsize=(8, 6))
-    sm.plot_shift_lags()
-    plt.title('{0} lags'.format(name))
+    if singleorder:
+        sm.plot_shift_lags(order)
+        plt.title('{0} lags for order {1:d}'.format(name, order))
+    else:
+        sm.plot_shift_lags()
+        plt.title('{0} lags'.format(name))
     fig.set_tight_layout(True)
     pdf.savefig()
     plt.close()
+
+
+def plot_shift_data(target_unshifted, target_shifted, reference, shift_data,
+                    pdf, order, wavlim='all', singleorder=False):
+    """Create shift plots from shift data
+
+    Args:
+        target_unshifted (HiresSpectrum): Unshifted target spectrum
+        target_shifted (Spectrum): Shifted target spectrum
+        reference (Spectrum): Reference spectrum
+        shift_data (dict): Shift data object
+        pdf: Pdf file object
+        order (int): HIRES order to plot
+        wavlim: A specific wavelength range to plot spectrum
+    """
+    # Create temp specmatch object
+    sm = specmatch.SpecMatch(target_unshifted)
+    sm.target = target_shifted
+    sm.shift_ref = reference
+    sm.shift_data = shift_data
+
+    plot_shifts(sm, pdf, order, wavlim, singleorder)
 
 
 def plot_match(sm, pdf, region=0, wavlim='all', targ_param=None):
@@ -380,7 +407,8 @@ def lincomb_spectrum(respath, plot_level=0, inlib=False, outdir="./",
     return sm
 
 
-def shift_spectrum(obs, indir="./", plot_level=0, outdir="./", suffix=""):
+def shift_spectrum(obs, indir="./", plot_level=0, outdir="./",
+                   name="", suffix=""):
     """Shift a target spectrum given an observation code.
 
     Saves the shifted spectrum in a fits file.
@@ -389,6 +417,7 @@ def shift_spectrum(obs, indir="./", plot_level=0, outdir="./", suffix=""):
         obs (str): CPS id of target spectrum
         indir (str): Directory to look in for target spectrum
         plot_level (int, 0-2): Level of plotting to save
+        name (str): Name to use as target ID.
         suffix (str): String to append to output file names
     Returns:
         shifted, unshifted, shift_data
@@ -404,6 +433,11 @@ def shift_spectrum(obs, indir="./", plot_level=0, outdir="./", suffix=""):
     # load target and references
     targ_path = os.path.join(specdir, 'r' + obs + '.fits')
     targ_spec = spectrum.read_hires_fits(targ_path)
+    if len(name) > 0:
+        targ_spec.name = name
+        targid = name
+    else:
+        targid = obs
 
     ref_specs = [spectrum.read_fits(os.path.join(shiftedspecdir,
                  r[0] + '_adj.fits')) for r in SHIFT_REFERENCES]
@@ -411,43 +445,37 @@ def shift_spectrum(obs, indir="./", plot_level=0, outdir="./", suffix=""):
     # Shift spectrum
     shift_data = {}
     shifted = shift.bootstrap_shift(targ_spec, ref_specs, store=shift_data)
-
     # Save shifted spectrum
     outpath = os.path.join(shiftedspecdir, 'r' + obs + '_adj' +
                            suffix + '.fits')
-    shift.save_shift_to_fits(outpath, shifted, targ_spec, shift_data)
+    shift.save_shift_to_fits(outpath, shifted, targ_spec, shift_data,
+                             clobber=True)
     if outdir is not shiftedspecdir:
+        outdir = os.path.join(outdir, name)
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
         copy(outpath, outdir)
 
-    # Generate plots
-    if plot_level:
-        plotfile = os.path.join(outdir, obs + "_shift_plots.pdf")
+    # Generate representative plots
+    if plot_level == 1:
+        plotfile = os.path.join(outdir, targid + "_shift_plots.pdf")
         wavlim = (5160, 5190)
 
         with PdfPages(plotfile) as pdf:
-            targid = targ_spec.name
-            fig = plt.figure(figsize=(10, 6))
-            plt.title('Shift results for star {0}'.format(targid))
-            targ_spec.plot(offset=0, normalize=True, text='Target (unshifted)',
-                           plt_kw={'color': 'forestgreen'})
-
-            shifted.plot(offset=1, text='Target (shifted): {0}'.format(targid))
-
+            # Get reference used
             shift_ref = ref_specs[shift_data['shift_reference']]
-            refid = shift_ref.name
-            shift_ref.plot(offset=1.5, text='Reference: {0}'.format(refid),
-                           plt_kw={'color': 'firebrick'})
+            # Plot single order
+            plot_shift_data(targ_spec, shifted, shift_ref, shift_data, pdf, 2)
+    # Generate individual plots for every order
+    elif plot_level == 2:
+        plotfile = os.path.join(outdir, targid + "_shift_plots.pdf")
+        with PdfPages(plotfile) as pdf:
+            # Get reference used
+            shift_ref = ref_specs[shift_data['shift_reference']]
+            num_orders = shift_data['num_orders']
+            for i in range(num_orders):
+                plot_shift_data(targ_spec, shifted, shift_ref, shift_data,
+                                pdf, i, singleorder=True)
 
-            if (shifted.w[0] > shift_ref.w[0]) \
-                    or (shifted.w[-1] < shift_ref.w[-1]):
-                shifted = shifted.extend(shift_ref.w)
-            plt.plot(shifted.w, shift_ref.s - shifted.s, '-', color='purple')
-            plots.annotate_spectrum('Residuals', spec_offset=-1)
-
-            plt.xlim(wavlim)
-            plt.ylim(-0.5, 2.7)
-            plt.tight_layout()
-            pdf.savefig(fig)
-            plt.close()
 
     return shifted, targ_spec, shift_data
