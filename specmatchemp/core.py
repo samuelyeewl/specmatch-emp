@@ -461,6 +461,8 @@ def shift_spectrum(obs, indir="./", plot_level=0, outdir="./",
             os.mkdir(outdir)
         copy(outpath, outdir)
 
+    # print(shift_data['lag'])
+
     # Generate representative plots
     if plot_level == 1:
         plotfile = os.path.join(outdir, targid + "_shift_plots.pdf")
@@ -481,6 +483,5 @@ def shift_spectrum(obs, indir="./", plot_level=0, outdir="./",
             for i in range(num_orders):
                 plot_shift_data(targ_spec, shifted, shift_ref, shift_data,
                                 pdf, i, singleorder=True)
-
 
     return shifted, targ_spec, shift_data

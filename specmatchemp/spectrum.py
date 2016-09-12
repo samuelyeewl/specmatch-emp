@@ -52,10 +52,10 @@ class Spectrum(object):
             self.serr = serr
 
         if mask is None:
-            self.mask = np.empty_like(s)
+            self.mask = np.empty_like(s).astype(bool)
             self.mask.fill(True)
         else:
-            self.mask = mask
+            self.mask = mask.astype(bool)
 
         if name is None:
             self.name = "Spectrum {0:d}".format(Spectrum._counter)
@@ -315,7 +315,7 @@ class HiresSpectrum(Spectrum):
                  header=None, attrs={}):
         self.mask_table = mask_table
         if mask_table is not None and mask is None:
-            mask = np.empty_like(s)
+            mask = np.empty_like(s).astype(bool)
             mask.fill(True)
             for order in range(len(mask)):
                 mask_table_cut = mask_table.query('order == {0:d}'

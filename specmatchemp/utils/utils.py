@@ -91,6 +91,6 @@ def extend_array(arr, length, fill=np.nan):
         new_arr[0:length] = arr[0:length]
     else:
         new_arr[0:len(arr)] = arr
-        new_arr[len(arr):-1] = fill
+        new_arr[len(arr):length] = fill
 
     return new_arr

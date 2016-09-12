@@ -40,14 +40,15 @@ def main():
         reffile = os.path.join(shifted_dir, r[3]+'_adj.fits')
         ref_spec = spectrum.read_fits(reffile)
 
-        targ_unshifted = spectrum.read_hires_fits(infile)
+        maskfile = os.path.join(SPECMATCHDIR, 'hires_telluric_mask.csv')
+        targ_unshifted = spectrum.read_hires_fits(infile, maskfile=maskfile)
 
         shift_data = {}
 
         targ_shifted = shift.shift(targ_unshifted, ref_spec, store=shift_data)
 
         shift.save_shift_to_fits(outfile, targ_shifted, targ_unshifted,
-                                 shift_data)
+                                 shift_data, clobber=True)
 
 
 if __name__ == '__main__':

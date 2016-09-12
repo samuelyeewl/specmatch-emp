@@ -159,14 +159,17 @@ def shift(targ, ref, store=None):
         start_idx = np.argmax(in_range)
         w_ref_c = ref.w[in_range]
         s_ref_c = ref.s[in_range]
+        m_ref_c = ref.mask[in_range]
 
         # place the target spectrum on the same wavelength scale
         ss, sserr, mm = rescale_w(ss, sserr, ww, mm, w_ref_c)
 
         # solve for shifts in different sections
-        num_sections = int(len(w_ref_c) / section_length) + 1
+        masked_length = len(ss[mm])
+        num_sections = int(masked_length / section_length) + 1
+
         # true section length
-        l_sect = int(len(w_ref_c) / num_sections)
+        l_sect = int(masked_length / num_sections)
         lags = np.empty(num_sections)
         center_pix = np.empty(num_sections)
 
@@ -175,10 +178,18 @@ def shift(targ, ref, store=None):
             store[key] = num_sections
 
         for j in range(num_sections):
-            ss_sect = ss[j*l_sect:(j+1)*l_sect]
-            s_ref_sect = s_ref_c[j*l_sect:(j+1)*l_sect]
+            # Get indices for masked section
+            ww_sect_masked = w_ref_c[mm][j*l_sect:(j+1)*l_sect]
+            idx_min = np.argwhere(w_ref_c == ww_sect_masked[0])[0,0]
+            idx_max = np.argwhere(w_ref_c == ww_sect_masked[-1])[0,0]
+
+            ss_sect = ss[idx_min:idx_max]
+            mm_sect = mm[idx_min:idx_max]
+            s_ref_sect = s_ref_c[idx_min:idx_max]
+            m_ref_sect = m_ref_c[idx_min:idx_max]
             # get the shifts in pixel number
-            lag, lag_arr, xcorr = solve_for_shifts(ss_sect, s_ref_sect)
+            lag, lag_arr, xcorr = solve_for_shifts(ss_sect, mm_sect,
+                                                   s_ref_sect, m_ref_sect)
             lags[j] = lag
             center_pix[j] = (j + 1/2)*l_sect
 
@@ -189,7 +200,7 @@ def shift(targ, ref, store=None):
 
         # remove clear outliers
         med = np.median(lags)
-        tol = 20
+        tol = 10
         not_outlier = np.asarray([True if l > med-tol and l < med+tol
                                   else False for l in lags])
         lags_trunc = lags[not_outlier]
@@ -375,7 +386,7 @@ def flatten(w, s, serr=None, mask=None, w_ref=None, wavlim=None):
     return w_flattened, s_flattened, serr_flattened, mask_flattened
 
 
-def solve_for_shifts(s, s_ref):
+def solve_for_shifts(s, mask, s_ref, mask_ref):
     """
     Solve for the pixel shifts required to align two spectra that are on the
     same wavelength scale.
@@ -384,20 +395,28 @@ def solve_for_shifts(s, s_ref):
     solve for sub-pixel shifts.
 
     Args:
-        s: The target spectrum
+        s: The target spectrum array
+        mask: Mask array for the target spectrum
         s_ref: The reference spectrum
-        w: The common wavelength scale.
+        mask_ref: Mask array for the reference spectrum
 
     Returns:
         The pixel shift, the lag and correlation data
     """
-    # correlate the two spectra
+    # set masked values to nan
+    s = s.copy()
+    s[~mask] = np.nan
+    s_ref = s_ref.copy()
+    s_ref[~mask_ref] = np.nan
+
+    # find the mean of the two spectra
     smean = np.nanmean(s)
     srefmean = np.nanmean(s_ref)
     # fill nans with mean value so they contribute nothing to correlation
     s = _fill_nans(s, smean)
     s_ref = _fill_nans(s_ref, srefmean)
 
+    # perform correlation
     xcorr = np.correlate(s-smean, s_ref-srefmean, mode='full')
     xcorr = np.nan_to_num(xcorr)
     max_corr = np.argmax(xcorr)
