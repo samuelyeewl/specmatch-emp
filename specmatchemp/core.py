@@ -408,7 +408,7 @@ def lincomb_spectrum(respath, plot_level=0, inlib=False, outdir="./",
 
 
 def shift_spectrum(obs, indir="./", plot_level=0, outdir="./",
-                   name="", suffix=""):
+                   name="", suffix="", mask=True):
     """Shift a target spectrum given an observation code.
 
     Saves the shifted spectrum in a fits file.
@@ -432,7 +432,12 @@ def shift_spectrum(obs, indir="./", plot_level=0, outdir="./",
 
     # load target and references
     targ_path = os.path.join(specdir, 'r' + obs + '.fits')
-    targ_spec = spectrum.read_hires_fits(targ_path)
+    if mask:
+        maskfile = os.path.join(SPECMATCHDIR, 'hires_telluric_mask.csv')
+    else:
+        maskfile = None
+    targ_spec = spectrum.read_hires_fits(targ_path, maskfile)
+
     if len(name) > 0:
         targ_spec.name = name
         targid = name

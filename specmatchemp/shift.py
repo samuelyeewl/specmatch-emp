@@ -30,6 +30,7 @@ def bootstrap_shift(targ, ref_list, store=None):
     Returns:
         shifted (Spectrum): Shifted and flattened spectrum.
     """
+    print("\nShifting spectrum {0}".format(targ.name))
     # Try to use the Mg triplet to determine which reference spectrum is
     # best.
     if isinstance(targ, spectrum.HiresSpectrum) and targ.w.ndim == 2:
