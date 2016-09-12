@@ -180,8 +180,8 @@ def shift(targ, ref, store=None):
         for j in range(num_sections):
             # Get indices for masked section
             ww_sect_masked = w_ref_c[mm][j*l_sect:(j+1)*l_sect]
-            idx_min = np.argwhere(w_ref_c == ww_sect_masked[0])[0,0]
-            idx_max = np.argwhere(w_ref_c == ww_sect_masked[-1])[0,0]
+            idx_min = np.argwhere(w_ref_c == ww_sect_masked[0])[0, 0]
+            idx_max = np.argwhere(w_ref_c == ww_sect_masked[-1])[0, 0]
 
             ss_sect = ss[idx_min:idx_max]
             mm_sect = mm[idx_min:idx_max]
