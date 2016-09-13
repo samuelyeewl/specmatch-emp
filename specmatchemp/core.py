@@ -212,7 +212,7 @@ def plot_match(sm, pdf, region=0, wavlim='all', targ_param=None):
         axes[1].axvline(targ_param['radius'], color='k')
         axes[2].axvline(targ_param['feh'], color='k')
     plt.suptitle('{0} chi-squared surface'.format(name))
-    fig.set_tight_layout(rect=[0, 0, 1, 0.95])
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
     pdf.savefig()
     plt.close()
 
@@ -220,7 +220,7 @@ def plot_match(sm, pdf, region=0, wavlim='all', targ_param=None):
     fig = plt.figure(figsize=(10, 4))
     sm.plot_best_match_spectra(region=region, wavlim=wavlim, num_best=1)
     plt.suptitle('{0} best matching spectrum'.format(name))
-    fig.set_tight_layout(rect=[0.05, 0.05, 1, 0.95])
+    plt.tight_layout(rect=[0.05, 0.05, 1, 0.95])
     pdf.savefig()
     plt.close()
 
