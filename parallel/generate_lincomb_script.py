@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-@filename generate_match_script.py
+@filename generate_lincomb_script.py
 
-Generate script lines for matching spectra
+Generate script lines to run lincomb
 """
 
 from __future__ import print_function
@@ -20,7 +20,7 @@ if __name__ == '__main__':
                      default=os.path.join(SPECMATCHDIR, 'library.h5'),
                      help="Path to parameters csv file")
     psr.add_argument('-o', '--outpath', type=str,
-                     default='./match_script.sh',
+                     default='./lincomb_script.sh',
                      help="Path to output match script")
     psr.add_argument('-s', '--suffix', type=str, default="",
                      help="Suffix to append to match results")
@@ -33,8 +33,10 @@ if __name__ == '__main__':
         for idx, row in params.iterrows():
             obs = row['lib_obs'][1:]
             name = row['cps_name']
+            resdir = "/home/syee/specmatchemp-working/specmatchemp/results/"
             s = "source ~/.bash_profile; "
-            s += "smemp match " + obs + " "
+            s += "smemp lincomb "
+            s += resdir + name + "/" + name + "_sm.hdf "
             s += "-pp "
             s += "-i " + name + " "
             s += "-o /home/syee/specmatchemp-working/specmatchemp/results"

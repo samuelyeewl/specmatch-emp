@@ -101,5 +101,5 @@ class Detrend(object):
         Args:
             param (str): Name of parameter to plot
         """
-        for row in self._detrendtable[param]:
+        for param in self._detrendtable and row in self._detrendtable[param]:
             plt.plot([row[0], row[2]], [row[1], row[3]], 'r-')

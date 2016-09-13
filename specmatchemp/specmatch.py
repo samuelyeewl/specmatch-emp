@@ -323,6 +323,8 @@ class SpecMatch(object):
             for i in range(len(lincomb_regions)):
                 self.results_nodetrend[p] += (self.lincomb_results[i][p] /
                                               len(lincomb_regions))
+                # TODO: Add uncertainties
+                self.results_nodetrend['u_'+p] = 0.0
 
         # Detrend parameters
         d = detrend.Detrend()

@@ -102,8 +102,6 @@ def main():
     psr_match.set_defaults(func=match_spectrum)
 
     psr_lincomb = subpsr.add_parser("lincomb")
-    psr_lincomb.add_argument("spectrum", type=str,
-                             help="Path to target spectrum")
     psr_lincomb.add_argument("match_results", type=str, default="",
                              help="Results hdf file containing match results")
     psr_lincomb.add_argument("-p", "--plots", action='count',

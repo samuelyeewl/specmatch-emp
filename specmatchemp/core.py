@@ -260,7 +260,7 @@ def plot_lincomb(sm, pdf, region=0, wavlim='all', targ_param=None):
 
     # Lincomb results
     fig = plt.figure(figsize=(12, 6))
-    sm.plot_lincomb(region=(5100, 5200), wavlim=(5160, 5190))
+    sm.plot_lincomb(region=region, wavlim=wavlim)
     plt.title('{0} Linear Combination results'.format(name))
     fig.set_tight_layout(True)
     pdf.savefig()

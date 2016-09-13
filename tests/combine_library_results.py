@@ -29,10 +29,14 @@ def main(resdir, suffix, plots):
     for idx, row in lib.library_params.iterrows():
         targ_name = row['cps_name']
         res_path = os.path.join(resdir, targ_name + '/' + targ_name +
-                                args.suffix + '_sm.hdf')
+                                args.suffix + '_lincomb_sm.hdf')
         if not os.path.exists(res_path):
-            print("Results file for {0} not found!".format(targ_name))
-            continue
+            res_path = os.path.join(resdir, targ_name + '/' + targ_name +
+                                    args.suffix + '_sm.hdf')
+            if not os.path.exists(res_path):
+                print("Results file for {0} not found!".format(targ_name))
+                continue
+
         print("Reading in results for {0}".format(targ_name))
 
         sm = specmatch.SpecMatch.read_hdf(res_path, lib)
@@ -107,8 +111,9 @@ def main(resdir, suffix, plots):
                                .group(1) for c in cscols]))
 
             for reg in regions:
+                reg = float(reg)
                 suf = '_lincomb_{0:.0f}'.format(reg)
-                title = 'Wavelength region: {0:d} - {1:d} A'\
+                title = 'Wavelength region: {0:.0f} - {1:.0f} A'\
                         .format(reg, reg + 100)
                 plot_diag(lincomb_res_global, suf, pdf, title)
 
@@ -133,24 +138,24 @@ def plot_diag(results, suffix, pdf, title="", trend=False):
     # Plot all stars
     plt.figure(figsize=(15, 12))
     diagplots.five_pane(results, suffix, trend=trend)
-    plt.title('Results from Lincomb Approach\n' + title)
-    plt.tight_layout(rect=[0.05, 0.05, 1, 0.95])
+    plt.suptitle('Results from Lincomb Approach\n' + title)
+    fig.set_tight_layout(rect=[0.05, 0.05, 1, 0.95])
     pdf.savefig()
     plt.close()
 
     # Plot cool stars
     plt.figure(figsize=(15, 12))
     diagplots.five_pane(results.query('Teff < 4500'), suffix, trend=trend)
-    plt.title('Results from Lincomb Approach, Teff < 4500\n' + title)
-    plt.tight_layout(rect=[0.05, 0.05, 1, 0.95])
+    plt.suptitle('Results from Lincomb Approach, Teff < 4500\n' + title)
+    fig.set_tight_layout(rect=[0.05, 0.05, 1, 0.95])
     pdf.savefig()
     plt.close()
 
     # Plot cool stars
     plt.figure(figsize=(15, 12))
     diagplots.five_pane(results.query('Teff >= 4500'), suffix, trend=trend)
-    plt.title('Results from Lincomb Approach, Teff >= 4500\n' + title)
-    plt.tight_layout(rect=[0.05, 0.05, 1, 0.95])
+    plt.suptitle('Results from Lincomb Approach, Teff >= 4500\n' + title)
+    fig.set_tight_layout(rect=[0.05, 0.05, 1, 0.95])
     pdf.savefig()
     plt.close()
 

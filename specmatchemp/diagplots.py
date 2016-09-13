@@ -73,7 +73,7 @@ def library_difference(params, prop, suffix='_sm', ptlabels=False,
              .format(mean, rms), transform=ax.transAxes)
     plt.axhline(y=0, color='k', linestyle='dashed')
 
-    plots.label_axes(param_x=prop)
+    plots.label_axes(param_x=prop, rescale=False)
 
 
 def five_pane(params, suffix, trend=False, ptlabels=False):
