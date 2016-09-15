@@ -136,26 +136,26 @@ def main(resdir, suffix, plots):
 
 def plot_diag(results, suffix, pdf, title="", trend=False):
     # Plot all stars
-    plt.figure(figsize=(15, 12))
+    fig = plt.figure(figsize=(15, 12))
     diagplots.five_pane(results, suffix, trend=trend)
     plt.suptitle('Results from Lincomb Approach\n' + title)
-    fig.set_tight_layout(rect=[0.05, 0.05, 1, 0.95])
+    plt.tight_layout(rect=[0.05, 0.05, 1, 0.95])
     pdf.savefig()
     plt.close()
 
     # Plot cool stars
-    plt.figure(figsize=(15, 12))
+    fig = plt.figure(figsize=(15, 12))
     diagplots.five_pane(results.query('Teff < 4500'), suffix, trend=trend)
     plt.suptitle('Results from Lincomb Approach, Teff < 4500\n' + title)
-    fig.set_tight_layout(rect=[0.05, 0.05, 1, 0.95])
+    plt.tight_layout(rect=[0.05, 0.05, 1, 0.95])
     pdf.savefig()
     plt.close()
 
     # Plot cool stars
-    plt.figure(figsize=(15, 12))
+    fig = plt.figure(figsize=(15, 12))
     diagplots.five_pane(results.query('Teff >= 4500'), suffix, trend=trend)
     plt.suptitle('Results from Lincomb Approach, Teff >= 4500\n' + title)
-    fig.set_tight_layout(rect=[0.05, 0.05, 1, 0.95])
+    plt.tight_layout(rect=[0.05, 0.05, 1, 0.95])
     pdf.savefig()
     plt.close()
 
