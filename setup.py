@@ -61,6 +61,12 @@ else:
     if not os.path.exists(LIBPATH):
         os.system("wget --no-check-certificate --output-document=${HOME}/.specmatchemp/library.h5 https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#")
 
+    # Additional csv files
+    csv_urls = ["https://www.dropbox.com/s/sdeouxrs7jrvss9/hires_telluric_mask.csv#",
+                "https://www.dropbox.com/s/wmdn6z67op2est0/detrend.csv#"]
+    for f in csv_urls:
+        os.system("wget --no-check-certificate -P " + SPECMATCHDIR + " " + f)
+
     specdir = os.path.join(SPECMATCHDIR, 'spectra')
     if not os.path.exists(specdir):
         os.mkdir(specdir)
