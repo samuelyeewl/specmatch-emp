@@ -65,7 +65,9 @@ else:
     csv_urls = ["https://www.dropbox.com/s/sdeouxrs7jrvss9/hires_telluric_mask.csv#",
                 "https://www.dropbox.com/s/wmdn6z67op2est0/detrend.csv#"]
     for f in csv_urls:
-        os.system("wget --no-check-certificate -P " + SPECMATCHDIR + " " + f)
+        outfile = os.path.join(SPECMATCHDIR,f.split('/')[-1][:-1])
+        cmd = "wget --no-check-certificate {} -O {}".format(f,outfile)
+        os.system(cmd)
 
     specdir = os.path.join(SPECMATCHDIR, 'spectra')
     if not os.path.exists(specdir):
@@ -76,11 +78,15 @@ else:
                     "https://www.dropbox.com/s/la0ojduaz5sf6pm/rj55.1872.fits#",
                     "https://www.dropbox.com/s/9pe7pwae489mjdw/rj59.1926.fits#"]
         for ref in ref_urls:
-            os.system("wget --no-check-certificate -P " + specdir + " " +
-                      ref)
+            outfile = os.path.join(specdir,ref.split('/')[-1][:-1])
+            cmd = "wget --no-check-certificate {} -O {}".format(ref,outfile)
+            os.system(cmd)
+
 
 #        from six.moves import urllib
 #        print("Downloading library.h5")
 #        urllib.request.urlretrieve(liburl, LIBPATH, reporthook)
+
+
 
 
