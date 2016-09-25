@@ -740,7 +740,7 @@ class SpecMatch(object):
         if orders == 'all':
             orders = np.arange(total_orders)
 
-        colormap = plt.cm.nipy_spectral_r
+        colormap = plt.cm.nipy_spectral
         num_orders = len(orders)
         for i in range(num_orders):
             color = colormap(0.9 * i / num_orders + 0.1)
@@ -765,7 +765,7 @@ class SpecMatch(object):
             highlightpeak (bool): Whether to highlight the peak value.
         """
         num_sects = self.shift_data['order_{0:d}/num_sections'.format(order)]
-        colormap = plt.cm.nipy_spectral_r
+        colormap = plt.cm.nipy_spectral
 
         for i in range(num_sects):
             color = colormap(0.9 * i / num_sects + 0.1)
