@@ -743,15 +743,19 @@ class SpecMatch(object):
         colormap = plt.cm.nipy_spectral
         num_orders = len(orders)
         for i in range(num_orders):
-            color = colormap(0.9 * (i / num_orders))
+            color = colormap(0.9 * i / num_orders + 0.1)
             order = orders[i]
-            plt.plot(center_pix[order], lags[order], 'o', color=color)
-            plt.plot(center_pix[order], fit[order], '-', color=color,
-                     label='Order {0:d}'.format(order))
+            plt.plot(
+                center_pix[order], lags[order], '_', ms=10, mew=4, color=color
+            )
+            plt.plot(
+                center_pix[order], fit[order], '-', color=color,
+                label='{0:d}'.format(order)
+            )
 
         plt.xlabel('Pixel number')
         plt.ylabel('Shift (pixels)')
-        plt.legend(loc='best', ncol=2, fontsize='small')
+        plt.legend(loc='best', ncol=2, fontsize='small',title='Order')
 
     def plot_xcorr(self, order=0, highlightpeak=False):
         """Plot the correlation array for each section of the given order.
@@ -761,18 +765,26 @@ class SpecMatch(object):
             highlightpeak (bool): Whether to highlight the peak value.
         """
         num_sects = self.shift_data['order_{0:d}/num_sections'.format(order)]
+        colormap = plt.cm.nipy_spectral
+
         for i in range(num_sects):
+            color = colormap(0.9 * i / num_sects + 0.1)
+
             xcorr = self.shift_data['order_{0:d}/sect_{1:d}/xcorr'
                                     .format(order, i)]
             lag_arr = self.shift_data['order_{0:d}/sect_{1:d}/lag_arr'
                                       .format(order, i)]
-            plt.plot(lag_arr, xcorr, label="Section {0:d}".format(i))
+            plt.plot(lag_arr, xcorr, label="{0:d}".format(i),color=color)
 
             if highlightpeak:
                 max_corr = np.argmax(xcorr)
-                plt.plot(lag_arr[max_corr], xcorr[max_corr], 'ko')
+                mew = plt.rcParams['lines.markeredgewidth'] * 4
+                plt.plot(
+                    lag_arr[max_corr], xcorr[max_corr],'x',color=color, 
+                    mew=mew,zorder=10
+                )
 
-        plt.legend(loc='upper left', fontsize='small')
+        plt.legend(loc='upper left', fontsize='small',title='Section')
         plt.xlabel('Shift (pixels)')
         plt.ylabel('Correlation')
 

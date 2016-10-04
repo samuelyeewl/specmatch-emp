@@ -147,10 +147,15 @@ def plot_shifts(sm, pdf, order, wavlim='all', singleorder=False):
     plt.close()
 
     # Cross-correlation
-    fig = plt.figure(figsize=(10, 5))
+    fig, axL = plt.subplots(ncols=2, figsize=(10, 5))
+    plt.sca(axL[0])
     sm.plot_xcorr(order, True)
-    plt.title('{0} cross-correlation for order {1:d}'
-              .format(name, order))
+    plt.title('{0} cross-correlation for order {1:d}'.format(name, order))
+    plt.sca(axL[1])
+    sm.plot_xcorr(order,True)
+    meanshift = np.nanmean(sm.shift_data['fit'])
+    dpix = 30
+    plt.xlim(meanshift-dpix, meanshift+dpix)
     fig.set_tight_layout(True)
     pdf.savefig()
     plt.close()
