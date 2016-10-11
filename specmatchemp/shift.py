@@ -416,14 +416,20 @@ def solve_for_shifts(s, mask, s_ref, mask_ref):
     s = _fill_nans(s, smean)
     s_ref = _fill_nans(s_ref, srefmean)
 
-    # perform correlation
-    xcorr = np.correlate(s-smean, s_ref-srefmean, mode='full')
-    xcorr = np.nan_to_num(xcorr)
-    max_corr = np.argmax(xcorr)
+    # # perform correlation
+    # xcorr = np.correlate(s-smean, s_ref-srefmean, mode='full')
+    # xcorr = np.nan_to_num(xcorr)
+    # max_corr = np.argmax(xcorr)
 
-    # number of pixels
-    npix = xcorr.shape[0]
-    lag_arr = np.arange(-(npix-1)/2, (npix+1)/2, 1)
+    # # number of pixels
+    # npix = xcorr.shape[0]
+    # lag_arr = np.arange(-(npix-1)/2, (npix+1)/2, 1)
+
+    # perform correlation
+    xcorr = correlate(s-smean, s_ref-srefmean)
+    max_corr = np.argmax(xcorr)
+    npix = len(xcorr)
+    lag_arr = np.arange(-npix/2+1, npix/2+1, 1)
 
     # select points around the peak and fit a quadratic
     lag_peaks = lag_arr[max_corr-5:max_corr+6]
@@ -434,6 +440,49 @@ def solve_for_shifts(s, mask, s_ref, mask_ref):
     lag = -p[1] / (2*p[0])
 
     return lag, lag_arr, xcorr
+
+
+def correlate(a, v, lowfilter=100):
+    """Custom function to perform 1-dimensional cross-correlation
+
+    Args:
+        a (np.ndarray): Input sequence
+        v (np.ndarray): Input sequence
+        lowfilter (int): Filter out components with frequency below this
+            threshold (given in number of cycles per length)
+
+    Returns:
+        np.ndarray: Symmetric cross-correlation array
+    """
+    # Zero pad arrays to double length, rounded to nearest power of two
+    # This is necessary to avoid effects from circular convolution
+    l = max(len(a), len(v))
+    # Add 1 in the exponent for doubling the length
+    # Add another for integer rounding
+    padded_length = 2**int(np.log2(l) + 1 + 1)
+    a_padded = np.zeros(padded_length)
+    a_padded[:len(a)] = a
+    v_padded = np.zeros(padded_length)
+    v_padded[:len(v)] = v
+
+    # Perform fast Fourier transforms of the input sequences
+    a_f = np.fft.rfft(a_padded)
+    v_f = np.fft.rfft(v_padded)
+
+    # Perform low frequency filtering
+    a_f[:lowfilter] = 0
+    v_f[:lowfilter] = 0
+
+    # Use correlation theorem to perform a fast cross-correlation
+    xcorr = np.fft.irfft(np.conj(a_f) * v_f)
+
+    # Final correlation array is by convention reversed and reorderd
+    xcorr_rearranged = np.empty(len(xcorr))
+    xcorr_rearranged[:int(len(xcorr)/2)] = xcorr[int(len(xcorr)/2):]
+    xcorr_rearranged[int(len(xcorr)/2):] = xcorr[:int(len(xcorr)/2)]
+    xcorr_rearranged = xcorr_rearranged[::-1]
+
+    return xcorr_rearranged
 
 
 def rescale_w(s, serr, w, m, w_ref):
