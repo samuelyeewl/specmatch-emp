@@ -442,7 +442,7 @@ def solve_for_shifts(s, mask, s_ref, mask_ref):
     return lag, lag_arr, xcorr
 
 
-def correlate(a, v, lowfilter=100):
+def correlate(a, v, lowfilter=0):
     """Custom function to perform 1-dimensional cross-correlation
 
     Args:

@@ -432,7 +432,7 @@ def shift_spectrum(obs, indir="./", plot_level=0, outdir="./",
     specdir = os.path.join(SPECMATCHDIR, 'spectra')
     shiftedspecdir = os.path.join(SPECMATCHDIR, 'shifted_spectra')
 
-    if indir is not specdir:
+    if indir != specdir:
         copy(os.path.join(indir, 'r' + obs + '.fits'), specdir)
 
     # load target and references
