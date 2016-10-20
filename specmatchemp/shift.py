@@ -432,8 +432,8 @@ def solve_for_shifts(s, mask, s_ref, mask_ref):
     lag_arr = np.arange(-npix/2+1, npix/2+1, 1)
 
     # select points around the peak and fit a quadratic
-    lag_peaks = lag_arr[max_corr-5:max_corr+6]
-    xcorr_peaks = xcorr[max_corr-5:max_corr+6]
+    lag_peaks = lag_arr[max_corr-10:max_corr+11]
+    xcorr_peaks = xcorr[max_corr-10:max_corr+11]
 
     p = np.polyfit(lag_peaks, xcorr_peaks, 2)
     # peak is simply -p[1]/2p[0]
@@ -442,7 +442,7 @@ def solve_for_shifts(s, mask, s_ref, mask_ref):
     return lag, lag_arr, xcorr
 
 
-def correlate(a, v, lowfilter=0):
+def correlate(a, v, lowfilter=100):
     """Custom function to perform 1-dimensional cross-correlation
 
     Args:
