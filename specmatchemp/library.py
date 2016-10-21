@@ -7,6 +7,8 @@ Defines the library class which will be used for matching
 from __future__ import print_function
 
 import datetime
+import os
+import re
 
 import numpy as np
 import pandas as pd
@@ -73,7 +75,7 @@ class Library(object):
     LIB_COLS = ['lib_index', 'cps_name', 'lib_obs', 'Teff', 'u_Teff',
                 'radius', 'u_radius', 'logg', 'u_logg', 'feh', 'u_feh',
                 'mass', 'u_mass', 'age', 'u_age', 'vsini', 'source',
-                'source_name', 'snr']
+                'source_name', 'Plx', 'u_Plx', 'Plx_source', 'snr']
     #: Numeric star properties
     STAR_PROPS = ['Teff', 'radius', 'logg', 'feh', 'mass', 'age']
 
@@ -411,6 +413,140 @@ class Library(object):
                              compression='gzip', compression_opts=1,
                              shuffle=True, chunks=chunk_size)
 
+    def to_csv(self, path):
+        """
+        Saves library parameters as a CSV file, using Pandas native to_csv
+        function.
+
+        Args:
+            path (str): Path to store csv file.
+        """
+        self.library_params.to_csv(path)
+
+    def to_tex(self, path, cols='standard', mode='w'):
+        """
+        Outputs library parameters into a tex file.
+
+        Args:
+            path (str): Path to store tex file.
+            cols (str or list): 'standard' or list of columns to be used
+            mode (str): Writing mode to pass to open(), either 'w' or 'a'
+        """
+        std_cols = ['cps_name', 'Teff', 'radius', 'logg', 'feh', 'mass', 'age',
+                    'Plx', 'source']
+
+        col_units = {'Teff': 'K', 'radius': 'Rsun', 'logg': 'dex',
+                     'feh': 'dex', 'mass': 'Msun', 'age': 'log(Gyr)',
+                     'vsini': 'km/s', 'Plx': 'mas'}
+
+        col_spec = {'Teff': '{:.0f}', 'radius': '{:.3f}', 'logg': '{:.2f}',
+                    'feh': '{:.2f}', 'mass': '{:.2f}', 'age': '{:.2f}',
+                    'vsini': '{:.2f}', 'Plx': '{:.2f}'}
+
+        self._source_table = None
+
+        if cols == 'standard' or type(cols) is not list:
+            cols = std_cols
+
+        if not os.path.exists(os.path.dirname(path)):
+            os.path.mkdir(os.path.dirname(path))
+
+        with open(path, mode) as f:
+            # Write column headers
+            f.write("%")
+            for col in cols:
+                if col in col_units:
+                    col_head = col + "({0})".format(col_units[col])
+                else:
+                    col_head = col
+                f.write(col_head + "\t& ")
+            f.write("\n")
+
+            # Write rows
+            for idx, row in self.library_params.iterrows():
+                for col in cols:
+                    # Name
+                    if col == 'cps_name':
+                        f.write(self._format_name(row['cps_name']))
+
+                    # Quantitative values
+                    if col in col_spec:
+                        if np.isnan(row[col]):
+                            f.write("--")
+                        else:
+                            fmt = col_spec[col] + " $\pm$ " + col_spec[col]
+                            f.write(fmt.format(row[col], row['u_' + col]))
+
+                    if col == 'source':
+                        f.write(self._format_source(row))
+                        # Don't write the column delimiter
+                        break
+
+                    # Column delimiter
+                    f.write("     & ")
+
+                # Row delimiter
+                f.write(" \\\\")
+                f.write("\n")
+
+            # Write source list
+            f.write("\n")
+            for k, v in self._source_table.items():
+                f.write("% " + k + ': ' + v + "\n")
+
+    def _format_name(self, name):
+        """
+        Converts a cps_name entry into a name suitable for printing
+
+        Args:
+            name (str): Original cps name
+        Returns:
+            str: converted name
+        """
+        m = re.search("\d", name)
+        if m:
+            if m.start() == 0:
+                # Add HD prefix to strings beginning with numbers
+                return 'HD ' + str(name)
+            else:
+                return name[:m.start()] + " " + name[m.start():]
+        return name
+
+    def _format_source(self, row):
+        """
+        Gets the source from the row elements and assigns a unique letter.
+
+        Args:
+            row (pd.Series): Library.lib_params row
+        Returns:
+            str: Source letter
+        """
+        # Create a new mapping
+        if self._source_table is None:
+            self._source_table = {}
+            # Group by parameter source
+            g = self.library_params.groupby('source')
+            idx = 'a'
+            for k, v in g:
+                self._source_table[k] = idx
+                idx = chr(ord(idx) + 1)
+
+            # Group by parallax source
+            g = self.library_params.groupby('Plx_source')
+            idx = 1
+            for k, v in g:
+                if k != 'None':
+                    self._source_table['Plx_' + k] = str(idx)
+                    idx += 1
+
+        # Get row source
+        src_string = self._source_table[row['source']]
+        if ('Plx_' + row['Plx_source']) in self._source_table:
+            src_string += "," + self._source_table['Plx_' + row['Plx_source']]
+
+        return src_string
+
+
     def get_spectrum(self, indices):
         """Returns the spectrum at the given index.
 
@@ -564,7 +700,7 @@ class Library(object):
         Returns:
             Number of spectra stored in library.
         """
-        return len(self.library_spectra)
+        return len(self.library_params)
 
     def __getitem__(self, index):
         """
