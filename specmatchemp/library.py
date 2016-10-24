@@ -421,7 +421,7 @@ class Library(object):
         Args:
             path (str): Path to store csv file.
         """
-        self.library_params.to_csv(path)
+        self.library_params.to_csv(path, index=False)
 
     def to_tex(self, path, cols='standard', mode='w'):
         """
