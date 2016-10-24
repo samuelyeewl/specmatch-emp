@@ -525,14 +525,14 @@ class Library(object):
         if self._source_table is None:
             self._source_table = {}
             # Group by parameter source
-            g = self.library_params.groupby('source')
+            g = self.library_params.groupby('source', sort=False)
             idx = 'a'
             for k, v in g:
                 self._source_table[k] = idx
                 idx = chr(ord(idx) + 1)
 
             # Group by parallax source
-            g = self.library_params.groupby('Plx_source')
+            g = self.library_params.groupby('Plx_source', sort=False)
             idx = 1
             for k, v in g:
                 if k != 'None':
