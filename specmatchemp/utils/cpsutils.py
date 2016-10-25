@@ -78,7 +78,8 @@ def check_cps_database(starname, cps_list):
 
     # else the search string is simply the name
     # e.g. BD+, EPIC, HTR, HATS, HIP, HII
-    elif starname.upper().startswith(('BD+', 'EPIC', 'HTR', 'HATS', 'HIP', 'HII')):
+    elif starname.upper().startswith(('BD+', 'EPIC', 'HTR',
+                                      'HATS', 'HIP', 'HII')):
         # starname = starname.strip('*')
         # cps_search_str = starname
         cps_search_str = 'NOSTARFOUND'
@@ -88,6 +89,7 @@ def check_cps_database(starname, cps_list):
 
     cps_search_str = '^' + cps_search_str + '$'
     return cps_list[cps_list['name'].str.match(cps_search_str)].copy()
+
 
 def find_spectra(starname, cps_list, specdir=""):
     """Checks the CPS database for the star with the provided identifier.
@@ -113,7 +115,8 @@ def find_spectra(starname, cps_list, specdir=""):
             s_query_result = Simbad.query_objectids(starname)
             if s_query_result is not None:
                 for r in s_query_result:
-                    result = check_cps_database(r['ID'].decode('ascii'), cps_list)
+                    result = check_cps_database(r['ID'].decode('ascii'),
+                                                cps_list)
                     if not result.empty:
                         break
 
@@ -122,7 +125,7 @@ def find_spectra(starname, cps_list, specdir=""):
         if len(specdir) == 0:
             specdir = os.path.join(SPECMATCHDIR, 'spectra')
 
-        result.loc[:,'snr'] = result.obs.apply(calc_snr, args=(specdir,))
+        result.loc[:, 'snr'] = result.obs.apply(calc_snr, args=(specdir, ))
         result.sort_values(by='snr', ascending=False, inplace=True)
 
     return result

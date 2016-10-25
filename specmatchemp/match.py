@@ -9,7 +9,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import lmfit
 from scipy.interpolate import LSQUnivariateSpline
-from scipy import signal
 from scipy.ndimage.filters import convolve1d
 
 import specmatchemp.kernels

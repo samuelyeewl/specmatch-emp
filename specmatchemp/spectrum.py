@@ -246,6 +246,9 @@ class Spectrum(object):
         plt.xlabel('Wavelength (Angstroms)')
         plt.ylabel('Normalized Flux (Arbitrary Offset)')
 
+    def snr(self):
+        return np.nanpercentile(1/self.serr, 90)
+
     def _convert_mask_to_regions(self):
         """Converts a boolean mask into a list of regions
         """
