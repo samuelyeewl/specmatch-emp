@@ -8,6 +8,7 @@ from __future__ import print_function
 import numpy as np
 from astropy.io import fits
 from scipy.optimize import least_squares
+from scipy.special import expit
 
 from specmatchemp import spectrum
 from specmatchemp.utils import utils
@@ -83,7 +84,7 @@ def bootstrap_shift(targ, ref_list, store=None):
     return shifted
 
 
-def shift(targ, ref, store=None):
+def shift(targ, ref, store=None, lowfilter=20):
     """Shifts the given spectrum by placing it on the same wavelength
     scale as the specified reference spectrum, then solves for shifts
     between the two spectra through cross-correlation.
@@ -189,7 +190,8 @@ def shift(targ, ref, store=None):
             m_ref_sect = m_ref_c[idx_min:idx_max]
             # get the shifts in pixel number
             lag, lag_arr, xcorr = solve_for_shifts(ss_sect, mm_sect,
-                                                   s_ref_sect, m_ref_sect)
+                                                   s_ref_sect, m_ref_sect,
+                                                   lowfilter=lowfilter)
             lags[j] = lag
             center_pix[j] = (j + 1/2)*l_sect
 
@@ -386,7 +388,7 @@ def flatten(w, s, serr=None, mask=None, w_ref=None, wavlim=None):
     return w_flattened, s_flattened, serr_flattened, mask_flattened
 
 
-def solve_for_shifts(s, mask, s_ref, mask_ref):
+def solve_for_shifts(s, mask, s_ref, mask_ref, lowfilter=20):
     """
     Solve for the pixel shifts required to align two spectra that are on the
     same wavelength scale.
@@ -426,14 +428,14 @@ def solve_for_shifts(s, mask, s_ref, mask_ref):
     # lag_arr = np.arange(-(npix-1)/2, (npix+1)/2, 1)
 
     # perform correlation
-    xcorr = correlate(s-smean, s_ref-srefmean)
+    xcorr = correlate(s-smean, s_ref-srefmean, lowfilter=lowfilter)
     max_corr = np.argmax(xcorr)
     npix = len(xcorr)
     lag_arr = np.arange(-npix/2+1, npix/2+1, 1)
 
     # select points around the peak and fit a quadratic
-    lag_peaks = lag_arr[max_corr-10:max_corr+11]
-    xcorr_peaks = xcorr[max_corr-10:max_corr+11]
+    lag_peaks = lag_arr[max_corr-5:max_corr+6]
+    xcorr_peaks = xcorr[max_corr-5:max_corr+6]
 
     p = np.polyfit(lag_peaks, xcorr_peaks, 2)
     # peak is simply -p[1]/2p[0]
@@ -442,14 +444,14 @@ def solve_for_shifts(s, mask, s_ref, mask_ref):
     return lag, lag_arr, xcorr
 
 
-def correlate(a, v, lowfilter=100):
+def correlate(a, v, lowfilter=0):
     """Custom function to perform 1-dimensional cross-correlation
 
     Args:
         a (np.ndarray): Input sequence
         v (np.ndarray): Input sequence
-        lowfilter (int): Filter out components with frequency below this
-            threshold (given in number of cycles per length)
+        lowfilter (int): Filter out components with wavelength above this
+            number of pixels
 
     Returns:
         np.ndarray: Symmetric cross-correlation array
@@ -469,9 +471,14 @@ def correlate(a, v, lowfilter=100):
     a_f = np.fft.rfft(a_padded)
     v_f = np.fft.rfft(v_padded)
 
+    cutoff = int(padded_length/lowfilter)
+    # Use a sigmoid filter
+    pix = np.arange(len(a_f))
+    b = expit(0.01 * (pix - cutoff))
+
     # Perform low frequency filtering
-    a_f[:lowfilter] = 0
-    v_f[:lowfilter] = 0
+    a_f *= b
+    v_f *= b
 
     # Use correlation theorem to perform a fast cross-correlation
     xcorr = np.fft.irfft(np.conj(a_f) * v_f)
