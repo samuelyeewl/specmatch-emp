@@ -209,7 +209,7 @@ class Library(object):
                 raise ValueError("Different number of spectra and parameters")
             if isinstance(spectra, np.ndarray):
                 if np.shape(spectra)[1] != 3 \
-                        or np.shape(spectra)[2] != self.wav:
+                        or np.shape(spectra)[2] != len(self.wav):
                     raise ValueError("spectra should be an np.ndarray of " +
                                      "shape ({0:d}, 3, {1:d})"
                                      .format(len(params), len(self.wav)))
@@ -219,17 +219,17 @@ class Library(object):
 
         # Check param_mask
         if param_mask is not None:
-            if isinstance(param_mask, pd.Series):
-                param_mask = pd.DataFrame(param_mask).T
-            elif not isinstance(param_mask, pd.DataFrame):
-                raise TypeError("param_mask is not pd.Series or pd.DataFrame")
+            # if isinstance(param_mask, pd.Series):
+            #     param_mask = pd.DataFrame(param_mask).T
+            # elif not isinstance(param_mask, pd.DataFrame):
+            #     raise TypeError("param_mask is not pd.Series or pd.DataFrame")
 
             if len(param_mask) != len(params):
                 raise ValueError("param_mask not the same length as params")
 
-            for col in param_mask.columns:
-                if col not in self.param_mask.columns:
-                    raise ValueError(col + " is not an allowed column")
+            # for col in param_mask.columns:
+            #     if col not in self.param_mask.columns:
+            #         raise ValueError(col + " is not an allowed column")
 
         # Finally, append spectra
         if spectra is not None:
@@ -249,7 +249,7 @@ class Library(object):
         # Append params
         self.library_params = pd.concat((self.library_params, params))
         # Append param_mask
-        self.param_mask = pd.concat((self.param_mask, params))
+        self.param_mask = np.concatenate((self.param_mask, param_mask))
 
         self.library_params.set_index('lib_index', inplace=True, drop=False)
         self.header['last_modified'] = _timestamp()
