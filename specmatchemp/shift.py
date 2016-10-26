@@ -461,8 +461,8 @@ def solve_for_shifts(s, mask, s_ref, mask_ref, lowfilter=20):
     lag_arr = np.arange(-npix/2+1, npix/2+1, 1)
 
     # select points around the peak and fit a quadratic
-    lag_peaks = lag_arr[max_corr-5:max_corr+6]
-    xcorr_peaks = xcorr[max_corr-5:max_corr+6]
+    lag_peaks = lag_arr[max_corr-1:max_corr+2]
+    xcorr_peaks = xcorr[max_corr-1:max_corr+2]
 
     p = np.polyfit(lag_peaks, xcorr_peaks, 2)
     # peak is simply -p[1]/2p[0]
