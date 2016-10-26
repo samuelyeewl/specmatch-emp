@@ -240,7 +240,7 @@ def shift(targ, ref, store=None, lowfilter=20):
                                 args=(center_pix_trunc, lags_trunc),
                                 loss='cauchy')
         fit = fit_res.x
-        pix_arr = np.arange(0, len(w_ref_c))
+        pix_arr = np.arange(0, len(ss))
         pix_shifted = pix_arr - fit[1] - pix_arr*fit[0]
 
         # don't read past the wavelength array
@@ -251,10 +251,6 @@ def shift(targ, ref, store=None, lowfilter=20):
         new_pix = np.arange(pix_min, pix_max)
         # new wavelength array
         w_ref_c = ref.w[start_idx+pix_min:start_idx+pix_max]
-
-        print(start_idx)
-        print(len(w_ref_c))
-        print(len(ss))
 
         # interpolate the spectrum back onto the reference spectrum
         ss_shifted = np.interp(new_pix, pix_shifted, ss)
