@@ -299,7 +299,7 @@ def shift(targ, ref, store=None, lowfilter=20):
 
     return spectrum.Spectrum(w_flat, s_flat, serr_flat, name=targ.name,
                              mask=mask_flat, header=targ.header,
-                             attrs=targ.attrs), np.asarray(lag_data)
+                             attrs=targ.attrs)
 
 
 def _isclose(a, b, abs_tol=1e-6):
