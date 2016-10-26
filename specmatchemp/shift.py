@@ -9,6 +9,7 @@ import numpy as np
 from astropy.io import fits
 from scipy.optimize import least_squares
 from scipy.special import expit
+from scipy.stats import sigmaclip
 
 from specmatchemp import spectrum
 from specmatchemp.utils import utils
@@ -214,7 +215,19 @@ def shift(targ, ref, store=None, lowfilter=20):
         lag_data.append(lags)
         center_pix_data.append(center_pix)
 
-    # Loop over again to achieve robust line fit
+    # Compute sigma-clipped mean lags for each segment
+    lag_data = np.asarray(lag_data)
+    clip = 2
+    for j in range(lag_data.shape[1]):
+        clipped, crit_low, crit_high = sigmaclip(lag_data[:,j], low=clip, high=clip)
+        mean_lag = np.mean(clipped)
+        # print(clipped)
+        for i in range(lag_data.shape[0]):
+            curr = lag_data[i, j]
+            lag_data[i, j] = curr if curr > crit_low and curr < crit_high \
+                             else mean_lag
+
+
     for i in range(s.shape[0]):
         # Restore data from previous loop
         ss = s_rescaled[i]
@@ -225,20 +238,11 @@ def shift(targ, ref, store=None, lowfilter=20):
         lags = lag_data[i]
         center_pix = center_pix_data[i]
 
-        # remove clear outliers
-        med = np.median(lags)
-        tol = 10
-        not_outlier = np.asarray([True if l > med-tol and l < med+tol
-                                  else False for l in lags])
-        lags_trunc = lags[not_outlier]
-        center_pix_trunc = center_pix[not_outlier]
-
         # use robust least squares to fit a line to the shifts
         # (Cauchy loss function)
         p_guess = np.array([0, 0])
         fit_res = least_squares(_linear_fit_residuals, p_guess,
-                                args=(center_pix_trunc, lags_trunc),
-                                loss='cauchy')
+                                args=(center_pix, lags), loss='cauchy')
         fit = fit_res.x
         pix_arr = np.arange(0, len(ss))
         pix_shifted = pix_arr - fit[1] - pix_arr*fit[0]
@@ -264,7 +268,7 @@ def shift(targ, ref, store=None, lowfilter=20):
         ws = np.append(ws, w_ref_c)
 
         # save diagnostic data
-        fitted = fit[0]*center_pix+fit[1]
+        fitted = fit[0] * center_pix + fit[1]
         fit_data.append(np.array(fitted))
 
     # save diagnostic data
@@ -295,7 +299,7 @@ def shift(targ, ref, store=None, lowfilter=20):
 
     return spectrum.Spectrum(w_flat, s_flat, serr_flat, name=targ.name,
                              mask=mask_flat, header=targ.header,
-                             attrs=targ.attrs)
+                             attrs=targ.attrs), np.asarray(lag_data)
 
 
 def _isclose(a, b, abs_tol=1e-6):
