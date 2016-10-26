@@ -130,6 +130,12 @@ def shift(targ, ref, store=None, lowfilter=20):
     if store is not None:
         store['num_orders'] = s.shape[0]
 
+    # Containers for tempoerary holding of data
+    s_rescaled = []
+    serr_rescaled = []
+    m_rescaled = []
+    start_idxs = []
+
     # shift each order
     for i in range(s.shape[0]):
         ww = w[i]
@@ -157,13 +163,17 @@ def shift(targ, ref, store=None, lowfilter=20):
 
         in_range = np.asarray([True if wr > w_min and wr < w_max else False
             for wr in ref.w])
-        start_idx = np.argmax(in_range)
+        start_idxs.append(np.argmax(in_range))
         w_ref_c = ref.w[in_range]
         s_ref_c = ref.s[in_range]
         m_ref_c = ref.mask[in_range]
 
         # place the target spectrum on the same wavelength scale
         ss, sserr, mm = rescale_w(ss, sserr, ww, mm, w_ref_c)
+
+        s_rescaled.append(ss)
+        serr_rescaled.append(sserr)
+        m_rescaled.append(mm)
 
         # solve for shifts in different sections
         masked_length = len(ss[mm])
@@ -199,6 +209,21 @@ def shift(targ, ref, store=None, lowfilter=20):
                 key = "order_{0:d}/sect_{1:d}/".format(i, j)
                 store[key+"xcorr"] = xcorr
                 store[key+"lag_arr"] = lag_arr
+        
+        # Save lag data
+        lag_data.append(lags)
+        center_pix_data.append(center_pix)
+
+    # Loop over again to achieve robust line fit
+    for i in range(s.shape[0]):
+        # Restore data from previous loop
+        ss = s_rescaled[i]
+        sserr = serr_rescaled[i]
+        mm = m_rescaled[i]
+        start_idx = start_idxs[i]
+        
+        lags = lag_data[i]
+        center_pix = center_pix_data[i]
 
         # remove clear outliers
         med = np.median(lags)
@@ -227,6 +252,10 @@ def shift(targ, ref, store=None, lowfilter=20):
         # new wavelength array
         w_ref_c = ref.w[start_idx+pix_min:start_idx+pix_max]
 
+        print(start_idx)
+        print(len(w_ref_c))
+        print(len(ss))
+
         # interpolate the spectrum back onto the reference spectrum
         ss_shifted = np.interp(new_pix, pix_shifted, ss)
         sserr_shifted = np.interp(new_pix, pix_shifted, sserr)
@@ -239,8 +268,6 @@ def shift(targ, ref, store=None, lowfilter=20):
         ws = np.append(ws, w_ref_c)
 
         # save diagnostic data
-        lag_data.append(lags)
-        center_pix_data.append(center_pix)
         fitted = fit[0]*center_pix+fit[1]
         fit_data.append(np.array(fitted))
 
