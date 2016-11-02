@@ -72,10 +72,10 @@ class Library(object):
         nso (Spectrum): NSO spectrum
     """
     #: Columns required in library
-    LIB_COLS = ['lib_index', 'cps_name', 'lib_obs', 'Teff', 'u_Teff',
-                'radius', 'u_radius', 'logg', 'u_logg', 'feh', 'u_feh',
-                'mass', 'u_mass', 'age', 'u_age', 'vsini', 'source',
-                'source_name', 'Plx', 'u_Plx', 'Plx_source', 'snr']
+    LIB_COLS = ['lib_index', 'cps_name', 'lib_obs', 'source', 'source_name',
+                'Teff', 'u_Teff', 'radius', 'u_radius', 'logg', 'u_logg',
+                'feh', 'u_feh', 'mass', 'u_mass', 'age', 'u_age', 'vsini', 
+                'Plx', 'u_Plx', 'Plx_source', 'Vmag', 'snr']
     #: Numeric star properties
     STAR_PROPS = ['Teff', 'radius', 'logg', 'feh', 'mass', 'age']
 
@@ -231,10 +231,10 @@ class Library(object):
             #     if col not in self.param_mask.columns:
             #         raise ValueError(col + " is not an allowed column")
 
+        cur_length = len(self.library_spectra)
         # Finally, append spectra
         if spectra is not None:
-            cur_length = len(self.library_spectra)
-            params['lib_obs'] = np.arange(cur_length, cur_length+len(spectra))
+            params['lib_index'] = np.arange(cur_length, cur_length+len(spectra))
 
             if isinstance(spectra, np.ndarray):
                 self.library_spectra = np.vstack((self.library_spectra,
@@ -246,6 +246,7 @@ class Library(object):
                     new_spec = [spec.s, spec.serr, spec.mask]
                     self.library_spectra = np.vstack((self.library_spectra,
                                                       new_spec))
+
         # Append params
         self.library_params = pd.concat((self.library_params, params))
         # Append param_mask
@@ -421,7 +422,8 @@ class Library(object):
         Args:
             path (str): Path to store csv file.
         """
-        self.library_params.to_csv(path, index=False)
+        self.library_params.to_csv(path, index=False, float_format='{:.3f}',
+                                   na_rep='--')
 
     def to_tex(self, path, cols='standard', mode='w'):
         """
@@ -792,8 +794,8 @@ def read_hdf(path=None, wavlim='all'):
             library_spectra = f['library_spectra'][:, :, idxmin:idxmax]
             wav = wav[idxmin:idxmax]
 
-    lib = Library(wav, library_spectra, library_params, header=header,
-                  wavlim=wavlim, param_mask=param_mask, nso=nso)
+    lib = Library(wav, library_spectra, library_params[Library.LIB_COLS],
+                  header=header, wavlim=wavlim, param_mask=param_mask, nso=nso)
     return lib
 
 

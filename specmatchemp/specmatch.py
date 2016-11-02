@@ -18,6 +18,7 @@ import astropy.io.fits as fits
 from time import strftime
 
 from specmatchemp import SPECMATCH_VERSION
+from specmatchemp import SHIFT_REFERENCES
 from specmatchemp.io import h5plus
 from specmatchemp import spectrum
 from specmatchemp.spectrum import Spectrum
@@ -119,13 +120,16 @@ class SpecMatch(object):
                 self.target
         """
         print("Shifting spectrum")
-        shift_refs = self.lib.header['shift_refs']
-        if 'nso' in shift_refs and self.lib.nso is None:
-            raise ValueError("Error: Library did not contain NSO spectrum.")
+        shift_refs = SHIFT_REFERENCES
 
+        # Obtain spectra
         shift_specs = []
-        for obs in shift_refs:
+        for ref in shift_refs:
+            obs = ref[0]
             if obs == 'nso':
+                if self.lib.nso is None:
+                    raise ValueError("Error: Library did not contain " + 
+                                     "NSO spectrum.")
                 shift_specs.append(self.lib.nso)
             else:
                 idx = self.lib.get_index(obs)

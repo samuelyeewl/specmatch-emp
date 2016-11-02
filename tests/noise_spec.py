@@ -36,7 +36,7 @@ def add_noise(spec, snr):
 
 
 def main(args):
-    filename = os.path.splitext(args.input_file)
+    filename = os.path.splitext(args.input_file)[0]
     infile = os.path.join(args.dir, filename + '.fits')
 
     spec = spectrum.read_hires_fits(infile)
@@ -50,7 +50,7 @@ def main(args):
             suffix = "_snr={0:.0f}_i={1:d}".format(args.snr, i + 1)
         outfile = os.path.join(args.dir, filename + suffix + '.fits')
 
-        noised_spec.to_fits(outfile)
+        noised_spec.to_hires_fits(outfile)
 
 
 if __name__ == '__main__':
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     psr.add_argument('snr', type=float, help="Target signal-to-noise ratio")
     psr.add_argument('-n', '--num', type=int, default=1,
                      help="Number of noisy spectra to generate")
-    psr.add_argument('-d', '--dir', type=str, default=SPECMATCHDIR,
+    psr.add_argument('-d', '--dir', type=str, default=SPECMATCHDIR+'spectra/',
                      help="Directory to look for spectra")
     args = psr.parse_args()
 

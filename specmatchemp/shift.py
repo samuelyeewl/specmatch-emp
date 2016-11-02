@@ -126,7 +126,7 @@ def shift(targ, ref, store=None, lowfilter=20):
     fit_data = []
 
     # length of each section in pixels
-    section_length = 700
+    section_length = 500
 
     if store is not None:
         store['num_orders'] = s.shape[0]
@@ -136,6 +136,9 @@ def shift(targ, ref, store=None, lowfilter=20):
     serr_rescaled = []
     m_rescaled = []
     start_idxs = []
+
+    # Fixed number of sections across every order
+    num_sections = int(s.shape[1] / section_length) + 1
 
     # shift each order
     for i in range(s.shape[0]):
@@ -178,7 +181,7 @@ def shift(targ, ref, store=None, lowfilter=20):
 
         # solve for shifts in different sections
         masked_length = len(ss[mm])
-        num_sections = int(masked_length / section_length) + 1
+        # num_sections = int(masked_length / section_length) + 1
 
         # true section length
         l_sect = int(masked_length / num_sections)
@@ -215,18 +218,20 @@ def shift(targ, ref, store=None, lowfilter=20):
         lag_data.append(lags)
         center_pix_data.append(center_pix)
 
-    # Compute sigma-clipped mean lags for each segment
     lag_data = np.asarray(lag_data)
-    clip = 2
-    for j in range(lag_data.shape[1]):
-        clipped, crit_low, crit_high = sigmaclip(lag_data[:,j], low=clip, high=clip)
-        mean_lag = np.mean(clipped)
-        # print(clipped)
-        for i in range(lag_data.shape[0]):
-            curr = lag_data[i, j]
-            lag_data[i, j] = curr if curr > crit_low and curr < crit_high \
-                             else mean_lag
+    # Compute sigma-clipped mean lags for each segment, if there are multiple
+    # orders
+    if s.shape[0] > 1:
+        clip = 2
+        for j in range(lag_data.shape[1]):
+            clipped, crit_low, crit_high = sigmaclip(lag_data[:,j], low=clip,
+                                                     high=clip)
+            mean_lag = np.mean(clipped)
 
+            for i in range(lag_data.shape[0]):
+                curr = lag_data[i, j]
+                lag_data[i, j] = curr if curr > crit_low and curr < crit_high \
+                                 else mean_lag
 
     for i in range(s.shape[0]):
         # Restore data from previous loop

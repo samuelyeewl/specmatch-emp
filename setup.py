@@ -75,7 +75,7 @@ else:
         # download references
         ref_urls = ["https://www.dropbox.com/s/i397kkebdm2b5ez/nso.fits#",
                     "https://www.dropbox.com/s/6oim1suxnu3mci8/rj26.532.fits#",
-                    "https://www.dropbox.com/s/la0ojduaz5sf6pm/rj55.1872.fits#",
+                    "https://www.dropbox.com/s/cepbxprp6wvdmee/rj72.718.fits#",
                     "https://www.dropbox.com/s/9pe7pwae489mjdw/rj59.1926.fits#"]
         for ref in ref_urls:
             outfile = os.path.join(specdir,ref.split('/')[-1][:-1])
