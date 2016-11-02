@@ -140,7 +140,8 @@ class Library(object):
 
         # assign attributes
         self.wav = wav
-        self.library_params = library_params
+        self.library_params = library_params.sort_values(by=['source',
+                                                             'cps_name'])
         self.library_spectra = library_spectra
         self.header = header
         header['date_created'] = _timestamp()
@@ -422,8 +423,8 @@ class Library(object):
         Args:
             path (str): Path to store csv file.
         """
-        self.library_params.to_csv(path, index=False, float_format='{:.3f}',
-                                   na_rep='--')
+        self.library_params.to_csv(path, index=False, na_rep='--',
+                                   float_format='%.3f')
 
     def to_tex(self, path, cols='standard', mode='w'):
         """
