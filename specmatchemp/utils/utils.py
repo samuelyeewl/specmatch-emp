@@ -24,8 +24,12 @@ def calc_logg(radius, u_radius, mass, u_mass):
     """
     rstar = radius * c.R_sun
     mstar = mass * c.M_sun
-    logg = np.log10((c.G * mstar/(rstar**2)).cgs.value)
-    u_logg = (u_mass/mass + 2*u_radius/radius)*logg
+    g = (c.G * mstar/(rstar**2)).cgs.value
+    logg = np.log10(g)
+    # Fractional error in g
+    u_frac_g = np.sqrt((u_mass/mass)**2 + 2*(u_radius/radius)**2)
+    # delta log_g = (1 / ln 10) * (delta g / g)
+    u_logg = u_frac_g / np.log(10)
 
     return logg, u_logg
 
@@ -51,6 +55,7 @@ def calc_radius(plx, u_plx, theta, u_theta):
     u_radius = (u_plx/plx + u_theta/theta) * radius
 
     return radius, u_radius
+
 
 def calc_residuals(s1, w1, s2, w2):
     """Find the residuals between two spectra (s1-s2) when they are on the same
