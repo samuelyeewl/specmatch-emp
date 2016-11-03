@@ -598,7 +598,7 @@ def save_shift_to_fits(outpath, shifted, unshifted, shift_data, clobber=False):
     shifted_hdu = shifted.to_hdu()
 
     # Save unshifted spectrum
-    unshifted_hdus = unshifted.to_hdu()
+    unshifted_hdus = unshifted.to_hdulist(primary=False)
 
     # Save shift data
     shift_data_hdu = shift_data_to_hdu(shift_data)

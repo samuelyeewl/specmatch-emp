@@ -380,16 +380,21 @@ class HiresSpectrum(Spectrum):
         plt.xlabel('Wavelength (Angstroms)')
         plt.ylabel('Flux')
 
-    def to_hdulist(self):
+    def to_hdulist(self, primary=True):
         """Creates a list of fits.ImageHDU to store HIRES spectrum.
-
+        
+        Args:
+            primary (bool): True if first HDU should be a primary HDU
         Returns:
             list of fits.ImageHDU:
                 l[0] = spectrum
                 l[1] = spectrum error
                 l[2] = wavelength
         """
-        s_hdu = fits.PrimaryHDU(data=self.s, header=self.header)
+        if primary:
+            s_hdu = fits.PrimaryHDU(data=self.s, header=self.header)
+        else:
+            s_hdu = fits.ImageHDU(data=self.s, header=self.header)
         serr_hdu = fits.ImageHDU(data=self.serr)
         w_hdu = fits.ImageHDU(data=self.w)
 
