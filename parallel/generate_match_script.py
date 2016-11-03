@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-@filename generate_match_script.py
+@filename generate_test_script.py
 
 Generate script lines for matching spectra
 """
@@ -8,7 +8,6 @@ Generate script lines for matching spectra
 from __future__ import print_function
 
 import os
-import pandas as pd
 from argparse import ArgumentParser
 
 from specmatchemp import library

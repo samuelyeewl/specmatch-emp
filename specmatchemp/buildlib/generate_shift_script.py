@@ -32,8 +32,8 @@ if __name__ == '__main__':
             obs = row['lib_obs'][1:]
             name = row['cps_name']
             s = "smemp shift " + obs + " "
-            s += "-d ~/Dropbox/SpecMatch-Emp/spectra/iodfitsdb/ "
-            s += "-p -o ~/SpecMatch-Emp/results/ "
+            s += "-pp "
+            s += "-o /home/syee/specmatchemp-working/specmatchemp/results/ "
             s += "-n " + name
             s += "\n"
             f.write(s)

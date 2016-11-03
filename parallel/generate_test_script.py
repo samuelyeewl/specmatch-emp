@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-@filename generate_lincomb_script.py
+@filename generate_match_script.py
 
-Generate script lines to run lincomb
+Generate script lines for matching spectra
 """
 
 from __future__ import print_function
@@ -19,7 +19,7 @@ if __name__ == '__main__':
                      default=os.path.join(SPECMATCHDIR, 'library.h5'),
                      help="Path to parameters csv file")
     psr.add_argument('-o', '--outpath', type=str,
-                     default='./lincomb_script.sh',
+                     default='./libtest_script.sh',
                      help="Path to output match script")
     psr.add_argument('-s', '--suffix', type=str, default="",
                      help="Suffix to append to match results")
@@ -27,17 +27,21 @@ if __name__ == '__main__':
 
     lib = library.read_hdf(args.libpath, wavlim='none')
     params = lib.library_params
+    outdir = "/home/syee/specmatchemp-working/specmatchemp/results/"
 
     with open(args.outpath, 'w') as f:
         for idx, row in params.iterrows():
             obs = row['lib_obs'][1:]
             name = row['cps_name']
-            resdir = "/home/syee/specmatchemp-working/specmatchemp/results/"
             s = "source ~/.bash_profile; "
-            s += "smemp lincomb "
-            s += resdir + name + "/" + name + "_sm.hdf "
+            s += "smemp match " + obs + " "
             s += "-pp "
             s += "-i " + name + " "
-            s += "-o /home/syee/specmatchemp-working/specmatchemp/results"
+            s += "-o " + outdir + "; "
+            s += "smemp lincomb "
+            s += outdir + name + "/" + name + "_sm.hdf "
+            s += "-pp "
+            s += "-i " + name + " "
+            s += "-o " + outdir
             s += "\n"
             f.write(s)

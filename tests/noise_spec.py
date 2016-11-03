@@ -50,7 +50,7 @@ def main(args):
             suffix = "_snr={0:.0f}_i={1:d}".format(args.snr, i + 1)
         outfile = os.path.join(args.dir, filename + suffix + '.fits')
 
-        noised_spec.to_hires_fits(outfile)
+        noised_spec.to_hires_fits(outfile, clobber=True)
 
 
 if __name__ == '__main__':

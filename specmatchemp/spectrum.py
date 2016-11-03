@@ -73,7 +73,7 @@ class Spectrum(object):
                           mask=np.copy(self.mask), name=self.name,
                           header=self.header, attrs=self.attrs.copy())
 
-    def to_fits(self, outpath):
+    def to_fits(self, outpath, clobber=True):
         """Saves the spectrum to a fits file.
 
         Args:
@@ -97,7 +97,7 @@ class Spectrum(object):
              fits.Column(name='mask', format='B', array=self.mask)])
 
         hdulist = fits.HDUList([prihdu, tbhdu])
-        hdulist.writeto(outpath, clobber=True)
+        hdulist.writeto(outpath, clobber=clobber)
 
     def to_hdu(self):
         """Creates a fits.BinTableHDU object from spectrum data
@@ -400,9 +400,9 @@ class HiresSpectrum(Spectrum):
 
         return fits.HDUList([s_hdu, serr_hdu, w_hdu])
 
-    def to_hires_fits(self, outfile):
+    def to_hires_fits(self, outfile, clobber=False):
         hdulist = self.to_hdulist()
-        hdulist.writeto(outfile)
+        hdulist.writeto(outfile, clobber=clobber)
 
 
 def read_fits(infile, wavlim=None):
