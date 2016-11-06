@@ -115,7 +115,7 @@ def label_axes(param_x=None, param_y=None, rescale=True):
             ax.set_xscale('log')
 
     if param_y is 'radius':
-        plt.ylabel('Stellar Radius (Solar-radii)')
+        plt.ylabel(r'Stellar Radius (Solar-radii)')
         if rescale:
             ax = plt.gca()
             ax.set_yscale('log')

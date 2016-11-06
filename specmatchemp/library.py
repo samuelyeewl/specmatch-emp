@@ -436,7 +436,7 @@ class Library(object):
             mode (str): Writing mode to pass to open(), either 'w' or 'a'
         """
         std_cols = ['cps_name', 'Teff', 'radius', 'logg', 'feh', 'mass', 'age',
-                    'Plx', 'source']
+                    'Plx', 'Vmag', 'source']
 
         col_units = {'Teff': 'K', 'radius': 'Rsun', 'logg': 'dex',
                      'feh': 'dex', 'mass': 'Msun', 'age': 'log(Gyr)',
@@ -444,7 +444,9 @@ class Library(object):
 
         col_spec = {'Teff': '{:.0f}', 'radius': '{:.3f}', 'logg': '{:.2f}',
                     'feh': '{:.2f}', 'mass': '{:.2f}', 'age': '{:.2f}',
-                    'vsini': '{:.2f}', 'Plx': '{:.2f}'}
+                    'vsini': '{:.2f}', 'Plx': '{:.1f}', 'Vmag': '{:.2f}'}
+
+        col_no_pm = {'Plx': False, 'Vmag': False}
 
         self._source_table = None
 
@@ -476,9 +478,14 @@ class Library(object):
                     if col in col_spec:
                         if np.isnan(row[col]):
                             f.write("--")
-                        else:
+                        elif col not in col_no_pm:
+                            # Quantitative results with uncertainties
                             fmt = col_spec[col] + " $\pm$ " + col_spec[col]
                             f.write(fmt.format(row[col], row['u_' + col]))
+                        else:
+                            # Quantitative results with no uncertainties
+                            fmt = col_spec[col]
+                            f.write(fmt.format(row[col]))
 
                     if col == 'source':
                         f.write(self._format_source(row))

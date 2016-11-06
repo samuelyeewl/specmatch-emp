@@ -579,7 +579,7 @@ class SpecMatch(object):
                     f.write('\t#{0:d}: {1}, '.format(j, ref.name))
                     f.write('chi^2 = {0:.3f}, '.format(mt.ref_chisq[j]))
                     f.write('c_{0:d} = {1:.3f}\n'.format(j, mt.coeffs[j]))
-                f.write('Final chi^2 = {0:.3f}'.format(mt.best_chisq))
+                f.write('Final chi^2 = {0:.3f}\n'.format(mt.best_chisq))
 
     def to_fits(self, outpath):
         """Saves the current state of the SpecMatch object to a fits file.

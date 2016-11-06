@@ -216,7 +216,8 @@ class Spectrum(object):
         return np.allclose(w, self.w)
 
     def plot(self, offset=0, label='_nolegend_', showmask=False,
-             plt_kw={'color': 'RoyalBlue'}, text='', text_kw={}):
+             normalize=True, plt_kw={'color': 'RoyalBlue'}, text='',
+             text_kw={}):
         """Plots the spectrum.
 
         Args:
@@ -228,7 +229,11 @@ class Spectrum(object):
             text (str, optional): String to label the spectrum
             text_kw (dict, optional): Keyword arguments to pass to plt.text
         """
-        plt.plot(self.w, self.s + offset, '-', label=label, **plt_kw)
+        if normalize:
+            plt.plot(self.w, self.s / np.nanpercentile(self.s, 95) + offset,
+                     '-', label=label, **plt_kw)
+        else:
+            plt.plot(self.w, self.s + offset, '-', label=label, **plt_kw)
         if len(text) > 0:
             plots.annotate_spectrum(text, spec_offset=offset, text_kw=text_kw)
 

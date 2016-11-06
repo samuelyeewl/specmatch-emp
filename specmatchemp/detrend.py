@@ -42,7 +42,15 @@ class Detrend(object):
 
         self._detrendtable = {}
         with open(filename, mode='r') as csvfile:
+            has_header = csv.Sniffer().has_header(csvfile.read(1024))
+            # Rewind
+            csvfile.seek(0)
+            # Create reader object
             reader = csv.reader(csvfile)
+            # Skip header row
+            if has_header:
+                next(reader)
+
             for row in reader:
                 param = row[0]
                 if param in self._detrendtable:
@@ -55,7 +63,7 @@ class Detrend(object):
         for p in self._detrendtable:
             self._detrendtable[param].sort()
 
-    def detrend(self, param, value):
+    def detrend(self, value, param):
         """Calculate the detrended parameter.
 
         Args:
@@ -101,5 +109,6 @@ class Detrend(object):
         Args:
             param (str): Name of parameter to plot
         """
-        for param in self._detrendtable and row in self._detrendtable[param]:
-            plt.plot([row[0], row[2]], [row[1], row[3]], 'r-')
+        for param in self._detrendtable:
+            for row in self._detrendtable[param]:
+                plt.plot([row[0], row[2]], [row[1], row[3]], 'r-')
