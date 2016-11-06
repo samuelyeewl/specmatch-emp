@@ -10,7 +10,6 @@ import numpy as np
 from collections import defaultdict
 
 from specmatchemp import library
-from specmatchemp.library.Library import STAR_PROPS
 from specmatchemp import specmatch
 
 # Noise selection path
@@ -35,7 +34,7 @@ if __name__ == '__main__':
         lc_res = lincomb_res_table.query('cps_name == "' + star + '"').iloc[0]
         suf = '_nodetrend_lincomb'
         lincomb_result = {}
-        for p in STAR_PROPS:
+        for p in library.Library.STAR_PROPS:
             p_col = p + suf
             starlist.loc[idx, p_col] = lc_res[p_col]
             lincomb_result[p] = lc_res[p_col]
@@ -48,11 +47,11 @@ if __name__ == '__main__':
                 sm_name = resdir + '{0}/{0}/{0}_snr={1:d}_i={2:d}_sm.hdf'\
                     .format(star, snr, i)
                 sm = specmatch.SpecMatch.read_hdf(sm_name, lib)
-                for p in STAR_PROPS:
+                for p in library.Library.STAR_PROPS:
                     result_lists[p].append(sm.results[p] - lincomb_result[p])
 
             # Calculate standard deviation of each property
-            for p in STAR_PROPS:
+            for p in library.Library.STAR_PROPS:
                 p_col = p + '_snr={0:d}'.format(snr)
                 starlist.loc[idx, p_col] = np.std(result_lists[p])
 
