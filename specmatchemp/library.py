@@ -639,12 +639,20 @@ class Library(object):
             plt_kw (dict, optional): Additional keyword arguments to pass to
                 pyplot.plot
         """
+        source_labels = {
+            'Gaidos': 'K-dwarfs',
+            'Von Braun': 'Interferometric',
+            'Brewer': 'Brewer (2016)',
+            'Mann': 'Mann (2015)',
+            'Bruntt': 'Bruntt (2012)'
+        }
         if grouped:
             g = self.library_params.groupby('source')
 
             for source in g.groups:
                 cut = self.library_params.ix[g.groups[source]]
-                plt.plot(cut[paramx], cut[paramy], marker, label=source)
+                plt.plot(cut[paramx], cut[paramy], marker,
+                         label=source_labels[source])
         else:
             plt.plot(self.library_params[paramx], self.library_params[paramy],
                      marker, **plt_kw)

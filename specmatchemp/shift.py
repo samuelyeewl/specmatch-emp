@@ -213,7 +213,7 @@ def shift(targ, ref, store=None, lowfilter=20):
                 key = "order_{0:d}/sect_{1:d}/".format(i, j)
                 store[key+"xcorr"] = xcorr
                 store[key+"lag_arr"] = lag_arr
-        
+
         # Save lag data
         lag_data.append(lags)
         center_pix_data.append(center_pix)
@@ -224,7 +224,7 @@ def shift(targ, ref, store=None, lowfilter=20):
     if s.shape[0] > 1:
         clip = 2
         for j in range(lag_data.shape[1]):
-            clipped, crit_low, crit_high = sigmaclip(lag_data[:,j], low=clip,
+            clipped, crit_low, crit_high = sigmaclip(lag_data[:, j], low=clip,
                                                      high=clip)
             mean_lag = np.mean(clipped)
 

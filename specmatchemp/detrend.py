@@ -91,17 +91,21 @@ class Detrend(object):
 
             # detrend in radius is for delta r / r
             if param == 'radius':
-                dr_r_1 = (cal_1 - uncal_1) / uncal_1
-                dr_r_2 = (cal_2 - uncal_2) / uncal_2
+                dr_r_1 = (uncal_1 - cal_1) / cal_1
+                dr_r_2 = (uncal_2 - cal_2) / cal_2
 
                 dr_r_target = ((value - uncal_1) *
                                ((dr_r_2 - dr_r_1) / (uncal_2 - uncal_1)) +
                                dr_r_1)
-                return value + dr_r_target * value
+
+                return value - dr_r_target * value
             else:
                 return ((value - uncal_1) *
                         ((cal_2 - cal_1) / (uncal_2 - uncal_1)) +
                         cal_1)
+            # return ((value - uncal_1) *
+            #         ((cal_2 - cal_1) / (uncal_2 - uncal_1)) +
+            #         cal_1)
 
     def plot(self, param):
         """Plot the trendline(s) for the given parameter.
@@ -109,6 +113,12 @@ class Detrend(object):
         Args:
             param (str): Name of parameter to plot
         """
-        for param in self._detrendtable:
+        if param in self._detrendtable:
             for row in self._detrendtable[param]:
-                plt.plot([row[0], row[2]], [row[1], row[3]], 'r-')
+                if param == 'radius':
+                    plt.plot([row[1], row[3]],
+                        [(row[0] - row[1])/row[1], (row[2] - row[3])/row[3]],
+                        'r-', linewidth=1.0)
+                else:
+                    plt.plot([row[1], row[3]],
+                        [row[0] - row[1], row[2] - row[3]], 'r-', linewidth=1)

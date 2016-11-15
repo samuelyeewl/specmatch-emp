@@ -13,7 +13,8 @@ from specmatchemp import detrend
 from specmatchemp.library import Library
 
 
-def library_comparison(params, param_x, param_y, suffix='_sm', ptlabels=False):
+def library_comparison(params, param_x, param_y, suffix='_sm', ptlabels=False,
+                       legend=True, rescale=True):
     """Create a library comparison plot showing the library values of the
     parameters as points, with lines point to derived parameters.
 
@@ -36,8 +37,9 @@ def library_comparison(params, param_x, param_y, suffix='_sm', ptlabels=False):
     y = params[[param_y+suffix, param_y]]
     plt.plot(x.T, y.T, 'r')
     plt.plot(x.iloc[0], y.iloc[0], 'r', label='SpecMatch-Emp value')
-    plots.label_axes(param_x, param_y)
-    plt.legend(loc='best')
+    plots.label_axes(param_x, param_y, rescale)
+    if legend:
+        plt.legend(loc='best')
 
     if ptlabels is not False and ptlabels in params.columns:
         params.apply(lambda row: plots.annotate_point(
@@ -45,7 +47,7 @@ def library_comparison(params, param_x, param_y, suffix='_sm', ptlabels=False):
 
 
 def library_difference(params, prop, suffix='_sm', ptlabels=False,
-                       plt_kw={'color': 'blue'}):
+                       rescale=True, plt_kw={'color': 'blue'}):
     """Plot the residuals (library-derived) for each star in the library.
 
     Args:
@@ -54,11 +56,11 @@ def library_difference(params, prop, suffix='_sm', ptlabels=False,
         suffix (str): Suffix on columns in parameter table with derived values
     """
     if prop == 'radius':
-        resid = (params[prop] - params[prop+suffix])/params[prop]
+        resid = (params[prop+suffix] - params[prop])/params[prop]
+        plt.semilogx(params[prop], resid, 'o', **plt_kw)
     else:
-        resid = params[prop] - params[prop+suffix]
-
-    plt.plot(params[prop], resid, 'o', **plt_kw)
+        resid = params[prop+suffix] - params[prop]
+        plt.plot(params[prop], resid, 'o', **plt_kw)
 
     if ptlabels is not False and ptlabels in params.columns:
         params['resid'] = resid
@@ -69,14 +71,15 @@ def library_difference(params, prop, suffix='_sm', ptlabels=False,
     rms = np.sqrt(np.mean(resid**2))
 
     ax = plt.gca()
+    bbox = dict(facecolor='white', edgecolor='none', alpha=0.8)
     plt.text(0.05, 0.1, "Mean Diff: {0:.3g}\nRMS Diff: {1:.3g}"
-             .format(mean, rms), transform=ax.transAxes)
+             .format(mean, rms), transform=ax.transAxes, bbox=bbox)
     plt.axhline(y=0, color='k', linestyle='dashed')
 
-    plots.label_axes(param_x=prop, rescale=False)
+    plots.label_axes(param_x=prop, rescale=rescale)
 
 
-def five_pane(params, suffix, trend=False, ptlabels=False):
+def five_pane(params, suffix, trend=False, ptlabels=False, rescale=True):
     """Five panel diagnostic plot
     """
     if trend:
@@ -85,13 +88,16 @@ def five_pane(params, suffix, trend=False, ptlabels=False):
     gs = gridspec.GridSpec(6, 2)
 
     plt.subplot(gs[0:3, 0])
-    library_comparison(params, 'Teff', 'radius', suffix, ptlabels=ptlabels)
+    library_comparison(params, 'Teff', 'radius', suffix, ptlabels=ptlabels,
+                       rescale=rescale)
 
     plt.subplot(gs[3:6, 0])
-    library_comparison(params, 'feh', 'radius', suffix, ptlabels=ptlabels)
+    library_comparison(params, 'feh', 'radius', suffix, ptlabels=ptlabels,
+                       legend=False, rescale=rescale)
 
     plt.subplot(gs[0:2, 1])
-    library_difference(params, 'Teff', suffix=suffix, ptlabels=ptlabels)
+    library_difference(params, 'Teff', suffix=suffix, ptlabels=ptlabels,
+                       rescale=rescale)
     if trend:
         xlim = plt.xlim()
         ylim = plt.ylim()
@@ -101,7 +107,8 @@ def five_pane(params, suffix, trend=False, ptlabels=False):
     plt.ylabel(r'$\Delta\ T_{eff} (K)$')
 
     plt.subplot(gs[2:4, 1])
-    library_difference(params, 'radius', suffix=suffix, ptlabels=ptlabels)
+    library_difference(params, 'radius', suffix=suffix, ptlabels=ptlabels,
+                       rescale=rescale)
     if trend:
         xlim = plt.xlim()
         ylim = plt.ylim()
@@ -111,7 +118,8 @@ def five_pane(params, suffix, trend=False, ptlabels=False):
     plt.ylabel(r'$\Delta R/R$')
 
     plt.subplot(gs[4:6, 1])
-    library_difference(params, 'feh', suffix=suffix, ptlabels=ptlabels)
+    library_difference(params, 'feh', suffix=suffix, ptlabels=ptlabels,
+                       rescale=rescale)
     if trend:
         xlim = plt.xlim()
         ylim = plt.ylim()

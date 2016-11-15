@@ -716,7 +716,7 @@ class SpecMatch(object):
                 plt.plot(target.w, shift_ref.s - target.s, '-', color='purple')
                 plots.annotate_spectrum('Residuals', spec_offset=-1)
 
-            if self.lib.nso is not None:
+            if self.lib.nso is not None and self.shift_ref.name != 'NSO':
                 nso = self.lib.nso.cut(*wavlim[i])
                 nso.plot(offset=2, text='NSO', plt_kw={'color': 'c'})
                 plt.ylim(-0.5, 3.5)
@@ -725,7 +725,7 @@ class SpecMatch(object):
 
             plt.xlim(wavlim[i])
 
-    def plot_shift_lags(self, orders='all'):
+    def plot_shift_lags(self, orders='all', legend=True):
         """Plot the lags for each order as a function of pixel number.
 
         Args:
@@ -750,7 +750,7 @@ class SpecMatch(object):
             color = colormap(0.9 * i / num_orders + 0.1)
             order = orders[i]
             plt.plot(
-                center_pix[order], lags[order], '_', ms=10, mew=4, color=color
+                center_pix[order], lags[order], '_', ms=6, mew=2, color=color
             )
             plt.plot(
                 center_pix[order], fit[order], '-', color=color,
@@ -759,9 +759,10 @@ class SpecMatch(object):
 
         plt.xlabel('Pixel number')
         plt.ylabel('Shift (pixels)')
-        plt.legend(loc='best', ncol=2, fontsize='small',title='Order')
+        if legend:
+            plt.legend(loc='best', ncol=2, fontsize='small',title='Order')
 
-    def plot_xcorr(self, order=0, highlightpeak=False):
+    def plot_xcorr(self, order=0, highlightpeak=False, legend=True):
         """Plot the correlation array for each section of the given order.
 
         Args:
@@ -782,13 +783,16 @@ class SpecMatch(object):
 
             if highlightpeak:
                 max_corr = np.argmax(xcorr)
-                mew = plt.rcParams['lines.markeredgewidth'] * 4
+                mew = plt.rcParams['lines.markeredgewidth'] * 2
                 plt.plot(
                     lag_arr[max_corr], xcorr[max_corr],'x',color=color, 
                     mew=mew,zorder=10
                 )
 
-        plt.legend(loc='upper left', fontsize='small',title='Section')
+        if legend:
+            plt.legend(loc='upper left', fontsize='small',title='Section')
+
+        plt.xlim(-600, 600)
         plt.xlabel('Shift (pixels)')
         plt.ylabel('Correlation')
 
