@@ -37,6 +37,7 @@ Contents:
    spectrum
    specmatch
    match
+   shift
 
 
 Indices and tables

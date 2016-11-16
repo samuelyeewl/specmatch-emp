@@ -15,7 +15,6 @@ from specmatchemp import SPECMATCHDIR
 from specmatchemp import SHIFT_REFERENCES
 from specmatchemp import spectrum
 from specmatchemp import shift
-from specmatchemp import plots
 from specmatchemp import specmatch
 from specmatchemp import library
 
