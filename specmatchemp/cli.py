@@ -18,9 +18,9 @@ def specmatch_spectrum(args):
 
 
 def match_spectrum(args):
-    core.match_spectrum(args.obs, indir=args.directory, plot_level=args.plots,
-                        inlib=args.in_library, outdir=args.outdir,
-                        suffix=args.suffix)
+    core.match_spectrum(args.spectrum, indir=args.directory,
+                        plot_level=args.plots, outdir=args.outdir,
+                        inlib=args.in_library, suffix=args.suffix)
 
 
 def lincomb_spectrum(args):
@@ -30,8 +30,9 @@ def lincomb_spectrum(args):
 
 
 def shift_spectrum(args):
-    core.shift_spectrum(args.obs, indir=args.directory, plot_level=args.plots,
-                        outdir=args.outdir, name=args.name, suffix=args.suffix)
+    core.shift_spectrum(args.spectrum, indir=args.directory,
+                        plot_level=args.plots, outdir=args.outdir,
+                        suffix=args.suffix)
 
 
 def main():
@@ -68,28 +69,34 @@ def main():
     psr_sm.set_defaults(func=specmatch_spectrum)
 
     psr_shift = subpsr.add_parser("shift")
-    psr_shift.add_argument("obs", type=str, help="cps id of target spectrum")
+    psr_shift.add_argument("spectrum", type=str, help="Path to spectrum file" +
+                           " or cps observation id")
     psr_shift.add_argument("-d", "--directory", type=str,
                            default=os.path.join(SPECMATCHDIR, 'spectra'),
-                           help="Directory to look in for spectra")
+                           help="Directory to look in for spectra if an obs " +
+                           "id was provided")
+    psr_shift.add_argument("-o", "--outdir", type=str,
+                           default=os.path.join(SPECMATCHDIR, 'shifted_spectra'),
+                           help="Directory to store output files.")
     psr_shift.add_argument("-p", "--plots", action='count',
                            help="Generate diagnostic plots")
-    psr_shift.add_argument("-o", "--outdir", type=str,
-                           default=os.path.join(SPECMATCHDIR,
-                           'shifted_spectra'),
-                           help="Directory to store output files.")
-    psr_shift.add_argument("-n", "--name", type=str, default="",
-                           help="Name to use as target ID")
-    psr_shift.add_argument("-s", "--suffix", type=str, default="",
+    psr_shift.add_argument("-s", "--suffix", type=str, default="_adj",
                         help="Suffix to append to results files")
     psr_shift.set_defaults(func=shift_spectrum)
+    # psr_shift.add_argument("obs", type=str, help="cps id of target spectrum")
+    # psr_shift.add_argument("-d", "--directory", type=str,
+    #                        default=os.path.join(SPECMATCHDIR, 'spectra'),
+    #                        help="Directory to look in for spectra")
+    # psr_shift.add_argument("-n", "--name", type=str, default="",
+    #                        help="Name to use as target ID")
 
     psr_match = subpsr.add_parser("match")
-    psr_match.add_argument("obs", type=str, help="cps id of target spectrum")
+    psr_match.add_argument("spectrum", type=str, help="Path to spectrum file" +
+                           " or cps observation id")
     psr_match.add_argument("-d", "--directory", type=str,
-                           default=os.path.join(SPECMATCHDIR,
-                           'shifted_spectra'),
-                           help="Directory to look in for spectra")
+                           default=os.path.join(SPECMATCHDIR, 'spectra'),
+                           help="Directory to look in for spectra if an obs " +
+                           "id was provided")
     psr_match.add_argument("-p", "--plots", action='count',
                            help="Generate diagnostic plots")
     psr_match.add_argument("-i", "--in_library", type=str, default=False,

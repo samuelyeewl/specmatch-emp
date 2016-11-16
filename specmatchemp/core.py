@@ -272,12 +272,12 @@ def plot_lincomb(sm, pdf, region=0, wavlim='all', targ_param=None):
     plt.close()
 
 
-def match_spectrum(obs, indir="./", plot_level=0, inlib=False, outdir="./",
-                   suffix=""):
+def match_spectrum(specpath, indir="./", plot_level=0, inlib=False,
+                   outdir="./", suffix=""):
     """Match a spectrum given its observation ID
 
     Args:
-        obs (str): CPS id of target spectrum
+        specpath (str): Path to spectrum or its CPS observation id jXX.XXXX
         indir (str): Directory to look in for target spectrum
         plot_level (int, 0-2): Level of plotting to save
         inlib (str or False): String to search within library for to exclude
@@ -288,12 +288,19 @@ def match_spectrum(obs, indir="./", plot_level=0, inlib=False, outdir="./",
     Returns:
         specmatch.SpecMatch object
     """
-    inpath = os.path.join(indir, 'r' + obs + '_adj' + suffix + '.fits')
-    if not os.path.exists(inpath):
-        raise ValueError(inpath + " does not exist!")
+    # Check if specpath is a path or an observation ID
+    if os.path.exists(specpath):
+        targ_path = specpath
+        targid = os.path.splitext(os.path.basename(specpath))[0]
+    else:
+        targ_path = os.path.join(indir, 'r' + specpath + '_adj' + suffix +
+                                 '.fits')
+        if not os.path.exists(targ_path):
+            raise ValueError(specpath + " does not exist!")
+        targid = 'r' + specpath
 
     # Load shifted spectrum
-    target = spectrum.read_fits(inpath)
+    target = spectrum.read_fits(targ_path)
 
     lib = library.read_hdf()
     sm = specmatch.SpecMatch(target, lib)
@@ -301,12 +308,12 @@ def match_spectrum(obs, indir="./", plot_level=0, inlib=False, outdir="./",
     if inlib:
         name = inlib
         sm.target.name = inlib
-        sm.target.attrs['obs'] = 'r' + obs
+        sm.target.attrs['obs'] = targid
         targ_idx = lib.get_index(inlib)
         targ_param, targ_spec = lib[targ_idx]
         sm.match(ignore=targ_idx)
     else:
-        name = 'r' + obs
+        name = targid
         targ_param = None
         sm.match()
 
@@ -412,42 +419,44 @@ def lincomb_spectrum(respath, plot_level=0, inlib=False, outdir="./",
     return sm
 
 
-def shift_spectrum(obs, indir="./", plot_level=0, outdir="./",
-                   name="", suffix="", mask=True):
+def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
+                   suffix="_adj", mask=True):
     """Shift a target spectrum given an observation code.
 
     Saves the shifted spectrum in a fits file.
 
     Args:
-        obs (str): CPS id of target spectrum
-        indir (str): Directory to look in for target spectrum
+        specpath (str): Path to spectrum or its CPS observation id jXX.XXXX
         plot_level (int, 0-2): Level of plotting to save
-        name (str): Name to use as target ID.
+        indir (str): Directory to look in for target spectrum
+        outdir (str): Directory to store output files
         suffix (str): String to append to output file names
     Returns:
         shifted, unshifted, shift_data
     """
+    # Check if specpath is a path or an observation ID
+    if os.path.exists(specpath):
+        targ_path = specpath
+        targid = os.path.splitext(os.path.basename(specpath))[0]
+    else:
+        targ_path = os.path.join(indir, 'r' + specpath + '.fits')
+        if not os.path.exists(targ_path):
+            raise ValueError(specpath + " does not exist!")
+        targid = 'r' + specpath
+
     # if a different directory is provided, copy the file into specmatchemp
     # working directory
     specdir = os.path.join(SPECMATCHDIR, 'spectra')
     shiftedspecdir = os.path.join(SPECMATCHDIR, 'shifted_spectra')
-
     if indir != specdir:
-        copy(os.path.join(indir, 'r' + obs + '.fits'), specdir)
+        copy(targ_path, specdir)
 
     # load target and references
-    targ_path = os.path.join(specdir, 'r' + obs + '.fits')
     if mask:
         maskfile = os.path.join(SPECMATCHDIR, 'hires_telluric_mask.csv')
     else:
         maskfile = None
     targ_spec = spectrum.read_hires_fits(targ_path, maskfile)
-
-    if len(name) > 0:
-        targ_spec.name = name
-        targid = name
-    else:
-        targid = obs
 
     ref_specs = [spectrum.read_fits(os.path.join(shiftedspecdir,
                  r[0] + '_adj.fits')) for r in SHIFT_REFERENCES]
@@ -456,22 +465,17 @@ def shift_spectrum(obs, indir="./", plot_level=0, outdir="./",
     shift_data = {}
     shifted = shift.bootstrap_shift(targ_spec, ref_specs, store=shift_data)
     # Save shifted spectrum
-    outpath = os.path.join(shiftedspecdir, 'r' + obs + '_adj' +
-                           suffix + '.fits')
+    outpath = os.path.join(shiftedspecdir, targid + suffix + '.fits')
     shift.save_shift_to_fits(outpath, shifted, targ_spec, shift_data,
                              clobber=True)
     if outdir is not shiftedspecdir:
-        outdir = os.path.join(outdir, name)
         if not os.path.exists(outdir):
             os.mkdir(outdir)
         copy(outpath, outdir)
 
-    # print(shift_data['lag'])
-
     # Generate representative plots
     if plot_level == 1:
         plotfile = os.path.join(outdir, targid + "_shift_plots.pdf")
-        wavlim = (5160, 5190)
 
         with PdfPages(plotfile) as pdf:
             # Get reference used
