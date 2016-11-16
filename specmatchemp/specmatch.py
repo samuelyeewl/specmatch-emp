@@ -44,6 +44,12 @@ class SpecMatch(object):
     Finally, use the lincomb() method to interpolate between the best library
     matches to obtain the final derived parameters, stored in the results dict.
 
+    Args:
+        target (spectrum.Spectrum): Target spectrum and uncertainty
+        lib (library.Library): Library object to match against
+        wavlim (tuple, optional):
+            Wavelength limits to perform matching on.
+
     Attributes:
         target (spectrum.Spectrum): Target spectrum object
         target_unshifted (spectrum.Spectrum): An unshifted spectrum
@@ -61,12 +67,6 @@ class SpecMatch(object):
             These are derived by taking the average of the detrended
             parameters from each wavelength region.
             Keys are elements of library.STAR_PROPS.
-
-    Args:
-        target (spectrum.Spectrum): Target spectrum and uncertainty
-        lib (library.Library): Library object to match against
-        wavlim (tuple, optional):
-            Wavelength limits to perform matching on.
     """
 
     def __init__(self, target, lib=None, wavlim=(5000, 5900)):
@@ -128,7 +128,7 @@ class SpecMatch(object):
             obs = ref[0]
             if obs == 'nso':
                 if self.lib.nso is None:
-                    raise ValueError("Error: Library did not contain " + 
+                    raise ValueError("Error: Library did not contain " +
                                      "NSO spectrum.")
                 shift_specs.append(self.lib.nso)
             else:

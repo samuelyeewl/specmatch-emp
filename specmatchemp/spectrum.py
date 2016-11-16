@@ -215,7 +215,7 @@ class Spectrum(object):
         """
         return np.allclose(w, self.w)
 
-    def plot(self, offset=0, label='_nolegend_', showmask=False,
+    def plot(self, wavlim='all', offset=0, label='_nolegend_', showmask=False,
              normalize=True, plt_kw={'color': 'RoyalBlue'}, text='',
              text_kw={}):
         """Plots the spectrum.
@@ -248,6 +248,8 @@ class Spectrum(object):
                                                alpha=0.3))
 
         plt.grid(True)
+        if wavlim != 'all' and isinstance(wavlim, tuple):
+            plt.xlim(wavlim)
         plt.xlabel('Wavelength (Angstroms)')
         plt.ylabel('Normalized Flux (Arbitrary Offset)')
 
@@ -336,12 +338,13 @@ class HiresSpectrum(Spectrum):
         super(HiresSpectrum, self).__init__(w, s, serr, mask=mask, name=name,
                                             header=header, attrs=attrs)
 
-    def plot(self, offset=0, label='_nolegend_', normalize=False,
+    def plot(self, wavlim='all', offset=0, label='_nolegend_', normalize=False,
              showmask=False, plt_kw={'color': 'RoyalBlue'},
              text='', text_kw={}):
         """Plots the spectrum
 
         Args:
+            wavlim (optional [tuple]): Wavelength limit to plot
             offset (optional [float]): Vertical offset of the spectrum
             label (optional [str]): Label of spectrum (appears in plt.legend)
             normalize (optional [bool]): Whether to normalize the spectrum.
@@ -382,12 +385,14 @@ class HiresSpectrum(Spectrum):
             plots.annotate_spectrum(text, spec_offset=offset, text_kw=text_kw)
 
         plt.grid(True)
+        if wavlim != 'all' and isinstance(wavlim, tuple):
+            plt.xlim(wavlim)
         plt.xlabel('Wavelength (Angstroms)')
         plt.ylabel('Flux')
 
     def to_hdulist(self, primary=True):
         """Creates a list of fits.ImageHDU to store HIRES spectrum.
-        
+
         Args:
             primary (bool): True if first HDU should be a primary HDU
         Returns:

@@ -109,6 +109,8 @@ def shift(targ, ref, store=None, lowfilter=20):
         w = np.array([w])
         mask = np.array([mask])
 
+    ref = _extend_ref(ref, w[0, 0], w[-1, -1])
+
     # normalize each order of the target spectrum by dividing by the
     # 95th percentile
     percen_order = np.percentile(s, 95, axis=1)
@@ -179,12 +181,9 @@ def shift(targ, ref, store=None, lowfilter=20):
         serr_rescaled.append(sserr)
         m_rescaled.append(mm)
 
-        # solve for shifts in different sections
-        masked_length = len(ss[mm])
-        # num_sections = int(masked_length / section_length) + 1
-
         # true section length
-        l_sect = int(masked_length / num_sections)
+        l_sect = int(len(ss) / num_sections)
+
         lags = np.empty(num_sections)
         center_pix = np.empty(num_sections)
 
@@ -193,22 +192,29 @@ def shift(targ, ref, store=None, lowfilter=20):
             store[key] = num_sections
 
         for j in range(num_sections):
-            # Get indices for masked section
-            ww_sect_masked = w_ref_c[mm][j*l_sect:(j+1)*l_sect]
-            idx_min = np.argwhere(w_ref_c == ww_sect_masked[0])[0, 0]
-            idx_max = np.argwhere(w_ref_c == ww_sect_masked[-1])[0, 0]
+            # Get indices for section
+            idx_min = j * l_sect
+            idx_max = (j+1) * l_sect
+            center_pix[j] = (j + 1/2)*l_sect
 
             ss_sect = ss[idx_min:idx_max]
             mm_sect = mm[idx_min:idx_max]
             s_ref_sect = s_ref_c[idx_min:idx_max]
             m_ref_sect = m_ref_c[idx_min:idx_max]
-            # get the shifts in pixel number
-            lag, lag_arr, xcorr = solve_for_shifts(ss_sect, mm_sect,
-                                                   s_ref_sect, m_ref_sect,
-                                                   lowfilter=lowfilter)
-            lags[j] = lag
-            center_pix[j] = (j + 1/2)*l_sect
 
+            # Don't use segments which have too many nans
+            if len(ss_sect[mm_sect]) < (l_sect / 2) or \
+                    len(s_ref_sect[m_ref_sect]) < (l_sect / 2):
+                lag = np.nan
+                lag_arr = []
+                xcorr = []
+            else:
+                # get the shifts in pixel number
+                lag, lag_arr, xcorr = solve_for_shifts(ss_sect, mm_sect,
+                                                       s_ref_sect, m_ref_sect,
+                                                       lowfilter=lowfilter)
+            # Save results
+            lags[j] = lag
             if store is not None:
                 key = "order_{0:d}/sect_{1:d}/".format(i, j)
                 store[key+"xcorr"] = xcorr
@@ -224,14 +230,18 @@ def shift(targ, ref, store=None, lowfilter=20):
     if s.shape[0] > 1:
         clip = 2
         for j in range(lag_data.shape[1]):
-            clipped, crit_low, crit_high = sigmaclip(lag_data[:, j], low=clip,
+            lag_order = lag_data[:, j]
+            lag_order = lag_order[~np.isnan(lag_order)]
+            clipped, crit_low, crit_high = sigmaclip(lag_order, low=clip,
                                                      high=clip)
-            mean_lag = np.mean(clipped)
 
+            mean_lag = np.nanmean(clipped)
+
+            # Replace values outside the critical range and nans with mean_lag
             for i in range(lag_data.shape[0]):
                 curr = lag_data[i, j]
                 lag_data[i, j] = curr if curr > crit_low and curr < crit_high \
-                                 else mean_lag
+                    else mean_lag
 
     for i in range(s.shape[0]):
         # Restore data from previous loop
@@ -239,7 +249,7 @@ def shift(targ, ref, store=None, lowfilter=20):
         sserr = serr_rescaled[i]
         mm = m_rescaled[i]
         start_idx = start_idxs[i]
-        
+
         lags = lag_data[i]
         center_pix = center_pix_data[i]
 
@@ -326,6 +336,37 @@ def _linear_fit_residuals(p, x, y):
     """Calculates residuals for a linear fit
     """
     return p[0]*x + p[1] - y
+
+
+def _extend_ref(ref, min_w, max_w):
+    """Extends the reference spectrum to the given limits, assuming a constant
+    delta log-lambda scale.
+
+    Args:
+        ref (spectrum.Spectrum): Reference spectrum
+        min_w, max_w (float): Wavelength limts
+    """
+    # Delta log-lambda
+    w = ref.w
+    dw = np.median(np.log10(w[1:]) - np.log10(w[:-1]))
+
+    if min_w < w[0]:
+        num_points = int((np.log10(w[0]) - np.log10(min_w))/dw)
+        left = np.logspace(np.log10(w[0]), np.log10(min_w), num_points,
+                           base=10.0)[1:]
+        # Don't forget to reverse left
+        w = np.concatenate((left[::-1], w))
+
+    if max_w > w[-1]:
+        num_points = int((np.log10(max_w) - np.log10(w[-1]))/dw)
+        right = np.logspace(np.log10(w[-1]), np.log10(max_w), num_points,
+                            base=10.0)[1:]
+        w = np.concatenate((w, right))
+
+    if len(w) != len(ref.w):
+        ref = ref.extend(w)
+
+    return ref
 
 
 def flatten(w, s, serr=None, mask=None, w_ref=None, wavlim=None):
