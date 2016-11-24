@@ -5,6 +5,7 @@ SpecMatch-Emp core functions
 """
 
 import os
+import sys
 from shutil import copy
 
 import numpy as np
@@ -20,7 +21,7 @@ from specmatchemp import library
 
 
 def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
-                       num_best=5, suffix=""):
+                       num_best=5, suffix="", wavlim=None, lib_subset=None):
     """Perform the specmatch on a given spectrum
 
     Args:
@@ -39,8 +40,11 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
     if not os.path.exists(specpath):
         raise ValueError(specpath + " does not exist!")
 
-    target = spectrum.read_hires_fits(specpath)
-    lib = library.read_hdf()
+    if wavlim is None:
+        target = spectrum.read_hires_fits(specpath).cut()
+    else:
+        target = spectrum.read_hires_fits(specpath).cut(*wavlim)
+    lib = library.read_hdf(wavlim=wavlim, lib_index_subset=lib_subset)
     sm = specmatch.SpecMatch(target, lib)
     sm.shift()
 
@@ -49,19 +53,18 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
         name = inlib
         targ_idx = lib.get_index(inlib)
         targ_param, targ_spec = lib[targ_idx]
-        sm.match(ignore=targ_idx)
+        sm.match(ignore=targ_idx, wavlim=wavlim)
     else:
-        name = os.path.basename(specpath)[:-4]
+        name = os.path.basename(specpath)[:-5]
         sm.target.name = name
         targ_param = None
-        sm.match()
+        sm.match(wavlim=wavlim)
 
     sm.lincomb(num_best)
 
     # Print results
     print("SpecMatch Results for {0}".format(name))
-    for p in library.Library.STAR_PROPS:
-        print("{0}: {1:.2f}".format(p, sm.results[p]))
+    sm.results_to_txt(sys.stdout)
 
     outdir = os.path.join(outdir, name)
     if not os.path.exists(outdir):
