@@ -58,6 +58,9 @@ def library_difference(params, prop, suffix='_sm', ptlabels=False,
     if prop == 'radius':
         resid = (params[prop+suffix] - params[prop])/params[prop]
         plt.semilogx(params[prop], resid, 'o', **plt_kw)
+    elif prop == 'mass':
+        resid = (params[prop+suffix] - params[prop])/params[prop]
+        plt.plot(params[prop], resid, 'o', **plt_kw)
     else:
         resid = params[prop+suffix] - params[prop]
         plt.plot(params[prop], resid, 'o', **plt_kw)

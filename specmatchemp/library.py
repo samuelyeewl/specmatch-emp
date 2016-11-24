@@ -444,7 +444,7 @@ class Library(object):
 
         col_spec = {'Teff': '{:.0f}', 'radius': '{:.3f}', 'logg': '{:.2f}',
                     'feh': '{:.2f}', 'mass': '{:.2f}', 'age': '{:.2f}',
-                    'vsini': '{:.2f}', 'Plx': '{:.1f}', 'Vmag': '{:.2f}'}
+                    'vsini': '{:.2f}', 'Plx': '{:.1f}', 'Vmag': '{:.1f}'}
 
         col_no_pm = {'Plx': False, 'Vmag': False}
 
@@ -536,7 +536,7 @@ class Library(object):
             self._source_table = {}
             # Group by parameter source
             g = self.library_params.groupby('source', sort=False)
-            idx = 'a'
+            idx = 'A'
             for k, v in g:
                 self._source_table[k] = idx
                 idx = chr(ord(idx) + 1)
@@ -545,14 +545,13 @@ class Library(object):
             g = self.library_params.groupby('Plx_source', sort=False)
             idx = 1
             for k, v in g:
-                if k != 'None':
-                    self._source_table['Plx_' + k] = str(idx)
-                    idx += 1
+                self._source_table['Plx_' + k] = str(idx)
+                idx += 1
 
         # Get row source
         src_string = self._source_table[row['source']]
         if ('Plx_' + row['Plx_source']) in self._source_table:
-            src_string += "," + self._source_table['Plx_' + row['Plx_source']]
+            src_string += self._source_table['Plx_' + row['Plx_source']]
 
         return src_string
 
@@ -755,7 +754,7 @@ class Library(object):
         return index in self.library_params.lib_index
 
 
-def read_hdf(path=None, wavlim='all'):
+def read_hdf(path=None, wavlim='all', lib_index_subset=None):
     """
     Reads in the library from a HDF file.
 
@@ -766,12 +765,15 @@ def read_hdf(path=None, wavlim='all'):
             The upper and lower wavelength limits to be read.
             If 'none', reads in library without spectra.
             If 'all', reads in complete stored spectra.
+        lib_index_subset (optional):
+            None - read in all spectra
+            List or np.s_ object: 
 
     Returns:
         Library: Library object
     """
     if path is None:
-        return read_hdf(LIBPATH, wavlim)
+        return read_hdf(LIBPATH, wavlim, lib_index_subset)
 
     with h5py.File(path, 'r') as f:
         print("Reading library from {0}".format(path))
@@ -809,6 +811,12 @@ def read_hdf(path=None, wavlim='all'):
             idxmax = idxwav[-1] + 1  # add 1 to include last index when slicing
             library_spectra = f['library_spectra'][:, :, idxmin:idxmax]
             wav = wav[idxmin:idxmax]
+
+    if lib_index_subset is not None:
+        library_params = library_params.iloc[lib_index_subset]
+        library_spectra = library_spectra[lib_index_subset]
+        library_params.reset_index(drop=True, inplace=True)
+        library_params.lib_index = library_params.index
 
     lib = Library(wav, library_spectra, library_params[Library.LIB_COLS],
                   header=header, wavlim=wavlim, param_mask=param_mask, nso=nso)

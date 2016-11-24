@@ -63,7 +63,8 @@ else:
 
     # Additional csv files
     csv_urls = ["https://www.dropbox.com/s/sdeouxrs7jrvss9/hires_telluric_mask.csv#",
-                "https://www.dropbox.com/s/wmdn6z67op2est0/detrend.csv#"]
+                "https://www.dropbox.com/s/wmdn6z67op2est0/detrend.csv#",
+                "https://www.dropbox.com/s/8ookg989hkyx7k1/uncertainties.csv#"]
     for f in csv_urls:
         outfile = os.path.join(SPECMATCHDIR,f.split('/')[-1][:-1])
         cmd = "wget --no-check-certificate {} -O {}".format(f,outfile)

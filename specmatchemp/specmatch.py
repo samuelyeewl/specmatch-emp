@@ -6,6 +6,7 @@ Class to carry out the specmatch
 from six import string_types
 
 import os
+import csv
 import lmfit
 import numpy as np
 import pandas as pd
@@ -17,6 +18,7 @@ import astropy.io.fits as fits
 
 from time import strftime
 
+from specmatchemp import SPECMATCHDIR
 from specmatchemp import SPECMATCH_VERSION
 from specmatchemp import SHIFT_REFERENCES
 from specmatchemp.io import h5plus
@@ -101,6 +103,7 @@ class SpecMatch(object):
         self.lincomb_results = []
         self.results_nodetrend = {}
         self.results = {}
+        self.u_table = None
 
         return
 
@@ -328,14 +331,55 @@ class SpecMatch(object):
                 self.results_nodetrend[p] += (self.lincomb_results[i][p] /
                                               len(lincomb_regions))
                 # TODO: Add uncertainties
-                self.results_nodetrend['u_'+p] = 0.0
+                # self.results_nodetrend['u_'+p] = 0.0
+
+        # Read in uncertainties
+        self._read_uncertainties()
 
         # Detrend parameters
         d = detrend.Detrend()
         for p in Library.STAR_PROPS:
-            self.results[p] = d.detrend(p, self.results_nodetrend[p])
+            self.results[p] = d.detrend(self.results_nodetrend[p], p)
             # TODO: Add uncertainties
-            self.results['u_'+p] = 0.0
+            self.results['u_'+p] = self._get_uncertainty(self.results[p], p)
+
+    def _read_uncertainties(self, filename=""):
+        # Read in the uncertainties
+        if len(filename) == 0:
+            filename = os.path.join(SPECMATCHDIR, 'uncertainties.csv')
+
+        self.u_table = {}
+
+        with open(filename, mode='r') as csvfile:
+            has_header = csv.Sniffer().has_header(csvfile.read(1024))
+            # Rewind
+            csvfile.seek(0)
+            # Create reader object
+            reader = csv.reader(csvfile)
+            # Skip header row
+            if has_header:
+                next(reader)
+
+            for row in reader:
+                param = row[0]
+                if param in self.u_table:
+                    self.u_table[param].append((float(row[1]),
+                        float(row[2]), float(row[3])))
+                else:
+                    self.u_table[param] = [(float(row[1]),
+                        float(row[2]), float(row[3]))]
+
+        for p in self.u_table:
+            self.u_table[param].sort()
+
+    def _get_uncertainty(self, value, param):
+        if self.u_table is None or param not in self._u_table:
+            return 0.0
+        # Find appropriate interval
+        for row in self.u_table[param]:
+            if value >= row[1] and value < row[2]:
+                return row[0]
+        return 0.0
 
     @classmethod
     def read_hdf(cls, infile, lib):
