@@ -7,10 +7,10 @@ Simply run
 
 ::
 
-	$ python setup.py install
+   $ python setup.py install
 
-This downloads all dependencies and data files, and creates the command line scripts.
-
+This downloads all dependencies and data files, and creates the
+command line scripts. 
 
 Software dependencies
 ~~~~~~~~~~~~~~~~~~~~~
@@ -32,11 +32,12 @@ To build library:
 
 Data Files
 ~~~~~~~~~~
-These data files are automatically downloade
-To use SpecMatch-Emp:
 
-- library.h5
+These data files are automatically downloaded upon installation.
 
-To build library:
-
-- reference .fits files (listed in specmatchemp.SHIFT_REFERENCES)
+- ``library.h5``: the HDF5 archive of spectra.
+- ``hires_telluric_mask.csv``: mask of telluric lines in HIRES spectra
+- ``detrend.csv``: parameter calibration info
+- ``nso.fits``, ``rj26.532.fits``, ``rj72.718.fits``,
+  ``rj59.1926.fits`` spectra used as wavelength standards
+ 

@@ -3,11 +3,19 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to specmatch-emp's documentation!
-=========================================
+Empirical SpecMatch
+===================
 
-SpecMatch-Emp is a package to extract stellar parameters from their spectra, by matching the target spectrum against empirically observed spectra from stars with known properties.
-
+Empirical SpecMatch, ``SpecMatch-Emp`` for short, is an algorithm for
+characterizing the properties of stars based on their optical
+spectra. Target spectra are compared against a dense spectral library
+of well-characterized touchstone stars. A key component of
+``SpecMatch-Emp`` is the library of high resolution (R~55,000), high
+signal-to-noise (> 100) spectra taken with Keck/HIRES by the
+California Planet Search. Spectra in the library may be accessed by a
+convenient Python API. For non-Python users spectra are also available
+monolithic memory-efficient HDF5 archive and a la carte as individual
+FITS files.
 
 Basic Usage
 ~~~~~~~~~~~
