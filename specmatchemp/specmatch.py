@@ -136,7 +136,8 @@ class SpecMatch(object):
                 shift_specs.append(self.lib.nso)
             else:
                 idx = self.lib.get_index(obs)
-                shift_specs.append(self.lib.get_spectrum(idx))
+                if idx is not None:
+                    shift_specs.append(self.lib.get_spectrum(idx))
 
         # Use the bootstrap shift approach
         self.target = shift.bootstrap_shift(self.target_unshifted, shift_specs,
@@ -331,7 +332,7 @@ class SpecMatch(object):
                 self.results_nodetrend[p] += (self.lincomb_results[i][p] /
                                               len(lincomb_regions))
                 # TODO: Add uncertainties
-                # self.results_nodetrend['u_'+p] = 0.0
+                self.results_nodetrend['u_'+p] = 0.0
 
         # Read in uncertainties
         self._read_uncertainties()
@@ -351,14 +352,12 @@ class SpecMatch(object):
         self.u_table = {}
 
         with open(filename, mode='r') as csvfile:
-            has_header = csv.Sniffer().has_header(csvfile.read(1024))
-            # Rewind
+            dialect = csv.Sniffer().sniff(csvfile.read(1024))
             csvfile.seek(0)
-            # Create reader object
-            reader = csv.reader(csvfile)
+
+            reader = csv.reader(csvfile, dialect)
             # Skip header row
-            if has_header:
-                next(reader)
+            next(reader)
 
             for row in reader:
                 param = row[0]
@@ -373,7 +372,7 @@ class SpecMatch(object):
             self.u_table[param].sort()
 
     def _get_uncertainty(self, value, param):
-        if self.u_table is None or param not in self._u_table:
+        if self.u_table is None or param not in self.u_table:
             return 0.0
         # Find appropriate interval
         for row in self.u_table[param]:

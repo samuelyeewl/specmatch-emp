@@ -58,6 +58,7 @@ def library_difference(params, prop, suffix='_sm', ptlabels=False,
     if prop == 'radius':
         resid = (params[prop+suffix] - params[prop])/params[prop]
         plt.semilogx(params[prop], resid, 'o', **plt_kw)
+        plt.xlim(0.1, 20)
     elif prop == 'mass':
         resid = (params[prop+suffix] - params[prop])/params[prop]
         plt.plot(params[prop], resid, 'o', **plt_kw)
@@ -107,7 +108,7 @@ def five_pane(params, suffix, trend=False, ptlabels=False, rescale=True):
         d.plot('Teff')
         plt.xlim(xlim)
         plt.ylim(ylim)
-    plt.ylabel(r'$\Delta\ T_{eff} (K)$')
+    plt.ylabel(r'$\Delta\ T_{\mathrm{eff}}$ (K)')
 
     plt.subplot(gs[2:4, 1])
     library_difference(params, 'radius', suffix=suffix, ptlabels=ptlabels,
@@ -118,7 +119,7 @@ def five_pane(params, suffix, trend=False, ptlabels=False, rescale=True):
         d.plot('radius')
         plt.xlim(xlim)
         plt.ylim(ylim)
-    plt.ylabel(r'$\Delta R/R$')
+    plt.ylabel(r'$\Delta R_{\star}/R_{\star}$')
 
     plt.subplot(gs[4:6, 1])
     library_difference(params, 'feh', suffix=suffix, ptlabels=ptlabels,
@@ -129,4 +130,4 @@ def five_pane(params, suffix, trend=False, ptlabels=False, rescale=True):
         d.plot('feh')
         plt.xlim(xlim)
         plt.ylim(ylim)
-    plt.ylabel(r'$\Delta [Fe/H] (dex)$')
+    plt.ylabel(r'$\Delta \mathrm{[Fe/H]}$ (dex)')
