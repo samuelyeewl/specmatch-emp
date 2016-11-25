@@ -43,7 +43,7 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
     else:
         target = spectrum.read_hires_fits(specpath).cut(*wavlim)
 
-    lib = library.read_hdf(lib_index_subset=lib_subset)
+    lib = library.read_hdf(wavlim=wavlim, lib_index_subset=lib_subset)
     sm = specmatch.SpecMatch(target, lib)
     sm.shift()
 
@@ -153,7 +153,7 @@ def plot_shifts(sm, pdf, order, wavlim='all', singleorder=False):
     sm.plot_xcorr(order, True)
     plt.title('{0} cross-correlation for order {1:d}'.format(name, order))
     plt.sca(axL[1])
-    sm.plot_xcorr(order,True)
+    sm.plot_xcorr(order, True)
     meanshift = np.nanmean(sm.shift_data['fit'])
     dpix = 30
     plt.xlim(meanshift-dpix, meanshift+dpix)

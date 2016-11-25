@@ -800,11 +800,11 @@ def read_hdf(path=None, wavlim='all', lib_index_subset=None):
                 library_params[col_name] = library_params[col_name]\
                     .str.decode('utf-8')
 
-        if wavlim == 'all':
+        if wavlim is None or wavlim == 'none':
+            library_spectra = None
+        elif wavlim == 'all':
             library_spectra = f['library_spectra'][:]
             wavlim = (wav[0], wav[-1])
-        elif wavlim == 'none':
-            library_spectra = None
         else:
             idxwav, = np.where((wav > wavlim[0]) & (wav < wavlim[1]))
             idxmin = idxwav[0]
