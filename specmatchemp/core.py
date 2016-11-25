@@ -3,7 +3,6 @@
 
 SpecMatch-Emp core functions
 """
-
 import os
 import sys
 from shutil import copy
@@ -18,7 +17,6 @@ from specmatchemp import spectrum
 from specmatchemp import shift
 from specmatchemp import specmatch
 from specmatchemp import library
-
 
 def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
                        num_best=5, suffix="", wavlim=None, lib_subset=None):
@@ -41,10 +39,11 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
         raise ValueError(specpath + " does not exist!")
 
     if wavlim is None:
-        target = spectrum.read_hires_fits(specpath).cut()
+        target = spectrum.read_hires_fits(specpath)
     else:
         target = spectrum.read_hires_fits(specpath).cut(*wavlim)
-    lib = library.read_hdf(wavlim=wavlim, lib_index_subset=lib_subset)
+
+    lib = library.read_hdf(lib_index_subset=lib_subset)
     sm = specmatch.SpecMatch(target, lib)
     sm.shift()
 
@@ -68,7 +67,7 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
 
     outdir = os.path.join(outdir, name)
     if not os.path.exists(outdir):
-        os.mkdir(outdir)
+        os.makedirs(outdir)
 
     # Save final results
     outpath = os.path.join(outdir, name + suffix + '_results.txt')
