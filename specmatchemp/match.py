@@ -371,6 +371,7 @@ class MatchLincomb(Match):
 
         # create the model from a linear combination of the reference spectra
         coeffs = get_lincomb_coeffs(params)
+
         for i in range(self.num_refs):
             self.modified.s += self.refs_broadened[i].s * coeffs[i]
             self.modified.serr += self.refs_broadened[i].serr * coeffs[i]
@@ -673,7 +674,7 @@ def add_lincomb_coeffs(params, num_refs):
 
     for i in range(num_refs):
         p = 'coeff_{0:d}'.format(i)
-        params.add(p, value=1/num_refs, min=0.0, max=1.0)
+        params.add(p, value=1./num_refs, min=0.0, max=1.0)
 
     return params
 
