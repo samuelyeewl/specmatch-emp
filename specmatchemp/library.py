@@ -800,23 +800,24 @@ def read_hdf(path=None, wavlim='all', lib_index_subset=None):
                 library_params[col_name] = library_params[col_name]\
                     .str.decode('utf-8')
 
+        if lib_index_subset is not None:
+            library_params = library_params.iloc[lib_index_subset]
+            library_params.reset_index(drop=True, inplace=True)
+            library_params.lib_index = library_params.index
+        else:
+            lib_index_subset = np.s_[:]
+
         if wavlim is None or wavlim == 'none':
             library_spectra = None
         elif wavlim == 'all':
-            library_spectra = f['library_spectra'][:]
+            library_spectra = f['library_spectra'][lib_index_subset]
             wavlim = (wav[0], wav[-1])
         else:
             idxwav, = np.where((wav > wavlim[0]) & (wav < wavlim[1]))
             idxmin = idxwav[0]
             idxmax = idxwav[-1] + 1  # add 1 to include last index when slicing
-            library_spectra = f['library_spectra'][:, :, idxmin:idxmax]
+            library_spectra = f['library_spectra'][lib_index_subset, :, idxmin:idxmax]
             wav = wav[idxmin:idxmax]
-
-    if lib_index_subset is not None:
-        library_params = library_params.iloc[lib_index_subset]
-        library_spectra = library_spectra[lib_index_subset]
-        library_params.reset_index(drop=True, inplace=True)
-        library_params.lib_index = library_params.index
 
     lib = Library(wav, library_spectra, library_params[Library.LIB_COLS],
                   header=header, wavlim=wavlim, param_mask=param_mask, nso=nso)

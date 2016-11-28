@@ -19,7 +19,7 @@ from specmatchemp import specmatch
 from specmatchemp import library
 
 def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
-                       num_best=5, suffix="", wavlim=None, lib_subset=None):
+                       num_best=5, suffix="", wavlim='all', lib_subset=None):
     """Perform the specmatch on a given spectrum
 
     Args:
@@ -38,7 +38,7 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
     if not os.path.exists(specpath):
         raise ValueError(specpath + " does not exist!")
 
-    if wavlim is None:
+    if wavlim == 'all':
         target = spectrum.read_hires_fits(specpath)
     else:
         target = spectrum.read_hires_fits(specpath).cut(*wavlim)
@@ -89,7 +89,7 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
     sm.to_hdf(outpath)
 
     # Create representative plots
-    if plot_level > 0:
+    if plot_level is not None and plot_level > 0:
         plotspath = os.path.join(outdir, name + suffix + '_plots.pdf')
         with PdfPages(plotspath) as pdf:
             region = (5100, 5200)

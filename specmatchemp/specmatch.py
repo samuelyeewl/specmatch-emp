@@ -189,8 +189,8 @@ class SpecMatch(object):
         # Get list of wavelength regions
         if isinstance(wavlim, list) or isinstance(wavlim, np.ndarray):
             regions = wavlim
-        elif isinstance(wavlim, tuple) or wavlim is None:
-            if wavlim is None:
+        elif isinstance(wavlim, tuple) or wavlim is None or wavlim == 'all':
+            if wavlim is None or wavlim == 'all':
                 # If no wavlim is provided, use the library wavlim
                 wavlim = self.wavlim
 
