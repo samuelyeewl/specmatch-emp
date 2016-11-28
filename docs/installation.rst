@@ -1,7 +1,7 @@
 .. _installation:
 
 Installation
-=============
+============
 
 Simply run 
 
@@ -13,15 +13,22 @@ This downloads all dependencies and data files, and creates the
 command line scripts. 
 
 Software dependencies
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
+
+To install
+
+- wget (facilitates downloading files).
+
+Python Packages
+
 To use SpecMatch-Emp:
 
 - numpy
 - scipy
 - matplotlib
 - h5py
-- pandas
-- lmfit
+- pandas (>=0.18)
+- lmfit (>=0.9)
 
 To build library:
 
