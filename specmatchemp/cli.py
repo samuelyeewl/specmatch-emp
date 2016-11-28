@@ -14,7 +14,8 @@ from specmatchemp import SPECMATCHDIR
 def specmatch_spectrum(args):
     core.specmatch_spectrum(args.spectrum, plot_level=args.plots,
                             inlib=args.in_library, outdir=args.outdir,
-                            num_best=args.num_best, suffix=args.suffix)
+                            num_best=args.num_best, suffix=args.suffix,
+                            )
 
 
 def match_spectrum(args):
