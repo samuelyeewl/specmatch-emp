@@ -7,14 +7,31 @@ import os
 import sys
 from argparse import ArgumentParser
 
+import numpy as np
+
 from specmatchemp import core
+from specmatchemp import library 
 from specmatchemp import SPECMATCHDIR
 
+NSPEC_DEBUG = 25
 
 def specmatch_spectrum(args):
-    core.specmatch_spectrum(args.spectrum, plot_level=args.plots,
-                            inlib=args.in_library, outdir=args.outdir,
-                            num_best=args.num_best, suffix=args.suffix)
+    lib_subset = None
+    if args.debug:
+        lib = library.read_hdf(wavlim='none')
+        nspec = len(lib.library_params)
+        lib_subset = np.random.choice(
+            np.arange(nspec), size=NSPEC_DEBUG, replace=False
+        )
+        lib_subset = np.sort(lib_subset)
+        lib_subset = list(lib_subset)
+
+
+    core.specmatch_spectrum(
+        args.spectrum, plot_level=args.plots,inlib=args.in_library, 
+        outdir=args.outdir, num_best=args.num_best, suffix=args.suffix, 
+        lib_subset=lib_subset
+    )
 
 
 def match_spectrum(args):
@@ -66,6 +83,9 @@ def main():
                         "combination step.")
     psr_sm.add_argument("-s", "--suffix", type=str, default="",
                         help="Suffix to append to results files")
+    psr_sm.add_argument("-d", "--debug", action='store_true',
+                        help="Run with paired down library")
+
     psr_sm.set_defaults(func=specmatch_spectrum)
 
     psr_shift = subpsr.add_parser("shift")

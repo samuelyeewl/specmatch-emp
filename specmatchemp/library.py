@@ -765,13 +765,15 @@ def read_hdf(path=None, wavlim='all', lib_index_subset=None):
             The upper and lower wavelength limits to be read.
             If 'none', reads in library without spectra.
             If 'all', reads in complete stored spectra.
-        lib_index_subset (optional):
-            None - read in all spectra
-            List or np.s_ object: 
+        lib_index_subset (iterable, optional): Load a subset of the library
+            useful for debuging and testing code. May be a list or a np.s_ 
+            object. If passing a list, it must be in strictly increasing order
+            due to the memory access protocol of h5py.
 
     Returns:
         Library: Library object
     """
+
     if path is None:
         return read_hdf(LIBPATH, wavlim, lib_index_subset)
 
