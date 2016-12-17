@@ -96,7 +96,7 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
                 targ_param['feh'], targ_param['u_feh']))
         f.write('\n')
         sm.results_to_txt(f, verbose=True)
-        print "created {}".format(f)
+        print "created {}".format(outpath)
 
 
     # Save full results
