@@ -68,7 +68,7 @@ if __name__ == '__main__':
     # Argument parser
     psr = ArgumentParser(description="Degrade the resolution of a given spectrum")
     psr.add_argument('input_file', type=str, help="Filename of input spectrum")
-    psr.add_argument('R', type=float, help="Target spectral resolution")
+    psr.add_argument('R', type=int, help="Target spectral resolution")
     psr.add_argument('-d', '--dir', type=str, default=SPECMATCHDIR+'spectra/',
                      help="Directory to look for spectra")
     args = psr.parse_args()
