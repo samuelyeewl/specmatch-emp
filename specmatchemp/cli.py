@@ -10,7 +10,7 @@ from argparse import ArgumentParser
 import numpy as np
 
 from specmatchemp import core
-from specmatchemp import library 
+from specmatchemp import library
 from specmatchemp import SPECMATCHDIR
 
 NSPEC_DEBUG = 25
@@ -21,7 +21,7 @@ def specmatch_spectrum(args):
         lib = library.read_hdf(wavlim='none')
         nspec = len(lib.library_params)
         lib_subset = np.random.choice(
-            np.arange(nspec), size=NSPEC_DEBUG, replace=False
+            np.arange(nspec), size=args.n_lib_subset, replace=False
         )
         lib_subset = np.sort(lib_subset)
         lib_subset = list(lib_subset)
@@ -83,7 +83,7 @@ def main():
                         "combination step.")
     psr_sm.add_argument("-s", "--suffix", type=str, default="",
                         help="Suffix to append to results files")
-    psr_sm.add_argument("--n-lib-subset", type=int, default="",
+    psr_sm.add_argument("--n_lib_subset", type=int, default=NSPEC_DEBUG,
                         help="Number of random stars to select from library. Useful for the purposes of debugging")
     psr_sm.add_argument("-d", "--debug", action='store_true',
                         help="Run with paired down library")

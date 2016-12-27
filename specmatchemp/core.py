@@ -50,7 +50,7 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
         name = inlib
     elif name is None:
         name = os.path.basename(specpath)[:-5]
-        
+
     if n_lib_subset is not None:
         lib = library.read_hdf(wavlim='none')
         lib_subset = lib.library_params.lib_index
