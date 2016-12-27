@@ -137,7 +137,7 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
             for reg in sm.lincomb_regions:
                 plot_lincomb(sm, pdf, reg, wavlim='all', targ_param=targ_param)
 
-        print "created {}".format(plotspath)
+        print("created {}".format(plotspath))
 
     return sm
 
