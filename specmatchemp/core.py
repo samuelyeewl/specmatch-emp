@@ -96,13 +96,13 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
                 targ_param['feh'], targ_param['u_feh']))
         f.write('\n')
         sm.results_to_txt(f, verbose=True)
-        print "created {}".format(outpath)
+        print("created {}".format(outpath))
 
 
     # Save full results
     outpath = os.path.join(outdir, name + suffix + '_sm.hdf')
     sm.to_hdf(outpath)
-    print "created {}".format(outpath)
+    print("created {}".format(outpath))
 
     # Create representative plots
     if plot_level is not None and plot_level > 0:
@@ -115,7 +115,7 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
             plot_shifts(sm, pdf, order, wavlim)
             plot_match(sm, pdf, region, wavlim, targ_param)
             plot_lincomb(sm, pdf, region, wavlim, targ_param)
-            print "created {}".format(plotspath)
+            print("created {}".format(plotspath))
 
     # Create full plots
     if plot_level == 2:
