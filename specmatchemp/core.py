@@ -6,6 +6,7 @@ SpecMatch-Emp core functions
 import os
 import sys
 from shutil import copy
+import logging
 
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
@@ -19,7 +20,8 @@ from specmatchemp import specmatch
 from specmatchemp import library
 
 def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
-                       num_best=5, suffix="", wavlim='all', lib_subset=None):
+                       num_best=5, suffix="", wavlim='all', lib_subset=None, 
+                       name=None, n_lib_subset=None):
     """Perform the specmatch on a given spectrum
 
     Args:
@@ -43,21 +45,32 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
     else:
         target = spectrum.read_hires_fits(specpath).cut(*wavlim)
 
+    # Determine the name of the target
+    if inlib:
+        name = inlib
+    elif name is None:
+        name = os.path.basename(specpath)[:-5]
+        
+    if n_lib_subset is not None:
+        lib = library.read_hdf(wavlim='none')
+        lib_subset = lib.library_params.lib_index
+        lib_subset = np.random.choice(
+            lib_subset, size=n_lib_subset, replace=False
+        )
+
     lib = library.read_hdf(wavlim=wavlim, lib_index_subset=lib_subset)
     sm = specmatch.SpecMatch(target, lib)
     sm.shift()
 
     if inlib:
-        sm.target.name = inlib
-        name = inlib
         targ_idx = lib.get_index(inlib)
         targ_param, targ_spec = lib[targ_idx]
         sm.match(ignore=targ_idx, wavlim=wavlim)
     else:
-        name = os.path.basename(specpath)[:-5]
-        sm.target.name = name
         targ_param = None
         sm.match(wavlim=wavlim)
+    
+    sm.target.name = name # attach target name
 
     sm.lincomb(num_best)
 
@@ -83,10 +96,13 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
                 targ_param['feh'], targ_param['u_feh']))
         f.write('\n')
         sm.results_to_txt(f, verbose=True)
+        print "created {}".format(outpath)
+
 
     # Save full results
     outpath = os.path.join(outdir, name + suffix + '_sm.hdf')
     sm.to_hdf(outpath)
+    print "created {}".format(outpath)
 
     # Create representative plots
     if plot_level is not None and plot_level > 0:
@@ -99,6 +115,7 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
             plot_shifts(sm, pdf, order, wavlim)
             plot_match(sm, pdf, region, wavlim, targ_param)
             plot_lincomb(sm, pdf, region, wavlim, targ_param)
+            print "created {}".format(plotspath)
 
     # Create full plots
     if plot_level == 2:
@@ -119,6 +136,8 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
         with PdfPages(lincombplotspath) as pdf:
             for reg in sm.lincomb_regions:
                 plot_lincomb(sm, pdf, reg, wavlim='all', targ_param=targ_param)
+
+        print "created {}".format(plotspath)
 
     return sm
 

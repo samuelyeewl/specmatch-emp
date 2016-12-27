@@ -803,6 +803,7 @@ def read_hdf(path=None, wavlim='all', lib_index_subset=None):
                     .str.decode('utf-8')
 
         if lib_index_subset is not None:
+            lib_index_subset = np.sort(lib_index_subset)
             library_params = library_params.iloc[lib_index_subset]
             library_params.reset_index(drop=True, inplace=True)
             library_params.lib_index = library_params.index
@@ -812,7 +813,7 @@ def read_hdf(path=None, wavlim='all', lib_index_subset=None):
         if wavlim is None or wavlim == 'none':
             library_spectra = None
         elif wavlim == 'all':
-            library_spectra = f['library_spectra'][lib_index_subset]
+            library_spectra = f['library_spectra'][lib_index_subset,:]
             wavlim = (wav[0], wav[-1])
         else:
             idxwav, = np.where((wav > wavlim[0]) & (wav < wavlim[1]))

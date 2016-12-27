@@ -83,6 +83,8 @@ def main():
                         "combination step.")
     psr_sm.add_argument("-s", "--suffix", type=str, default="",
                         help="Suffix to append to results files")
+    psr_sm.add_argument("--n-lib-subset", type=int, default="",
+                        help="Number of random stars to select from library. Useful for the purposes of debugging")
     psr_sm.add_argument("-d", "--debug", action='store_true',
                         help="Run with paired down library")
 
