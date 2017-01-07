@@ -42,7 +42,7 @@ if __name__ == '__main__':
         for res in RESOLUTION:
             result_list = {}
             # Read in results for each realization
-            sm_name = resdir + '{0}/{0}/{0}_R={1:d}.hdf'.format(star, res)
+            sm_name = resdir + '{0}/{0}/{0}_R={1:d}_sm.hdf'.format(star, res)
             sm = specmatch.SpecMatch.read_hdf(sm_name, lib)
             for p in library.Library.STAR_PROPS:
                 result_list[p] = sm.results_nodetrend[p] - lincomb_result[p]

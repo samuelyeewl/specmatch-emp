@@ -30,7 +30,7 @@ def degrade_spec(spec, r):
         # Perform convolution on every order
         mean_w = np.mean(spec.w[i])
         fwhm = mean_w / r
-        # Std dev of Gaussian = 2.355 * FWHM
+        # Std dev of Gaussian = FWHM / 2.355
         sigma_w = fwhm / 2.355
         # Width of Gaussian in pixels
         dw = np.mean(spec.w[i, 1:] - spec.w[i, :-1])
