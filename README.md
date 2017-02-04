@@ -4,7 +4,7 @@ SpecMatch-Emp is a tool to extract the fundamental properties (effective tempera
 
 ## Installation
 
-Run `python setup.py` in the root directory. This downloads all the necessary data files and installs the command-line tools.
+Run `python setup.py install` in the root directory. This downloads all the necessary data files and installs the command-line tools.
 
 ## Documentation
 
