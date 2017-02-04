@@ -11,7 +11,7 @@ or clone git repo
 
 ::
 
-    $ git@github.com:samuelyeewl/specmatch-emp.git
+    $ git clone git@github.com:samuelyeewl/specmatch-emp.git
 
 Then, simply run 
 
