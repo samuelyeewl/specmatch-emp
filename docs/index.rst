@@ -19,7 +19,7 @@ FITS files.
 
 Code availability
 ~~~~~~~~~~~~~~~~~
-The ``SpecMatch-Emp`` codebase is availble on GitHub. Follow the installation instructions.
+The ``SpecMatch-Emp`` codebase is availble on GitHub. Follow the :ref:`installation` page.
 
 Basic Usage
 ~~~~~~~~~~~
@@ -35,6 +35,14 @@ python.
 
 For more details on using the command line interface, visit :ref:`cmdline`.
 For a more general usage primer, check out the :ref:`quickstart` page.
+
+Attribution
+~~~~~~~~~~~
+
+If you make use of the specmatch-emp spectral library or matching code, please cite Yee et al. (2017) `[ADS Record] <http://adsabs.harvard.edu/abs/2017arXiv170100922Y>`_
+
+[ADS record].
+
 
 Contents:
 
