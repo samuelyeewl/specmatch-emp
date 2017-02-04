@@ -17,6 +17,10 @@ convenient Python API. For non-Python users spectra are also available
 monolithic memory-efficient HDF5 archive and a la carte as individual
 FITS files.
 
+Code availability
+~~~~~~~~~~~~~~~~~
+The ``SpecMatch-Emp`` codebase is availble on GitHub. Follow the :ref:`installation` page.
+
 Basic Usage
 ~~~~~~~~~~~
 The most basic method of using SpecMatch-Emp is to run the command line script:
@@ -31,6 +35,14 @@ python.
 
 For more details on using the command line interface, visit :ref:`cmdline`.
 For a more general usage primer, check out the :ref:`quickstart` page.
+
+Attribution
+~~~~~~~~~~~
+
+If you make use of the specmatch-emp spectral library or matching code, please cite Yee et al. (2017) `[ADS Record] <http://adsabs.harvard.edu/abs/2017arXiv170100922Y>`_
+
+[ADS record].
+
 
 Contents:
 
