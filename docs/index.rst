@@ -41,7 +41,6 @@ Attribution
 
 If you make use of the specmatch-emp spectral library or matching code, please cite Yee et al. (2017) `[ADS Record] <http://adsabs.harvard.edu/abs/2017arXiv170100922Y>`_
 
-[ADS record].
 
 
 Contents:
