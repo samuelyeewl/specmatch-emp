@@ -1,6 +1,3 @@
-import ez_setup
-ez_setup.use_setuptools()
-
 import os, sys
 from setuptools import setup, find_packages
 
