@@ -97,7 +97,7 @@ class Spectrum(object):
              fits.Column(name='mask', format='B', array=self.mask)])
 
         hdulist = fits.HDUList([prihdu, tbhdu])
-        hdulist.writeto(outpath, clobber=clobber)
+        hdulist.writeto(outpath, overwrite=clobber)
 
     def to_hdu(self):
         """Creates a fits.BinTableHDU object from spectrum data
@@ -412,7 +412,7 @@ class HiresSpectrum(Spectrum):
 
     def to_hires_fits(self, outfile, clobber=False):
         hdulist = self.to_hdulist()
-        hdulist.writeto(outfile, clobber=clobber)
+        hdulist.writeto(outfile, overwrite=clobber)
 
 
 def read_fits(infile, wavlim=None):
