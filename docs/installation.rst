@@ -3,7 +3,17 @@
 Installation
 ============
 
-Simply run 
+Download code from
+
+https://github.com/samuelyeewl/specmatch-emp
+
+or clone git repo 
+
+::
+
+    $ git clone git@github.com:samuelyeewl/specmatch-emp.git
+
+Then, simply run 
 
 ::
 
