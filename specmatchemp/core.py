@@ -488,7 +488,7 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
     outpath = os.path.join(shiftedspecdir, targid + suffix + '.fits')
     shift.save_shift_to_fits(outpath, shifted, targ_spec, shift_data,
                              clobber=True)
-    if outdir is not shiftedspecdir:
+    if outdir != shiftedspecdir:
         if not os.path.exists(outdir):
             os.mkdir(outdir)
         copy(outpath, outdir)
