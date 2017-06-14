@@ -756,6 +756,9 @@ class SpecMatch(object):
                 if (target.w[0] > shift_ref.w[0]) \
                         or (target.w[-1] < shift_ref.w[-1]):
                     target = target.extend(shift_ref.w)
+
+                if len(shift_ref.w) < len(target.w):
+                    target = target.cut(shift_ref.w[0], shift_ref.w[-1])
                 plt.plot(target.w, shift_ref.s - target.s, '-', color='purple')
                 plots.annotate_spectrum('Residuals', spec_offset=-1)
 
@@ -824,7 +827,7 @@ class SpecMatch(object):
                                       .format(order, i)]
             plt.plot(lag_arr, xcorr, label="{0:d}".format(i),color=color)
 
-            if highlightpeak:
+            if highlightpeak and len(xcorr) > 0:
                 max_corr = np.argmax(xcorr)
                 mew = plt.rcParams['lines.markeredgewidth'] * 2
                 plt.plot(

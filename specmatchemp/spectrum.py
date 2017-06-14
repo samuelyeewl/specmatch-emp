@@ -358,7 +358,7 @@ class HiresSpectrum(Spectrum):
         if self.w.ndim > 1:
             if normalize:
                 plt.plot(self.w.T,
-                         self.s.T / np.percentile(self.s, 95, axis=1) + offset,
+                         self.s.T / np.nanpercentile(self.s, 95, axis=1) + offset,
                          '-', label=label, **plt_kw)
             else:
                 plt.plot(self.w.T, self.s.T + offset, '-', label=label,
@@ -376,7 +376,7 @@ class HiresSpectrum(Spectrum):
                             ec='none', fc='gray', alpha=0.3))
         else:
             if normalize:
-                plt.plot(self.w, self.s / np.percentile(self.s, 95) + offset,
+                plt.plot(self.w, self.s / np.nanpercentile(self.s, 95) + offset,
                          '-', label=label, **plt_kw)
             else:
                 plt.plot(self.w, self.s + offset, '-', label=label, **plt_kw)
@@ -462,6 +462,9 @@ def read_hires_fits(infile, maskfile=None):
     w = hdu[2].data
     header = hdu[0].header
     hdu.close()
+
+    # Convert zeros to nans
+    s[np.isclose(s, 0.0)] = np.nan
 
     name = os.path.splitext(os.path.basename(infile))[0]
 

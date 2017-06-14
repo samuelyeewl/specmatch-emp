@@ -49,7 +49,7 @@ def lincomb_spectrum(args):
 def shift_spectrum(args):
     core.shift_spectrum(args.spectrum, indir=args.directory,
                         plot_level=args.plots, outdir=args.outdir,
-                        suffix=args.suffix)
+                        suffix=args.suffix, no_bootstrap=args.no_bootstrap)
 
 
 def main():
@@ -103,7 +103,9 @@ def main():
     psr_shift.add_argument("-p", "--plots", action='count',
                            help="Generate diagnostic plots")
     psr_shift.add_argument("-s", "--suffix", type=str, default="_adj",
-                        help="Suffix to append to results files")
+                           help="Suffix to append to results files")
+    psr_shift.add_argument("-nb", "--no_bootstrap", action="store_true",
+                           help="Shift spectrum without bootstrapping")
     psr_shift.set_defaults(func=shift_spectrum)
     # psr_shift.add_argument("obs", type=str, help="cps id of target spectrum")
     # psr_shift.add_argument("-d", "--directory", type=str,

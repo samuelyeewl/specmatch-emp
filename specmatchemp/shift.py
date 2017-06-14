@@ -113,7 +113,7 @@ def shift(targ, ref, store=None, lowfilter=20):
 
     # normalize each order of the target spectrum by dividing by the
     # 95th percentile
-    percen_order = np.percentile(s, 95, axis=1)
+    percen_order = np.nanpercentile(s, 95, axis=1)
     s /= percen_order.reshape(-1, 1)
 
     # create empty 2d arrays to store each order

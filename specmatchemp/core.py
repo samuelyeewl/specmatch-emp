@@ -440,7 +440,7 @@ def lincomb_spectrum(respath, plot_level=0, inlib=False, outdir="./",
 
 
 def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
-                   suffix="_adj", mask=True):
+                   suffix="_adj", mask=True, no_bootstrap=False):
     """Shift a target spectrum given an observation code.
 
     Saves the shifted spectrum in a fits file.
@@ -451,6 +451,8 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
         indir (str): Directory to look in for target spectrum
         outdir (str): Directory to store output files
         suffix (str): String to append to output file names
+        mask (bool): Use a mask to remove telluric lines
+        no_bootstrap (bool): Shift a spectrum without bootstrapping
     Returns:
         shifted, unshifted, shift_data
     """
@@ -478,16 +480,25 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
         maskfile = None
     targ_spec = spectrum.read_hires_fits(targ_path, maskfile)
 
-    ref_specs = [spectrum.read_fits(os.path.join(shiftedspecdir,
-                 r[0] + '_adj.fits')) for r in SHIFT_REFERENCES]
+    if no_bootstrap:
+        # Shift directly onto NSO spectrum
+        ref_specs = [spectrum.read_fits(os.path.join(shiftedspecdir,
+                     'nso_adj.fits'))]
+        shift_data = {}
+        shifted = shift.shift(targ_spec, ref_specs[0], store=shift_data)
+        shift_data['shift_reference'] = 0
+    else:
+        # Shift spectrum onto boostrapped spectra
+        ref_specs = [spectrum.read_fits(os.path.join(shiftedspecdir,
+                     r[0] + '_adj.fits')) for r in SHIFT_REFERENCES]
+        shift_data = {}
+        shifted = shift.bootstrap_shift(targ_spec, ref_specs, store=shift_data)
 
-    # Shift spectrum
-    shift_data = {}
-    shifted = shift.bootstrap_shift(targ_spec, ref_specs, store=shift_data)
     # Save shifted spectrum
     outpath = os.path.join(shiftedspecdir, targid + suffix + '.fits')
     shift.save_shift_to_fits(outpath, shifted, targ_spec, shift_data,
                              clobber=True)
+
     if outdir != shiftedspecdir:
         if not os.path.exists(outdir):
             os.mkdir(outdir)
@@ -496,6 +507,7 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
     # Generate representative plots
     if plot_level == 1:
         plotfile = os.path.join(outdir, targid + "_shift_plots.pdf")
+        print(plotfile)
 
         with PdfPages(plotfile) as pdf:
             # Get reference used
