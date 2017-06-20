@@ -61,7 +61,7 @@ the library (NSO) wavelength scale.
 
 ::
 
-    $ smemp shift [-d DIRECTORY] [-o OUTDIR] [-p] [-s SUFFIX] spectrum
+    $ smemp shift [-d DIRECTORY] [-o OUTDIR] [-nb] [-p] [-s SUFFIX] spectrum
 
 
 spectrum
@@ -79,6 +79,12 @@ Options
 \-o <outdir>
     Specifies the directory to place the output files. If no directory
     is specified, output files are placed in the current directory.
+
+\-nb
+    Set this flag to perform the shift directly against the NSO spectrum,
+    without bootstrapping. 
+    Useful for shifting non-HIRES spectra which have wavelength ranges
+    not overlapping the library spectra.
 
 \-p
     Set this flag to generate plots.
