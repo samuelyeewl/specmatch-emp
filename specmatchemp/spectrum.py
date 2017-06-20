@@ -5,6 +5,7 @@ Defines a spectrum object for use in SpecMatch-Emp
 """
 
 import os
+from warnings import catch_warnings, filterwarnings
 import numpy as np
 import pandas as pd
 import h5py
@@ -201,6 +202,9 @@ class Spectrum(object):
         Args:
             w (np.ndarray): New wavelength scale.
         """
+        if self.on_scale(w):
+            return self
+
         snew = np.interp(w, self.w, self.s, left=np.nan, right=np.nan)
         serrnew = np.interp(w, self.w, self.serr, left=np.nan, right=np.nan)
         masknew = np.interp(w, self.w, self.mask, left=0, right=0).astype(bool)
@@ -293,6 +297,74 @@ class Spectrum(object):
         """Get number of elements in spectrum.
         """
         return self.w.size
+
+    @staticmethod
+    def combine_spectra(spectra, w_ref, name=None, prefixes=None):
+        """Combines several spectra into one spectrum object.
+
+        Combine multiple spectrum objects into a single spectrum.
+        Places np.nan for the gaps between the spectra, and averages
+        overlapping portions.
+
+        Args:
+            spectra (iterable): Iterable of spectrum objects
+            w_ref (np.ndarray): Reference wavelength scale. This scale is used
+                to fill in the gaps between the spectra.
+            name (str, optional): Name for the flattend spectrum
+            prefixes (str, optional): Prefixes for attributes
+        """
+        for spec in spectra:
+            if type(spec) is not Spectrum:
+                raise TypeError("combine_spectra can only be used on Spectrum")
+
+        global_min = float('inf')
+        global_max = 0.
+        rescaled_spectra = []
+        for spec in spectra:
+            # Check wavelength scales
+            min_w = spec.w[0]
+            max_w = spec.w[-1]
+            global_min = min_w if min_w < global_min else global_min
+            global_max = max_w if max_w > global_max else global_max
+
+            w_trunc = w_ref[(w_ref >= min_w) & (w_ref <= max_w)]
+            spec = spec.rescale(w_trunc)
+            rescaled_spectra.append(spec)
+
+        # Get global wavelength array
+        w = w_ref[(w_ref >= global_min) & (w_ref <= global_max)]
+        s_stacked = []
+        serr_stacked = []
+        mask_stacked = []
+        for spec in rescaled_spectra:
+            # Extend spectra
+            spec = spec.extend(w)
+            s_stacked.append(spec.s)
+            serr_stacked.append(spec.serr)
+            mask_stacked.append(spec.mask)
+
+        s_stacked = np.asarray(s_stacked)
+        serr_stacked = np.asarray(serr_stacked)
+        mask_stacked = np.asarray(mask_stacked)
+
+        # Flatten spectra
+        with catch_warnings():
+            filterwarnings("ignore", message="Mean of empty slice")
+            s = np.nanmean(s_stacked, axis=0)
+            serr = np.sqrt(np.nansum(serr_stacked**2, axis=0))
+            mask = np.any(mask_stacked, axis=0)
+
+        # Create spectrum
+        if name is None:
+            name = spectra[0].name
+        if prefixes is None:
+            prefixes = [str(n) for n in np.arange(len(spectra))]
+        attrs = {}
+        for (i, spec) in enumerate(spectra):
+            for k, v in spec.attrs.items():
+                attrs[prefixes[i] + '_' + k] = v
+
+        return Spectrum(w, s, serr, mask, name=name, header=None, attrs=attrs)
 
 
 class HiresSpectrum(Spectrum):
@@ -413,6 +485,49 @@ class HiresSpectrum(Spectrum):
     def to_hires_fits(self, outfile, clobber=False):
         hdulist = self.to_hdulist()
         hdulist.writeto(outfile, overwrite=clobber)
+
+    @staticmethod
+    def combine_spectra(spectra, name=None, prefixes=None):
+        """Combines several raw HIRES spectra into one HIRES spectrum object.
+
+        Args:
+            spectra (iterable): Iterable of spectrum objects
+            name (str, optional): Name for the flattend spectrum
+            prefixes (str, optional): Prefixes for attributes
+        """
+        for spec in spectra:
+            if type(spec) is not HiresSpectrum:
+                raise TypeError("combine_spectra can only be used on " +
+                                "HiresSpectrum")
+
+        w_stacked = []
+        s_stacked = []
+        serr_stacked = []
+        mask_stacked = []
+        # Simply stack spectra
+        for spec in spectra:
+            w_stacked.append(spec.w)
+            s_stacked.append(spec.s)
+            serr_stacked.append(spec.serr)
+            mask_stacked.append(spec.mask)
+
+        w_stacked = np.concatenate(w_stacked)
+        s_stacked = np.concatenate(s_stacked)
+        serr_stacked = np.concatenate(serr_stacked)
+        mask_stacked = np.concatenate(mask_stacked)
+
+        # Create spectrum
+        if name is None:
+            name = spectra[0].name
+        if prefixes is None:
+            prefixes = [str(n) for n in np.arange(len(spectra))]
+        attrs = {}
+        for (i, spec) in enumerate(spectra):
+            for k, v in spec.attrs.items():
+                attrs[prefixes[i] + '_' + k] = v
+
+        return HiresSpectrum(w_stacked, s_stacked, serr_stacked, mask_stacked,
+                             name=name, header=None, attrs=attrs)
 
 
 def read_fits(infile, wavlim=None):

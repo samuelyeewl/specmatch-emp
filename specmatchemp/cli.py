@@ -15,23 +15,20 @@ from specmatchemp import SPECMATCHDIR
 
 NSPEC_DEBUG = 25
 
+
 def specmatch_spectrum(args):
     lib_subset = None
     if args.debug:
         lib = library.read_hdf(wavlim='none')
         nspec = len(lib.library_params)
         lib_subset = np.random.choice(
-            np.arange(nspec), size=args.n_lib_subset, replace=False
-        )
+            np.arange(nspec), size=args.n_lib_subset, replace=False)
         lib_subset = np.sort(lib_subset)
         lib_subset = list(lib_subset)
 
-
-    core.specmatch_spectrum(
-        args.spectrum, plot_level=args.plots,inlib=args.in_library, 
-        outdir=args.outdir, num_best=args.num_best, suffix=args.suffix, 
-        lib_subset=lib_subset
-    )
+    core.specmatch_spectrum(args.spectrum, plot_level=args.plots,
+        inlib=args.in_library, outdir=args.outdir, num_best=args.num_best,
+        suffix=args.suffix, lib_subset=lib_subset)
 
 
 def match_spectrum(args):
@@ -49,7 +46,8 @@ def lincomb_spectrum(args):
 def shift_spectrum(args):
     core.shift_spectrum(args.spectrum, indir=args.directory,
                         plot_level=args.plots, outdir=args.outdir,
-                        suffix=args.suffix, no_bootstrap=args.no_bootstrap)
+                        suffix=args.suffix, no_bootstrap=args.no_bootstrap,
+                        flatten=args.flatten)
 
 
 def main():
@@ -60,13 +58,13 @@ def main():
                          prog='smemp')
     subpsr = psr.add_subparsers(title="subcommands", dest='subcommand',
                 description="specmatch: Perform the entire SpecMatch " +
-                            "algorithm on a HIRES spectrum" +
+                            "algorithm on a HIRES spectrum\n" +
                             "shift: Shift a spectrum onto the reference " +
-                            "wavelength scale." +
+                            "wavelength scale.\n" +
                             "match: Perform only the library grid search " +
-                            "portion of the SpecMatch algorithm" +
+                            "portion of the SpecMatch algorithm\n" +
                             "lincomb: Perform only the linear combination " +
-                            "portion of the SpecMatch algorithm")
+                            "portion of the SpecMatch algorithm\n")
     subpsr.required = True
 
     psr_sm = subpsr.add_parser("specmatch")
@@ -97,6 +95,8 @@ def main():
                            default=os.path.join(SPECMATCHDIR, 'spectra'),
                            help="Directory to look in for spectra if an obs " +
                            "id was provided")
+    psr_shift.add_argument("-f", "--flatten", action='store_true',
+                           help="Flatten all chips into single spectrum.")
     psr_shift.add_argument("-o", "--outdir", type=str,
                            default=os.path.join(SPECMATCHDIR, 'shifted_spectra'),
                            help="Directory to store output files.")
@@ -107,12 +107,6 @@ def main():
     psr_shift.add_argument("-nb", "--no_bootstrap", action="store_true",
                            help="Shift spectrum without bootstrapping")
     psr_shift.set_defaults(func=shift_spectrum)
-    # psr_shift.add_argument("obs", type=str, help="cps id of target spectrum")
-    # psr_shift.add_argument("-d", "--directory", type=str,
-    #                        default=os.path.join(SPECMATCHDIR, 'spectra'),
-    #                        help="Directory to look in for spectra")
-    # psr_shift.add_argument("-n", "--name", type=str, default="",
-    #                        help="Name to use as target ID")
 
     psr_match = subpsr.add_parser("match")
     psr_match.add_argument("spectrum", type=str, help="Path to spectrum file" +

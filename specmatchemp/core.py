@@ -19,8 +19,9 @@ from specmatchemp import shift
 from specmatchemp import specmatch
 from specmatchemp import library
 
+
 def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
-                       num_best=5, suffix="", wavlim='all', lib_subset=None, 
+                       num_best=5, suffix="", wavlim='all', lib_subset=None,
                        name=None, n_lib_subset=None):
     """Perform the specmatch on a given spectrum
 
@@ -69,8 +70,8 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
     else:
         targ_param = None
         sm.match(wavlim=wavlim)
-    
-    sm.target.name = name # attach target name
+
+    sm.target.name = name  # attach target name
 
     sm.lincomb(num_best)
 
@@ -97,7 +98,6 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
         f.write('\n')
         sm.results_to_txt(f, verbose=True)
         print("created {}".format(outpath))
-
 
     # Save full results
     outpath = os.path.join(outdir, name + suffix + '_sm.hdf')
@@ -440,7 +440,8 @@ def lincomb_spectrum(respath, plot_level=0, inlib=False, outdir="./",
 
 
 def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
-                   suffix="_adj", mask=True, no_bootstrap=False):
+                   suffix="_adj", mask=True, no_bootstrap=False,
+                   flatten=False):
     """Shift a target spectrum given an observation code.
 
     Saves the shifted spectrum in a fits file.
@@ -453,6 +454,8 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
         suffix (str): String to append to output file names
         mask (bool): Use a mask to remove telluric lines
         no_bootstrap (bool): Shift a spectrum without bootstrapping
+        flatten (bool): If multiple chips are provided, flatten into a single
+            spectrum file.
     Returns:
         shifted, unshifted, shift_data
     """
@@ -461,10 +464,8 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
         targ_path = specpath
         targid = os.path.splitext(os.path.basename(specpath))[0]
     else:
-        targ_path = os.path.join(indir, 'r' + specpath + '.fits')
-        if not os.path.exists(targ_path):
-            raise ValueError(specpath + " does not exist!")
-        targid = 'r' + specpath
+        return _multishift_spectrum(specpath, plot_level, indir, outdir,
+                                    suffix, mask, no_bootstrap, flatten)
 
     # if a different directory is provided, copy the file into specmatchemp
     # working directory
@@ -485,6 +486,7 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
         ref_specs = [spectrum.read_fits(os.path.join(shiftedspecdir,
                      'nso_adj.fits'))]
         shift_data = {}
+        print("Shifting directly against NSO spectrum.")
         shifted = shift.shift(targ_spec, ref_specs[0], store=shift_data)
         shift_data['shift_reference'] = 0
     else:
@@ -526,3 +528,89 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
                                 pdf, i, singleorder=True)
 
     return shifted, targ_spec, shift_data
+
+
+def _multishift_spectrum(cps_id, plot_level=0, indir=None, outdir="./",
+                        suffix="_adj", mask=True, no_bootstrap=False,
+                        flatten=False):
+    """Helper function to shift multiple chips"""
+    # If an observation id is given, search for all chips and shift each in
+    # turn
+    bj_path = os.path.join(indir, 'b' + cps_id + '.fits')
+    if os.path.exists(bj_path):
+        print("Shifting bj chip...")
+        bj = shift_spectrum(bj_path, plot_level, indir, outdir, suffix,
+                            mask, suffix, no_bootstrap)
+    else:
+        bj = None
+
+    rj_path = os.path.join(indir, 'r' + cps_id + '.fits')
+    if os.path.exists(rj_path):
+        print("Shifting rj chip...")
+        rj = shift_spectrum(rj_path, plot_level, indir, outdir, suffix,
+                            mask, suffix, no_bootstrap)
+    else:
+        rj = None
+
+    ij_path = os.path.join(indir, 'i' + cps_id + '.fits')
+    if os.path.exists(ij_path):
+        print("Shifting ij chip...")
+        ij = shift_spectrum(ij_path, plot_level, indir, outdir, suffix,
+                            mask, suffix, no_bootstrap)
+    else:
+        ij = None
+
+    if bj is None and rj is None and ij is None:
+        raise ValueError("No observations corresponding to " + cps_id +
+                         "could be found in " + indir)
+
+    specs_shifted = []
+    specs_unshifted = []
+    specs_sd = []
+    chips = []
+    if bj is not None:
+        specs_shifted.append(bj[0])
+        specs_unshifted.append(bj[1])
+        specs_sd.append(bj[2])
+        chips.append('bj')
+    if rj is not None:
+        specs_shifted.append(rj[0])
+        specs_unshifted.append(rj[1])
+        specs_sd.append(rj[2])
+        chips.append('rj')
+    if ij is not None:
+        specs_shifted.append(ij[0])
+        specs_unshifted.append(ij[1])
+        specs_sd.append(ij[2])
+        chips.append('ij')
+
+    if flatten:
+        # Combine all chips into a single file
+        print("Flattening {0:d} spectra".format(len(specs_shifted)))
+        shiftedspecdir = os.path.join(SPECMATCHDIR, 'shifted_spectra')
+        nso = spectrum.read_fits(os.path.join(shiftedspecdir,
+                                              'nso_adj.fits'))
+
+        shifted = spectrum.Spectrum.combine_spectra(specs_shifted,
+            nso.w, name=cps_id, prefixes=chips)
+
+        unshifted = spectrum.HiresSpectrum.combine_spectra(specs_unshifted,
+            name=cps_id, prefixes=chips)
+
+        shift_data = {}
+        for (i, sd) in enumerate(specs_sd):
+            for k, v in sd.items():
+                shift_data[chips[i] + '/' + k] = v
+
+        # Save flattened spectrum
+        outpath = os.path.join(shiftedspecdir, cps_id + suffix + '.fits')
+        shifted.to_fits(outpath, clobber=True)
+
+        if outdir != shiftedspecdir:
+            if not os.path.exists(outdir):
+                os.mkdir(outdir)
+            copy(outpath, outdir)
+
+        return shifted, unshifted, shift_data
+    else:
+        return specs_shifted, specs_unshifted, specs_sd
