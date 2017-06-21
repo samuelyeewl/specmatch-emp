@@ -3,9 +3,9 @@ from setuptools import setup, find_packages
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 shift_only = False
-if "--shift" in sys.argv:
+if "--shift-only" in sys.argv:
     shift_only = True
-    sys.argv.remove("--shift")
+    sys.argv.remove("--shift-only")
 
 if on_rtd:
     setup(

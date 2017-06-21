@@ -53,8 +53,8 @@ g = cut.groupby(pd.cut(cut.Teff,bins=arange(3000,7000,500)))
 cut = g.first()
 
 fig = figure()
-plot(lib.library_params.Teff, lib.library_params.radius,'.', label='_nolegend_')
-plot(cut.Teff, cut.radius,'o', label='Selected Stars')
+plot(lib.library_params.Teff, lib.library_params.radius,'b.', label='_nolegend_')
+plot(cut.Teff, cut.radius,'ro', label='Selected Stars')
 legend()
 smplot.label_axes('Teff','radius')
 fig.savefig('quickstart-library-selected-stars.png')
@@ -95,8 +95,7 @@ M_star = lib.pop(idx2)
 
 # code-start-read-spectrum-G
 from specmatchemp import spectrum
-G_spectrum = spectrum.read_hires_fits('../samples/rj59.1923.fits').\
-             cut(5130,5210)
+G_spectrum = spectrum.read_hires_fits('../samples/rj59.1923.fits').cut(5130,5210)
 G_spectrum.name = 'HD190406'
 # code-stop-read-spectrum-G
 
@@ -130,18 +129,18 @@ sm_M = SpecMatch(M_spectrum, lib)
 sm_M.shift()
 
 # Plot shifts
-fig = plt.figure(figsize=(10,5))
-sm_M.plot_shifted_spectrum(wavlim=(5160,5200))
+fig = plt.figure(figsize=(10, 5))
+sm_M.plot_shifted_spectrum(wavlim=(5160, 5200))
 # code-stop-shift-spectrum-M
 fig.set_tight_layout(True)
 fig.savefig('quickstart-Mstar-shifts.png')
 
-print "Running brute-force match, G-star"
+print("Running brute-force match, G-star")
 # code-start-match-G
 sm_G.match()
 
 # Plot chi-squared surfaces
-fig = figure(figsize=(12,8))
+fig = figure(figsize=(12, 8))
 sm_G.plot_chi_squared_surface()
 # Indicate library parameters for target star.
 axes = fig.axes
@@ -153,7 +152,7 @@ axes[2].axvline(G_star[0]['feh'], color='k')
 fig.set_tight_layout(True)
 fig.savefig('quickstart-Gstar-chisquared-surface.png')
 
-print "Running linear combinations, G-star"
+print("Running linear combinations, G-star")
 # code-start-lincomb-G
 sm_G.lincomb()
 
@@ -165,10 +164,9 @@ print('Teff: {0:.0f}, Radius: {1:.2f}, [Fe/H]: {2:.2f}'.format(
     G_star[0]['Teff'], G_star[0]['radius'], G_star[0]['feh']))
 # code-stop-lincomb-G
 
-print "Running linear combinations, G-star"
 # code-start-plot-lincomb-G
 # Plot HR diagram
-fig1 = figure(figsize=(12,10))
+fig1 = figure(figsize=(12, 10))
 sm_G.plot_references(verbose=True)
 # plot target onto HR diagram
 axes = fig1.axes

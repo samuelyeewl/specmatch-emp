@@ -219,6 +219,10 @@ class Spectrum(object):
         """
         return np.allclose(w, self.w, rtol=1e-8)
 
+    def wavlim(self):
+        """Gets the wavelength range of the spectrum"""
+        return (self.w[0], self.w[-1])
+
     def plot(self, wavlim='all', offset=0, label='_nolegend_', showmask=False,
              normalize=True, plt_kw={'color': 'RoyalBlue'}, text='',
              text_kw={}):

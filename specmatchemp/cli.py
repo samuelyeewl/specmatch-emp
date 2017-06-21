@@ -84,7 +84,7 @@ def main():
     psr_sm.add_argument("--n_lib_subset", type=int, default=NSPEC_DEBUG,
                         help="Number of random stars to select from library. Useful for the purposes of debugging")
     psr_sm.add_argument("-d", "--debug", action='store_true',
-                        help="Run with paired down library")
+                        help="Run with pared down library")
 
     psr_sm.set_defaults(func=specmatch_spectrum)
 

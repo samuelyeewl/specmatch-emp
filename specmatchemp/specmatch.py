@@ -75,7 +75,8 @@ class SpecMatch(object):
         if wavlim is None:
             self.wavlim = lib.wavlim
         else:
-            self.wavlim = wavlim
+            self.wavlim = (max(wavlim[0], lib.wavlim[0]),
+                           min(wavlim[1], lib.wavlim[1]))
         self.regions = self.wavlim
 
         # truncate target spectrum and library
@@ -192,7 +193,7 @@ class SpecMatch(object):
         elif isinstance(wavlim, tuple) or wavlim is None or wavlim == 'all':
             if wavlim is None or wavlim == 'all':
                 # If no wavlim is provided, use the library wavlim
-                wavlim = self.wavlim
+                wavlim = self.target.wavlim()
 
             if wavstep is None:
                 # If no wavstep is provided, use the entire region given
@@ -206,11 +207,9 @@ class SpecMatch(object):
 
         regions.sort()
         # ensure regions don't exceed either the spectrum or library bounds
-        regions[0] = (max(regions[0][0], self.wavlim[0],
-                          np.round(self.target.w[0], 2)), regions[0][1])
+        regions[0] = (max(regions[0][0], self.wavlim[0]), regions[0][1])
         regions[-1] = (regions[-1][0],
-                       min(regions[-1][1], self.wavlim[1],
-                           np.round(self.target.w[-1], 2)))
+                       min(regions[-1][1], self.wavlim[1]))
 
         # save regions
         self.regions = regions
@@ -1014,7 +1013,7 @@ class SpecMatch(object):
 
         def _plot_ref_params(paramx, paramy, zoom=False):
             plt.plot(self.match_results[paramx], self.match_results[paramy],
-                     '.', alpha=0.6, label='_nolegend_')
+                     'b.', alpha=0.6, label='_nolegend_')
             plt.plot(self.match_results.head(num_best)[paramx],
                      self.match_results.head(num_best)[paramy], '^',
                      color='forestgreen', label='Best Matches')

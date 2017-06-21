@@ -261,9 +261,9 @@ class Library(object):
         the library.
 
         Args:
-            index (int of array of ints): Indices of spectra to remove.
+            index (int or array of ints): Indices of spectra to remove.
         """
-        if isinstance(indices, int):
+        if isinstance(indices, int) or isinstance(indices, np.integer):
             indices = [indices]
 
         # remove None
@@ -766,7 +766,7 @@ def read_hdf(path=None, wavlim='all', lib_index_subset=None):
             If 'none', reads in library without spectra.
             If 'all', reads in complete stored spectra.
         lib_index_subset (iterable, optional): Load a subset of the library
-            useful for debuging and testing code. May be a list or a np.s_ 
+            useful for debuging and testing code. May be a list or a np.s_
             object. If passing a list, it must be in strictly increasing order
             due to the memory access protocol of h5py.
 
@@ -824,6 +824,7 @@ def read_hdf(path=None, wavlim='all', lib_index_subset=None):
 
     lib = Library(wav, library_spectra, library_params[Library.LIB_COLS],
                   header=header, wavlim=wavlim, param_mask=param_mask, nso=nso)
+
     return lib
 
 

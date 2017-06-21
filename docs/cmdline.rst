@@ -53,11 +53,15 @@ Options
     Excludes the spectrum with the given name in the library, from the
     specmatch algorithm. Meant for validation purposes.
 
+\--n_lib_subset <n>
+    Run SpecMatch-Emp with only n random stars (default = 25). Useful
+    for debugging purposes.
+
 
 Shift
 -----
-This command runs only the shifting part of the code, placing the target spectrum onto
-the library (NSO) wavelength scale.
+This command runs only the shifting part of the code, placing the target spectrum
+onto the library (NSO) wavelength scale.
 
 ::
 
@@ -66,7 +70,9 @@ the library (NSO) wavelength scale.
 
 spectrum
     Either the full path to the target spectrum, or a CPS id (jXX.XXXX), where the
-    ``-d`` option specifies the directory to look for the file.
+    ``-d`` option specifies the directory to look for the file. If a CPS id is
+    provided, SpecMatch-Emp will search for all chips and shift them 
+    simultaneously.
 
 
 Options

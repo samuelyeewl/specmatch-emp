@@ -120,7 +120,7 @@ def label_axes(param_x=None, param_y=None, rescale=True):
             ax = plt.gca()
             ax.set_yscale('log')
             yt = [0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1, 2, 3, 4, 5, 7, 10, 20]
-            ax.set_yticks(yt, yt)
+            ax.set_yticks(yt, minor=False)
             ax.set_ylim(0.1, 20)
 
 

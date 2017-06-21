@@ -24,18 +24,20 @@ spectra are:
 
    $ ls ${SMEMP_WKDIR}/spectra/
    nso.fits # solar spectrum, ~5800 K
-   rj55.1872.fits # ~4800 K
-   rj26.532.fits # ~3700 K
-   rj59.1926.fits # ~6200 K
+   *j55.1872.fits # ~4800 K
+   *j26.532.fits # ~3700 K
+   *j59.1926.fits # ~6200 K
+
+Where at least the r chip must be provided.
 
 We shift the spectra using by
 
 ::
 
    $ python specmatchemp/buildlib/shift_references.py
-   Shifting spectrum rj55.1872 onto reference nso
-   Shifting spectrum rj26.532 onto reference nso
-   Shifting spectrum rj59.1926 onto reference rj55.1872
+   Shifting spectrum j55.1872 onto reference nso
+   Shifting spectrum j26.532 onto reference nso
+   Shifting spectrum j59.1926 onto reference j55.1872
 
 Which leaves the wavelength calibrated spectra here:
 
@@ -43,9 +45,9 @@ Which leaves the wavelength calibrated spectra here:
    
    $ ls ${SMEMP_WKDIR}/shifted_spectra/
    nso_adj.fits
-   rj26.532_adj.fits
-   rj55.1872_adj.fits
-   rj59.1926_adj.fits
+   j26.532_adj.fits
+   j55.1872_adj.fits
+   j59.1926_adj.fits
 
 Build Table of Library Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,7 +99,7 @@ Shift Library Spectra onto Rest Wavelength Scale
 
 We shift the remainder of the library spectra onto the rest
 wavelength scale with the following command, where jXXX.XXXX is the
-cps observation id.
+cps observation id. Only the rj chip is required.
 
 ::
 

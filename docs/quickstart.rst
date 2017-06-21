@@ -174,9 +174,9 @@ properties of the target. These are stored in the results attribute.
 ::
 
     Derived Parameters:
-    Teff: 5844, Radius: 1.33, [Fe/H]: 0.04
+    Teff: 5911, Radius: 1.17, [Fe/H]: 0.08
     Library Parameters:
-    Teff: 5763, Radius: 1.12, [Fe/H]: 0.03
+    Teff: 5763, Radius: 1.11, [Fe/H]: 0.03
 
 
 We can take a closer look at the workings of this process by plotting
@@ -203,7 +203,7 @@ Finally, we can repeat the whole process with Barnard's star.
 ::
 
     Derived Parameters:
-    Teff: 3181, Radius: 0.19, [Fe/H]: -0.29
+    Teff: 3185, Radius: 0.19, [Fe/H]: -0.39
     Library Parameters:
     Teff: 3222, Radius: 0.19, [Fe/H]: -0.39
 
