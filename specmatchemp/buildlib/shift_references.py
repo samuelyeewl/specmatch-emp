@@ -24,16 +24,16 @@ def main():
     if not os.path.exists(shifted_dir):
         os.mkdir(shifted_dir)
 
+    # Save base
+    r = REFERENCES[0]
+    infile = os.path.join(spectra_dir, r[0]+'.fits')
+    base_ref = spectrum.read_fits(infile)
+    base_w = base_ref.w
+    outfile = os.path.join(shifted_dir, r[0]+'_adj.fits')
+    copyfile(infile, outfile)
+
     # Shift each spectrum in order
-    for r in REFERENCES:
-        infile = os.path.join(spectra_dir, r[0]+'.fits')
-        outfile = os.path.join(shifted_dir, r[0]+'_adj.fits')
-
-        if r[3] is None:
-            # No reference to shift against, use this as base.
-            copyfile(infile, outfile)
-            continue
-
+    for r in REFERENCES[1:]:
         print("Shifting spectrum {0} onto reference {1}".format(
             r[0], r[3]))
 
@@ -41,14 +41,29 @@ def main():
         ref_spec = spectrum.read_fits(reffile)
 
         maskfile = os.path.join(SPECMATCHDIR, 'hires_telluric_mask.csv')
-        targ_unshifted = spectrum.read_hires_fits(infile, maskfile=maskfile)
 
-        shift_data = {}
+        # Shift each chip
+        chips = ['b', 'r', 'i']
+        shifted = []
+        for c in chips:
+            infile = os.path.join(spectra_dir, c + r[0] + '.fits')
+            outfile = os.path.join(shifted_dir, c + r[0] + '_adj.fits')
+            targ_unshifted = spectrum.read_hires_fits(infile, maskfile=maskfile)
 
-        targ_shifted = shift.shift(targ_unshifted, ref_spec, store=shift_data)
+            shift_data = {}
 
-        shift.save_shift_to_fits(outfile, targ_shifted, targ_unshifted,
-                                 shift_data, clobber=True)
+            targ_shifted = shift.shift(targ_unshifted, ref_spec, store=shift_data)
+
+            shift.save_shift_to_fits(outfile, targ_shifted, targ_unshifted,
+                                     shift_data, clobber=True)
+
+            shifted.append(targ_shifted)
+
+        # Flatten spectrum and save
+        print("Flattening spectra into single file")
+        outfile = os.path.join(shifted_dir, r[0] + '_adj.fits')
+        flattened = spectrum.Spectrum.combine_spectra(shifted, base_w)
+        flattened.to_fits(outfile)
 
 
 if __name__ == '__main__':

@@ -6,14 +6,14 @@ on_rtd = os.environ.get('READTHEDOCS') == 'True'
 if on_rtd:
     setup(
         name="SpecMatch-Emp",
-        version="0.2",
+        version="0.3",
         packages=find_packages(),
         include_package_data=True
     )
 else:
     setup(
         name="SpecMatch-Emp",
-        version="0.2",
+        version="0.3",
         packages=find_packages(),
         install_requires=[
             "numpy",
@@ -59,32 +59,24 @@ else:
         os.system("wget --no-check-certificate --output-document=${HOME}/.specmatchemp/library.h5 https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#")
 
     # Additional csv files
-    csv_urls = ["https://www.dropbox.com/s/sdeouxrs7jrvss9/hires_telluric_mask.csv#",
-                "https://www.dropbox.com/s/wmdn6z67op2est0/detrend.csv#",
-                "https://www.dropbox.com/s/8ookg989hkyx7k1/uncertainties.csv#"]
+    csv_urls = ["https://www.dropbox.com/s/8wv38eb8dzg1ou2/hires_telluric_mask.csv#",
+                "https://www.dropbox.com/s/ugqzpux73mgjuyj/detrend.csv#",
+                "https://www.dropbox.com/s/lxz0cb57a8xvsfl/uncertainties.csv#"]
     for f in csv_urls:
         outfile = os.path.join(SPECMATCHDIR,f.split('/')[-1][:-1])
         cmd = "wget --no-check-certificate {} -O {}".format(f,outfile)
         os.system(cmd)
 
-    specdir = os.path.join(SPECMATCHDIR, 'spectra')
+    specdir = os.path.join(SPECMATCHDIR, 'shifted_spectra')
     if not os.path.exists(specdir):
         os.mkdir(specdir)
         # download references
-        ref_urls = ["https://www.dropbox.com/s/i397kkebdm2b5ez/nso.fits#",
-                    "https://www.dropbox.com/s/6oim1suxnu3mci8/rj26.532.fits#",
-                    "https://www.dropbox.com/s/cepbxprp6wvdmee/rj72.718.fits#",
-                    "https://www.dropbox.com/s/9pe7pwae489mjdw/rj59.1926.fits#"]
+        ref_urls = ["https://www.dropbox.com/s/4aygfh3qnmorws1/nso_adj.fits#",
+                    "https://www.dropbox.com/s/sgkqhwe2kfm9yvp/j26.532_adj.fits#",
+                    "https://www.dropbox.com/s/lthwgat0e2s4gqu/j72.718_adj.fits#",
+                    "https://www.dropbox.com/s/vqqjlcnw7duuq54/j59.1926_adj.fits#"]
         for ref in ref_urls:
             outfile = os.path.join(specdir,ref.split('/')[-1][:-1])
             cmd = "wget --no-check-certificate {} -O {}".format(ref,outfile)
             os.system(cmd)
-
-
-#        from six.moves import urllib
-#        print("Downloading library.h5")
-#        urllib.request.urlretrieve(liburl, LIBPATH, reporthook)
-
-
-
 

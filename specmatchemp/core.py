@@ -471,7 +471,7 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
     # working directory
     specdir = os.path.join(SPECMATCHDIR, 'spectra')
     shiftedspecdir = os.path.join(SPECMATCHDIR, 'shifted_spectra')
-    if indir != specdir:
+    if indir != specdir and indir is not None:
         copy(targ_path, specdir)
 
     # load target and references
@@ -509,7 +509,7 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
     # Generate representative plots
     if plot_level == 1:
         plotfile = os.path.join(outdir, targid + "_shift_plots.pdf")
-        print(plotfile)
+        print("Saving plots to " + plotfile)
 
         with PdfPages(plotfile) as pdf:
             # Get reference used
@@ -519,6 +519,7 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
     # Generate individual plots for every order
     elif plot_level == 2:
         plotfile = os.path.join(outdir, targid + "_shift_plots.pdf")
+        print("Saving plots to " + plotfile)
         with PdfPages(plotfile) as pdf:
             # Get reference used
             shift_ref = ref_specs[shift_data['shift_reference']]
@@ -539,24 +540,27 @@ def _multishift_spectrum(cps_id, plot_level=0, indir=None, outdir="./",
     bj_path = os.path.join(indir, 'b' + cps_id + '.fits')
     if os.path.exists(bj_path):
         print("Shifting bj chip...")
-        bj = shift_spectrum(bj_path, plot_level, indir, outdir, suffix,
-                            mask, suffix, no_bootstrap)
+        bj = shift_spectrum(bj_path, plot_level=plot_level, indir=indir,
+                            outdir=outdir, suffix=suffix, mask=mask,
+                            no_bootstrap=no_bootstrap, flatten=False)
     else:
         bj = None
 
     rj_path = os.path.join(indir, 'r' + cps_id + '.fits')
     if os.path.exists(rj_path):
         print("Shifting rj chip...")
-        rj = shift_spectrum(rj_path, plot_level, indir, outdir, suffix,
-                            mask, suffix, no_bootstrap)
+        rj = shift_spectrum(rj_path, plot_level=plot_level, indir=indir,
+                            outdir=outdir, suffix=suffix, mask=mask,
+                            no_bootstrap=no_bootstrap, flatten=False)
     else:
         rj = None
 
     ij_path = os.path.join(indir, 'i' + cps_id + '.fits')
     if os.path.exists(ij_path):
         print("Shifting ij chip...")
-        ij = shift_spectrum(ij_path, plot_level, indir, outdir, suffix,
-                            mask, suffix, no_bootstrap)
+        ij = shift_spectrum(ij_path, plot_level=plot_level, indir=indir,
+                            outdir=outdir, suffix=suffix, mask=mask,
+                            no_bootstrap=no_bootstrap, flatten=False)
     else:
         ij = None
 

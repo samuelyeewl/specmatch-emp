@@ -32,7 +32,7 @@ def bootstrap_shift(targ, ref_list, store=None):
     Returns:
         shifted (Spectrum): Shifted and flattened spectrum.
     """
-    print("\nShifting spectrum {0}".format(targ.name))
+    print("Shifting spectrum {0}".format(targ.name))
     # Try to use the Mg triplet to determine which reference spectrum is
     # best.
     if isinstance(targ, spectrum.HiresSpectrum) and targ.w.ndim == 2:
@@ -60,7 +60,8 @@ def bootstrap_shift(targ, ref_list, store=None):
         peaks = []
         for sect in range(num_sects):
             xcorr = shift_data['order_0/sect_{0:d}/xcorr'.format(sect)]
-            peaks.append(max(xcorr))
+            if len(xcorr) > 0:
+                peaks.append(max(xcorr))
 
         med_peak = np.median(peaks)
 
@@ -242,6 +243,16 @@ def shift(targ, ref, store=None, lowfilter=20):
                 curr = lag_data[i, j]
                 lag_data[i, j] = curr if curr > crit_low and curr < crit_high \
                     else mean_lag
+    else:
+        for j in range(lag_data.shape[1]):
+            curr = lag_data[0, j]
+            if j == 0:
+                lag_data[0, j] = lag_data[0, j + 1] if np.isnan(curr) else curr
+            elif j == (lag_data.shape[1] - 1):
+                lag_data[0, j] = lag_data[0, j - 1] if np.isnan(curr) else curr
+            else:
+                lag_data[0, j] = np.nanmean([lag_data[0, j - 1],
+                    lag_data[0, j + 1]]) if np.isnan(curr) else curr
 
     for i in range(s.shape[0]):
         # Restore data from previous loop

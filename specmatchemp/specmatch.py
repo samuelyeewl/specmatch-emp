@@ -135,7 +135,7 @@ class SpecMatch(object):
                                      "NSO spectrum.")
                 shift_specs.append(self.lib.nso)
             else:
-                idx = self.lib.get_index(obs)
+                idx = self.lib.get_index('r'+obs)
                 if idx is not None:
                     shift_specs.append(self.lib.get_spectrum(idx))
 

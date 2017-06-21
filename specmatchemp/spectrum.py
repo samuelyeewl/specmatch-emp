@@ -217,7 +217,7 @@ class Spectrum(object):
         Args:
             w (np.ndarray): Wavelength scale to check against
         """
-        return np.allclose(w, self.w)
+        return np.allclose(w, self.w, rtol=1e-8)
 
     def plot(self, wavlim='all', offset=0, label='_nolegend_', showmask=False,
              normalize=True, plt_kw={'color': 'RoyalBlue'}, text='',
@@ -539,6 +539,7 @@ def read_fits(infile, wavlim=None):
     Returns:
         Spectrum: Spectrum object
     """
+    # Exception will be raised by fits.open if file does not exist
     hdu = fits.open(infile)
 
     data = hdu[1].data
