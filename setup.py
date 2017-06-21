@@ -2,6 +2,10 @@ import os, sys
 from setuptools import setup, find_packages
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
+shift_only = False
+if "--shift" in sys.argv:
+    shift_only = True
+    sys.argv.remove("--shift")
 
 if on_rtd:
     setup(
@@ -35,28 +39,29 @@ else:
     )
 
     # download library
-    HOMEDIR = os.environ['HOME']
-    SPECMATCHDIR = "{0}/.specmatchemp/".format(HOMEDIR)
-    if not os.path.exists(SPECMATCHDIR):
-        os.mkdir(SPECMATCHDIR)
+    if not shift_only:
+        HOMEDIR = os.environ['HOME']
+        SPECMATCHDIR = "{0}/.specmatchemp/".format(HOMEDIR)
+        if not os.path.exists(SPECMATCHDIR):
+            os.mkdir(SPECMATCHDIR)
 
-    def reporthook(blocknum, blocksize, totalsize):
-        readsofar = blocknum * blocksize
-        if totalsize > 0:
-            percent = readsofar * 1e2 / totalsize
-            s = "\r%5.1f%% %*d / %d" % (
-                percent, len(str(totalsize)), readsofar, totalsize)
-            sys.stderr.write(s)
-            if readsofar >= totalsize:  # near the end
-                sys.stderr.write("\n")
-        else:  # total size is unknown
-            sys.stderr.write("read %d\n" % (readsofar,))
+        def reporthook(blocknum, blocksize, totalsize):
+            readsofar = blocknum * blocksize
+            if totalsize > 0:
+                percent = readsofar * 1e2 / totalsize
+                s = "\r%5.1f%% %*d / %d" % (
+                    percent, len(str(totalsize)), readsofar, totalsize)
+                sys.stderr.write(s)
+                if readsofar >= totalsize:  # near the end
+                    sys.stderr.write("\n")
+            else:  # total size is unknown
+                sys.stderr.write("read %d\n" % (readsofar,))
 
-    # liburl = "https://zenodo.org/record/60225/files/library.h5"
-    liburl = "https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#"
-    LIBPATH = os.path.join(SPECMATCHDIR+"library.h5")
-    if not os.path.exists(LIBPATH):
-        os.system("wget --no-check-certificate --output-document=${HOME}/.specmatchemp/library.h5 https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#")
+        # liburl = "https://zenodo.org/record/60225/files/library.h5"
+        liburl = "https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#"
+        LIBPATH = os.path.join(SPECMATCHDIR+"library.h5")
+        if not os.path.exists(LIBPATH):
+            os.system("wget --no-check-certificate --output-document=${HOME}/.specmatchemp/library.h5 https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#")
 
     # Additional csv files
     csv_urls = ["https://www.dropbox.com/s/8wv38eb8dzg1ou2/hires_telluric_mask.csv#",
@@ -79,4 +84,3 @@ else:
             outfile = os.path.join(specdir,ref.split('/')[-1][:-1])
             cmd = "wget --no-check-certificate {} -O {}".format(ref,outfile)
             os.system(cmd)
-
