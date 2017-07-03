@@ -4,7 +4,7 @@ HOMEDIR = os.environ['HOME']
 SPECMATCHDIR = "{0}/.specmatchemp/".format(HOMEDIR)
 LIBPATH = "{0}/.specmatchemp/library.h5".format(HOMEDIR)
 
-SPECMATCH_VERSION = 'v0.3'
+SPECMATCH_VERSION = 'v0.4'
 
 SHIFT_REFERENCES = [['nso', 'NSO', 5777, None],
                     ['j72.718', '123239', 4800, 'nso'],

@@ -47,14 +47,15 @@ class Match(object):
 
         # target, reference and modified spectra
         self.target = target.copy()
+        self.targ_mod = target.copy()
         self.reference = reference.copy()
-        self.modified = reference.copy()
+        self.ref_mod = reference.copy()
 
         # replace nans with continuum
-        self.target.s[np.isnan(self.target.s)] = 1
-        self.target.serr[np.isnan(self.target.serr)] = 1
-        self.reference.s[np.isnan(self.reference.s)] = 1
-        self.reference.serr[np.isnan(self.reference.serr)] = 1
+        self.target.s[np.isnan(self.target.s)] = 1.
+        self.target.serr[np.isnan(self.target.serr)] = 1.
+        self.reference.s[np.isnan(self.reference.s)] = 1.
+        self.reference.serr[np.isnan(self.reference.serr)] = 1.
 
         self.best_params = lmfit.Parameters()
         self.best_chisq = np.NaN
@@ -76,20 +77,28 @@ class Match(object):
         based on the reference spectrum.
         Stores the tweaked model in spectra.s_mod and serr_mod.
         """
-        self.modified.s = np.nan_to_num(self.reference.s)
-        self.modified.serr = np.nan_to_num(self.reference.serr)
+        self.targ_mod.s = np.copy(self.target.s)
+        self.targ_mod.serr = np.copy(self.target.serr)
+        self.ref_mod.s = np.copy(self.reference.s)
+        self.ref_mod.serr = np.copy(self.reference.serr)
+
+        self.mod
 
         # Apply broadening kernel
         vsini = params['vsini'].value
-        self.modified = self.broaden(vsini, self.modified)
+
+        if vsini > 0.0:
+            self.ref_mod = self.broaden(vsini, self.ref_mod)
+        elif vsini < 0.0:
+            self.targ_mod = self.broaden(-vsini, self.targ_mod)
 
         # Use linear least squares to fit a spline
-        spline = LSQUnivariateSpline(self.w, self.target.s / self.modified.s,
+        spline = LSQUnivariateSpline(self.w, self.targ_mod.s / self.ref_mod.s,
                                      self.knot_x)
         self.spl = spline(self.w)
 
-        self.modified.s *= self.spl
-        self.modified.serr *= self.spl
+        self.ref_mod.s *= self.spl
+        self.ref_mod.serr *= self.spl
 
     def load_params(self, params):
         """
@@ -135,10 +144,10 @@ class Match(object):
 
         # Calculate residuals (data - model)
         if self.mode == 'normalized':
-            residuals = ((self.target.s - self.modified.s) /
-                         np.sqrt(self.target.serr**2 + self.modified.serr**2))
+            residuals = ((self.targ_mod.s - self.ref_mod.s) /
+                         np.sqrt(self.targ_mod.serr**2 + self.ref_mod.serr**2))
         else:
-            residuals = (self.target.s - self.modified.s)
+            residuals = (self.targ_mod.s - self.ref_mod.s)
 
         chi_square = np.sum(residuals**2)
 
@@ -157,7 +166,7 @@ class Match(object):
             params = lmfit.Parameters()
 
         # Rotational broadening parameters
-        params.add('vsini', value=1.0, min=0.0, max=10.0)
+        params.add('vsini', value=1.0, min=-5.0, max=10.0)
 
         # Spline parameters
         params = add_spline_positions(params, self.knot_x)
@@ -182,10 +191,10 @@ class Match(object):
             np.ndarray
         """
         if self.mode == 'normalized':
-            return ((self.target.s - self.modified.s) /
-                    np.sqrt(self.target.serr**2 + self.modified.serr**2))
+            return ((self.targ_mod.s - self.ref_mod.s) /
+                    np.sqrt(self.targ_mod.serr**2 + self.ref_mod.serr**2))
         else:
-            return (self.target.s - self.modified.s)  # data - model
+            return (self.targ_mod.s - self.ref_mod.s)  # data - model
 
     def get_spline_positions(self):
         """Wrapper function for getting spline positions
@@ -197,7 +206,7 @@ class Match(object):
 
     def plot(self, verbose=True):
         if verbose:
-            labels = {'target': 'Target: {0}'.format(self.target.name),
+            labels = {'target': 'Target: {0}'.format(self.targ_mod.name),
                     'reference': 'Reference: {0}'.format(self.reference.name),
                     'modified': r'Reference (modified): $v\sin i = {0:.2f}$'
                                 .format(self.best_params['vsini'].value),
@@ -209,13 +218,14 @@ class Match(object):
                       'modified': 'Reference (Modified)',
                       'residuals': 'Residuals'}
 
-        self.target.plot(text=labels['target'], plt_kw={'color': 'royalblue'})
-        self.modified.plot(offset=1, plt_kw={'color': 'forestgreen'},
-                           text=labels['modified'])
+        self.targ_mod.plot(text=labels['target'],
+                           plt_kw={'color': 'royalblue'})
+        self.ref_mod.plot(offset=1, plt_kw={'color': 'forestgreen'},
+                          text=labels['modified'])
         self.reference.plot(offset=2, plt_kw={'color': 'firebrick'},
                             text=labels['reference'])
 
-        plt.plot(self.target.w, self.modified.s-self.target.s,
+        plt.plot(self.targ_mod.w, self.ref_mod.s-self.targ_mod.s,
                  '-', color='black')
         plots.annotate_spectrum(labels['residuals'], spec_offset=-1)
 
@@ -231,17 +241,24 @@ class Match(object):
             outfile = h5py.File(outfile, 'w')
             is_path = True
 
+        # Specmatch-Emp version
+        outfile['smemp-version'] = specmatchemp.SPECMATCH_VERSION.lstrip('v')
+
         # Save target
         outfile.create_group('target')
         self.target.to_hdf(outfile['target'])
+
+        # Save modified target
+        outfile.create_group('targ_mod')
+        self.targ_mod.to_hdf(outfile['targ_mod'])
 
         # Save reference
         outfile.create_group('reference')
         self.reference.to_hdf(outfile['reference'])
 
         # Save modified
-        outfile.create_group('modified')
-        self.modified.to_hdf(outfile['modified'])
+        outfile.create_group('ref_mod')
+        self.ref_mod.to_hdf(outfile['ref_mod'])
 
         # Save best-fit parameters
         outfile['best_params'] = self.best_params.dumps()
@@ -264,14 +281,21 @@ class Match(object):
             infile = h5py.File(infile, 'r')
             is_path = True
 
-        # Read target
-        target = spectrum.read_hdf(infile['target'])
+        # Backward compatibility
+        if 'smemp-version' not in infile or infile['smemp-version'] < 0.4:
+            # Read target
+            target = spectrum.read_hdf(infile['target'])
+            targ_mod = target.copy()
+            # Read reference
+            reference = spectrum.read_hdf(infile['reference'])
 
-        # Read reference
-        reference = spectrum.read_hdf(infile['reference'])
-
-        # Read modified
-        modified = spectrum.read_hdf(infile['modified'])
+            # Read modified
+            ref_mod = spectrum.read_hdf(infile['modified'])
+        else:
+            target = spectrum.read_hdf(infile['target'])
+            targ_mod = spectrum.read_hdf(infile['targ_mod'])
+            reference = spectrum.read_hdf(infile['reference'])
+            ref_mod = spectrum.read_hdf(infile['ref_mod'])
 
         # Read best-fit parameters
         best_params = lmfit.Parameters()
@@ -282,7 +306,8 @@ class Match(object):
         mt = cls(target, reference)
         mt.load_params(best_params)
 
-        if not np.allclose(modified.s, mt.modified.s) \
+        if not np.allclose(ref_mod.s, mt.ref_mod.s) \
+                or not np.allclose(targ_mod.s, mt.targ_mod.s) \
                 or not np.allclose(spl, mt.spl) \
                 or mt.best_chisq != best_chisq:
             print("Warning: Saved model and recreated model are not " +
