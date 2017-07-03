@@ -74,6 +74,8 @@ class SpecMatch(object):
     def __init__(self, target, lib=None, wavlim=(5000, 5900)):
         if wavlim is None:
             self.wavlim = lib.wavlim
+        elif lib is None:
+            self.wavlim = wavlim
         else:
             self.wavlim = (max(wavlim[0], lib.wavlim[0]),
                            min(wavlim[1], lib.wavlim[1]))
