@@ -495,6 +495,7 @@ class SpecMatch(object):
         # Allow either a string or h5 file object ot be passed.
         is_path = False
         if isinstance(outfile, string_types):
+            print("Destination: " + outfile)
             outfile = h5py.File(outfile, 'w')
             is_path = True
 

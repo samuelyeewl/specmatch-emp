@@ -22,8 +22,10 @@ class Match(object):
 
     Attributes:
         target (Spectrum): Target spectrum
+        targ_mod (Spectrum): Modified target spectrum, broadened to account
+            for negative relative vsini
         reference (Spectrum): Reference spectrum
-        modified (Spectrum): Modified reference, after broadening and fitting a
+        ref_mod (Spectrum): Modified reference, after broadening and fitting a
             spline to correct for continuum differences
         spl (np.ndarray): Spline used to fit continuum level
         best_params (lmfit.Parameters): Parameters used to create the best
@@ -333,7 +335,7 @@ class MatchLincomb(Match):
         modified (Spectrum): Best linear combination of spectra.
         best_params (lmfit.Parameters): Parameters used to create the best
             match.
-        best_chisq (floatt): Chi-squared from the best match.
+        best_chisq (float): Chi-squared from the best match.
 
     Args:
         target (Spectrum): Target spectrum
@@ -352,25 +354,45 @@ class MatchLincomb(Match):
         self.w = np.copy(target.w)
         self.target = target.copy()
         self.targ_mod = target.copy()
+
+        # replace nans with continuum
+        self.targ_mod.s[np.isnan(self.targ_mod.s)] = 1.
+        self.targ_mod.serr[np.isnan(self.targ_mod.serr)] = 1.
+
         self.num_refs = len(refs)
         self.refs = []
         for i in range(self.num_refs):
             self.refs.append(refs[i].copy())
+            self.refs[i].s[np.isnan(self.refs[i].s)] = 1.
+            self.refs[i].serr[np.isnan(self.refs[i].serr)] = 1.
 
         self.ref_chisq = ref_chisq
 
+        self.original_vsini = vsini.copy()
         self.vsini = vsini
+        self.phys_vsini = [get_physical_vsini(v) for v in vsini]
 
-        # Broaden reference spectra
+        # Broaden target spectrum to make all vsini positive
+        min_vsini = np.min(self.phys_vsini)
+        if min_vsini < 0.0:
+            self.targ_mod = self.broaden(-min_vsini, self.targ_mod)
+            for idx, v in enumerate(self.vsini):
+                if v >= 1.0:
+                    self.vsini[idx] = v - min_vsini
+                else:
+                    # Correction for discontinuity
+                    self.vsini[idx] = v - min_vsini - 1.0
+
         self.refs_broadened = []
         for i in range(self.num_refs):
             self.refs_broadened.append(self.refs[i].copy())
-            self.refs_broadened[i] = self.broaden(vsini[i],
-                                                  self.refs_broadened[i])
+            if vsini[i] >= 1.0:
+                self.refs_broadened[i] = self.broaden(vsini[i],
+                                                      self.refs_broadened[i])
 
-        self.modified = Spectrum(self.w, np.zeros_like(self.w),
-                                 name='Linear Combination {0:d}'
-                                 .format(self.num_refs))
+        self.ref_mod = Spectrum(self.w, np.zeros_like(self.w),
+                                name='Linear Combination {0:d}'
+                                .format(self.num_refs))
 
         self.best_params = lmfit.Parameters()
         self.best_chisq = np.NaN
@@ -392,23 +414,23 @@ class MatchLincomb(Match):
         based on the reference spectrum.
         Stores the tweaked model in spectra.s_mod and serr_mod.
         """
-        self.modified.s = np.zeros_like(self.w)
-        self.modified.serr = np.zeros_like(self.w)
+        self.ref_mod.s = np.zeros_like(self.w)
+        self.ref_mod.serr = np.zeros_like(self.w)
 
         # create the model from a linear combination of the reference spectra
         coeffs = get_lincomb_coeffs(params)
 
         for i in range(self.num_refs):
-            self.modified.s += self.refs_broadened[i].s * coeffs[i]
-            self.modified.serr += self.refs_broadened[i].serr * coeffs[i]
+            self.ref_mod.s += self.refs_broadened[i].s * coeffs[i]
+            self.ref_mod.serr += self.refs_broadened[i].serr * coeffs[i]
 
         # Use linear least squares to fit a spline
-        spline = LSQUnivariateSpline(self.w, self.target.s / self.modified.s,
+        spline = LSQUnivariateSpline(self.w, self.targ_mod.s / self.ref_mod.s,
                                      self.knot_x)
         self.spl = spline(self.w)
 
-        self.modified.s *= self.spl
-        self.modified.serr *= self.spl
+        self.ref_mod.s *= self.spl
+        self.ref_mod.serr *= self.spl
 
     def objective(self, params):
         """Objective function evaluating goodness of fit given the passed
@@ -488,13 +510,13 @@ class MatchLincomb(Match):
                 if self.ref_chisq is None:
                     labels['ref_{0:d}'.format(i)] = (
                         'Reference: {0}, '.format(self.refs[i].name) +
-                        r'$v\sin i = {0:.2f}$, '.format(self.vsini[i]) +
+                        r'$v\sin i = {0:.2f}$, '.format(self.phys_vsini[i]) +
                         r'$c_{0:d} = {1:.3f}$'.format(i, coeffs[i]))
 
                 else:
                     labels['ref_{0:d}'.format(i)] = (
                         'Reference: {0}, '.format(self.refs[i].name) +
-                        r'$v\sin i = {0:.2f}$, '.format(self.vsini[i]) +
+                        r'$v\sin i = {0:.2f}$, '.format(self.phys_vsini[i]) +
                         r'$\chi^2 = {0:.2f}$, '.format(self.ref_chisq[i]) +
                         r'$c_{0:d} = {1:.3f}$'.format(i, coeffs[i]))
         else:
@@ -505,15 +527,16 @@ class MatchLincomb(Match):
                 labels['ref_{0:d}'.format(i)] = 'Reference {0:d}'.format(i)
 
         # Plot spectra
-        self.target.plot(plt_kw={'color': 'royalblue'}, text=labels['target'])
-        self.modified.plot(offset=0.5, plt_kw={'color': 'forestgreen'},
-                           text=labels['modified'])
+        self.targ_mod.plot(plt_kw={'color': 'royalblue'},
+                           text=labels['target'])
+        self.ref_mod.plot(offset=0.5, plt_kw={'color': 'forestgreen'},
+                          text=labels['modified'])
 
         for i in range(self.num_refs):
             self.refs[i].plot(offset=1.5+i*0.5, plt_kw={'color': 'firebrick'},
                               text=labels['ref_{0:d}'.format(i)])
 
-        plt.plot(self.target.w, self.modified.s-self.target.s,
+        plt.plot(self.targ_mod.w, self.ref_mod.s - self.targ_mod.s,
                  '-', color='black')
         plots.annotate_spectrum(labels['residuals'], spec_offset=-1)
 
@@ -534,9 +557,14 @@ class MatchLincomb(Match):
             outfile = h5py.File(outfile, 'w')
             is_path = True
 
+        # Specmatch-Emp version
+        outfile['smemp-version'] = specmatchemp.SPECMATCH_VERSION.lstrip('v')
+
         # Save target
         outfile.create_group('target')
         self.target.to_hdf(outfile['target'])
+        outfile.create_group('targ_mod')
+        self.targ_mod.to_hdf(outfile['targ_mod'])
 
         # Save references
         outfile['num_refs'] = self.num_refs
@@ -544,12 +572,13 @@ class MatchLincomb(Match):
         for i in range(self.num_refs):
             grp = outfile['references'].create_group('{0:d}'.format(i))
             self.refs[i].to_hdf(grp)
+
         outfile['ref_chisq'] = self.ref_chisq
-        outfile['vsini'] = self.vsini
+        outfile['vsini'] = self.original_vsini
 
         # Save modified
-        outfile.create_group('modified')
-        self.modified.to_hdf(outfile['modified'])
+        outfile.create_group('ref_mod')
+        self.ref_mod.to_hdf(outfile['ref_mod'])
 
         # Save best-fit parameters
         outfile['best_params'] = self.best_params.dumps()
@@ -573,7 +602,16 @@ class MatchLincomb(Match):
             is_path = True
 
         # Read target
+        # Backward compatibility
+        # if 'smemp-version' not in infile or infile['smemp-version'] < 0.4:
+        #     # Read target
+        #     target = spectrum.read_hdf(infile['target'])
+        #     targ_mod = target.copy()
+        #     ref_mod = spectrum.read_hdf(infile['modified'])
+        # else:
         target = spectrum.read_hdf(infile['target'])
+        targ_mod = spectrum.read_hdf(infile['targ_mod'])
+        ref_mod = spectrum.read_hdf(infile['ref_mod'])
 
         # Read reference
         num_refs = infile['num_refs'].value
@@ -587,9 +625,6 @@ class MatchLincomb(Match):
             ref_chisq = None
         vsini = infile['vsini'][:]
 
-        # Read modified
-        modified = spectrum.read_hdf(infile['modified'])
-
         # Read best-fit parameters
         best_params = lmfit.Parameters()
         best_params.loads(infile['best_params'].value)
@@ -600,7 +635,8 @@ class MatchLincomb(Match):
         mt.load_params(best_params)
         mt.ref_chisq = ref_chisq
 
-        if not np.allclose(modified.s, mt.modified.s) \
+        if not np.allclose(ref_mod.s, mt.ref_mod.s) \
+                or not np.allclose(targ_mod.s, mt.targ_mod.s) \
                 or not np.allclose(spl, mt.spl) \
                 or mt.best_chisq != best_chisq:
             print("Warning: Saved model and recreated model are not " +
