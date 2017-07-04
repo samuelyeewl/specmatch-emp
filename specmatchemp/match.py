@@ -82,15 +82,14 @@ class Match(object):
         self.ref_mod.s = np.copy(self.reference.s)
         self.ref_mod.serr = np.copy(self.reference.serr)
 
-        self.mod
-
         # Apply broadening kernel
         vsini = params['vsini'].value
 
-        if vsini > 0.0:
+        if vsini > 1.0:
             self.ref_mod = self.broaden(vsini, self.ref_mod)
-        elif vsini < 0.0:
-            self.targ_mod = self.broaden(-vsini, self.targ_mod)
+        elif vsini < 1.0:
+            # Threshold at 1 because kernel does nothing for abs(vsini) < 1.0
+            self.targ_mod = self.broaden(-2.0 + vsini, self.targ_mod)
 
         # Use linear least squares to fit a spline
         spline = LSQUnivariateSpline(self.w, self.targ_mod.s / self.ref_mod.s,
@@ -206,10 +205,11 @@ class Match(object):
 
     def plot(self, verbose=True):
         if verbose:
+            vsini = get_physical_vsini(self.best_params['vsini'].value)
             labels = {'target': 'Target: {0}'.format(self.targ_mod.name),
                     'reference': 'Reference: {0}'.format(self.reference.name),
                     'modified': r'Reference (modified): $v\sin i = {0:.2f}$'
-                                .format(self.best_params['vsini'].value),
+                                .format(vsini),
                     'residuals': r'Residuals: $\chi^2 = {0:.3f}$'
                                 .format(self.best_chisq)}
         else:
@@ -351,6 +351,7 @@ class MatchLincomb(Match):
 
         self.w = np.copy(target.w)
         self.target = target.copy()
+        self.targ_mod = target.copy()
         self.num_refs = len(refs)
         self.refs = []
         for i in range(self.num_refs):
@@ -720,3 +721,15 @@ def get_lincomb_coeffs(params):
         coeffs.append(params[p].value)
 
     return np.array(coeffs)
+
+
+def get_physical_vsini(vsini):
+    """Get the physical vsini
+
+    Returns:
+        physical vsini
+    """
+    if vsini >= 1.0:
+        return vsini
+    else:
+        return -2.0 + vsini

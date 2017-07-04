@@ -316,7 +316,7 @@ def match_spectrum(specpath, indir="./", plot_level=0, inlib=False,
         targ_path = os.path.join(indir, 'r' + specpath + '_adj' + suffix +
                                  '.fits')
         if not os.path.exists(targ_path):
-            raise ValueError(specpath + " does not exist!")
+            raise ValueError(targ_path + " does not exist!")
         targid = 'r' + specpath
 
     # Load shifted spectrum

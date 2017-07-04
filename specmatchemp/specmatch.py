@@ -535,7 +535,7 @@ class SpecMatch(object):
             for i in range(len(dt)):
                 if dt[i][1] == "|O":
                     # max string length = 1000
-                    dt[i] = (dt[i][0], 'S1000')
+                    dt[i] = (dt[i][0], 'S5000')
             match_rec = np.array(match_rec, dtype=dt)
 
             outfile['match_results'] = match_rec
