@@ -112,7 +112,7 @@ def main():
     psr_match.add_argument("spectrum", type=str, help="Path to spectrum file" +
                            " or cps observation id")
     psr_match.add_argument("-d", "--directory", type=str,
-                           default=os.path.join(SPECMATCHDIR, 'spectra'),
+                           default=os.path.join(SPECMATCHDIR, 'shifted_spectra'),
                            help="Directory to look in for spectra if an obs " +
                            "id was provided")
     psr_match.add_argument("-p", "--plots", action='count',
