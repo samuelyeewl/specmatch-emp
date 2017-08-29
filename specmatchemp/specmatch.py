@@ -32,6 +32,9 @@ from specmatchemp import analysis
 from specmatchemp import plots
 from specmatchemp import detrend
 
+WAVLIM_DEFAULT = (5000, 5900)
+WAVSTEP_DEFAULT = 100
+
 
 class SpecMatch(object):
     """SpecMatch class to perform the SpecMatch routine.
@@ -71,7 +74,7 @@ class SpecMatch(object):
             Keys are elements of library.STAR_PROPS.
     """
 
-    def __init__(self, target, lib=None, wavlim=(5000, 5900)):
+    def __init__(self, target, lib=None, wavlim=WAVLIM_DEFAULT):
         if wavlim is None:
             self.wavlim = lib.wavlim
         elif lib is None:
@@ -151,7 +154,8 @@ class SpecMatch(object):
         self._shifted = True
         return self.target
 
-    def match(self, wavlim=None, wavstep=100, ignore=None):
+    def match(self, wavlim=WAVLIM_DEFAULT, wavstep=WAVSTEP_DEFAULT,
+              ignore=None):
         """Match the target against the library spectra.
 
         Performs a pairwise match between the target spectrum and every
@@ -194,8 +198,8 @@ class SpecMatch(object):
             regions = wavlim
         elif isinstance(wavlim, tuple) or wavlim is None or wavlim == 'all':
             if wavlim is None or wavlim == 'all':
-                # If no wavlim is provided, use the library wavlim
-                wavlim = self.target.wavlim()
+                # If no wavlim is provided, use the default wavlim
+                wavlim = WAVLIM_DEFAULT
 
             if wavstep is None:
                 # If no wavstep is provided, use the entire region given
@@ -532,10 +536,14 @@ class SpecMatch(object):
                 self.match_results.drop('lib_index', inplace=True, axis=1)
             match_rec = self.match_results.to_records()
             dt = match_rec.dtype.descr
+
             for i in range(len(dt)):
                 if dt[i][1] == "|O":
                     # max string length = 5000
-                    dt[i] = (dt[i][0], 'S5000')
+                    dt[i] = (str(dt[i][0]), 'S5000')
+                else:
+                    dt[i] = (str(dt[i][0]), dt[i][1])
+
             match_rec = np.array(match_rec, dtype=dt)
 
             outfile['match_results'] = match_rec
