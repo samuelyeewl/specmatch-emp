@@ -58,10 +58,14 @@ else:
                 sys.stderr.write("read %d\n" % (readsofar,))
 
         # liburl = "https://zenodo.org/record/60225/files/library.h5"
-        liburl = "https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#"
+        # Old library
+        # liburl = "https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#"
+        # New library
+        liburl = "https://www.dropbox.com/s/rv66merlnpvjnyj/library.h5#"
         LIBPATH = os.path.join(SPECMATCHDIR+"library.h5")
         if not os.path.exists(LIBPATH):
-            os.system("wget --no-check-certificate --output-document=${HOME}/.specmatchemp/library.h5 https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#")
+            os.system("wget --no-check-certificate --output-document=${HOME}/.specmatchemp/library.h5 "
+                      + liburl)
 
     # Additional csv files
     csv_urls = ["https://www.dropbox.com/s/8wv38eb8dzg1ou2/hires_telluric_mask.csv#",
