@@ -69,6 +69,7 @@ else:
                 "https://www.dropbox.com/s/lxz0cb57a8xvsfl/uncertainties.csv#"]
     for f in csv_urls:
         outfile = os.path.join(SPECMATCHDIR,f.split('/')[-1][:-1])
+        # if not os.path.exists(outfile):
         cmd = "wget --no-check-certificate {} -O {}".format(f,outfile)
         os.system(cmd)
 
@@ -82,5 +83,6 @@ else:
                 "https://www.dropbox.com/s/vqqjlcnw7duuq54/j59.1926_adj.fits#"]
     for ref in ref_urls:
         outfile = os.path.join(specdir,ref.split('/')[-1][:-1])
-        cmd = "wget --no-check-certificate {} -O {}".format(ref,outfile)
-        os.system(cmd)
+        if not os.path.exists(outfile):
+            cmd = "wget --no-check-certificate {} -O {}".format(ref,outfile)
+            os.system(cmd)

@@ -47,7 +47,8 @@ def shift_spectrum(args):
     core.shift_spectrum(args.spectrum, indir=args.directory,
                         plot_level=args.plots, outdir=args.outdir,
                         suffix=args.suffix, no_bootstrap=args.no_bootstrap,
-                        flatten=args.flatten)
+                        flatten=args.flatten, name=args.star_name,
+                        plotdir=args.resultsdir)
 
 
 def main():
@@ -100,11 +101,15 @@ def main():
     psr_shift.add_argument("-o", "--outdir", type=str,
                            default=os.path.join(SPECMATCHDIR, 'shifted_spectra'),
                            help="Directory to store output files.")
-    psr_shift.add_argument("-p", "--plots", action='count',
-                           help="Generate diagnostic plots")
     psr_shift.add_argument("-s", "--suffix", type=str, default="_adj",
                            help="Suffix to append to results files")
-    psr_shift.add_argument("-nb", "--no_bootstrap", action="store_true",
+    psr_shift.add_argument("-p", "--plots", action='count',
+                           help="Generate diagnostic plots")
+    psr_shift.add_argument("-n", "--star_name", type=str, default=None,
+                           help="Name of star")
+    psr_shift.add_argument("-r", "--resultsdir", type=str, default=None,
+                           help="Directory to store plots")
+    psr_shift.add_argument("--no_bootstrap", action="store_true",
                            help="Shift spectrum without bootstrapping")
     psr_shift.set_defaults(func=shift_spectrum)
 

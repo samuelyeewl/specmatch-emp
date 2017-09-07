@@ -441,7 +441,7 @@ def lincomb_spectrum(respath, plot_level=0, inlib=False, outdir="./",
 
 def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
                    suffix="_adj", mask=True, no_bootstrap=False,
-                   flatten=False):
+                   flatten=False, name=None, plotdir="./"):
     """Shift a target spectrum given an observation code.
 
     Saves the shifted spectrum in a fits file.
@@ -465,7 +465,8 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
         targid = os.path.splitext(os.path.basename(specpath))[0]
     else:
         return _multishift_spectrum(specpath, plot_level, indir, outdir,
-                                    suffix, mask, no_bootstrap, flatten)
+                                    suffix, mask, no_bootstrap, flatten, name,
+                                    plotdir)
 
     # if a different directory is provided, copy the file into specmatchemp
     # working directory
@@ -507,8 +508,16 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
         copy(outpath, outdir)
 
     # Generate representative plots
+    if plotdir is None:
+        plotdir = outdir
+    if name is None:
+        name = targid
+    plotdir = os.path.join(plotdir, name + '/')
+    if not os.path.exists(plotdir):
+        os.mkdir(plotdir)
+
     if plot_level == 1:
-        plotfile = os.path.join(outdir, targid + "_shift_plots.pdf")
+        plotfile = os.path.join(plotdir, targid + "_shift_plots.pdf")
         print("Saving plots to " + plotfile)
 
         with PdfPages(plotfile) as pdf:
@@ -518,7 +527,7 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
             plot_shift_data(targ_spec, shifted, shift_ref, shift_data, pdf, 2)
     # Generate individual plots for every order
     elif plot_level == 2:
-        plotfile = os.path.join(outdir, targid + "_shift_plots.pdf")
+        plotfile = os.path.join(plotdir, targid + "_shift_plots.pdf")
         print("Saving plots to " + plotfile)
         with PdfPages(plotfile) as pdf:
             # Get reference used
@@ -533,7 +542,7 @@ def shift_spectrum(specpath, plot_level=0, indir=None, outdir="./",
 
 def _multishift_spectrum(cps_id, plot_level=0, indir=None, outdir="./",
                         suffix="_adj", mask=True, no_bootstrap=False,
-                        flatten=False):
+                        flatten=False, name=None, plotdir="./"):
     """Helper function to shift multiple chips"""
     # If an observation id is given, search for all chips and shift each in
     # turn
@@ -542,7 +551,8 @@ def _multishift_spectrum(cps_id, plot_level=0, indir=None, outdir="./",
         print("Shifting bj chip...")
         bj = shift_spectrum(bj_path, plot_level=plot_level, indir=indir,
                             outdir=outdir, suffix=suffix, mask=mask,
-                            no_bootstrap=no_bootstrap, flatten=False)
+                            no_bootstrap=no_bootstrap, flatten=False,
+                            name=name, plotdir=plotdir)
     else:
         bj = None
 
@@ -551,7 +561,8 @@ def _multishift_spectrum(cps_id, plot_level=0, indir=None, outdir="./",
         print("Shifting rj chip...")
         rj = shift_spectrum(rj_path, plot_level=plot_level, indir=indir,
                             outdir=outdir, suffix=suffix, mask=mask,
-                            no_bootstrap=no_bootstrap, flatten=False)
+                            no_bootstrap=no_bootstrap, flatten=False,
+                            name=name, plotdir=plotdir)
     else:
         rj = None
 
@@ -560,7 +571,8 @@ def _multishift_spectrum(cps_id, plot_level=0, indir=None, outdir="./",
         print("Shifting ij chip...")
         ij = shift_spectrum(ij_path, plot_level=plot_level, indir=indir,
                             outdir=outdir, suffix=suffix, mask=mask,
-                            no_bootstrap=no_bootstrap, flatten=False)
+                            no_bootstrap=no_bootstrap, flatten=False,
+                            name=name, plotdir=plotdir)
     else:
         ij = None
 
@@ -608,6 +620,7 @@ def _multishift_spectrum(cps_id, plot_level=0, indir=None, outdir="./",
 
         # Save flattened spectrum
         outpath = os.path.join(shiftedspecdir, cps_id + suffix + '.fits')
+        print("Saving flattened spectrum to " + outpath)
         shifted.to_fits(outpath, clobber=True)
 
         if outdir != shiftedspecdir:

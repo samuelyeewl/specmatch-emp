@@ -658,4 +658,5 @@ def save_shift_to_fits(outpath, shifted, unshifted, shift_data, clobber=False):
     hdulist = fits.HDUList([prihdu, shifted_hdu, shift_data_hdu] +
                            unshifted_hdus)
 
+    print("Saving shifted spectrum to " + outpath)
     hdulist.writeto(outpath, overwrite=clobber)

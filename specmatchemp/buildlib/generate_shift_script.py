@@ -33,7 +33,8 @@ if __name__ == '__main__':
             name = row.cps_name
             s = "source ~/.bash_profile; smemp shift " + obs + " "
             s += "-pp "
-            s += "-o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ "
+            s += "-f "
+            s += "-r /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ "
             s += "-n " + name
             s += "\n"
             f.write(s)
