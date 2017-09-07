@@ -31,7 +31,7 @@ if __name__ == '__main__':
         for idx, row in params.iterrows():
             obs = row.lib_obs.lstrip('r')
             name = row.cps_name
-            s = "smemp shift " + obs + " "
+            s = "source ~/.bash_profile; smemp shift " + obs + " "
             s += "-pp "
             s += "-o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ "
             s += "-n " + name

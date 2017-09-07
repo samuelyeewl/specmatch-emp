@@ -1,404 +1,404 @@
-smemp shift j06.1125 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 100623
-smemp shift j20.1313 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 101904
-smemp shift j15.2019 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 102195
-smemp shift j72.386 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 102444
-smemp shift j72.98 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 102956
-smemp shift j117.364 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 103459
-smemp shift j05.1265 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 103890
-smemp shift j32.1740 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 104437
-smemp shift j21.1217 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 106088
-smemp shift j20.823 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 107181
-smemp shift j72.389 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 108189
-smemp shift j72.738 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 108863
-smemp shift j72.387 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 109159
-smemp shift j93.1277 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 109749
-smemp shift j161.539 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 10995
-smemp shift j189.2174 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 110463
-smemp shift j06.1121 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 110537
-smemp shift j19.940 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 110743
-smemp shift j189.2172 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 110833
-smemp shift j117.361 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 111814
-smemp shift j21.1218 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 112415
-smemp shift j189.2175 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 112914
-smemp shift j72.741 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 114659
-smemp shift j06.1134 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 116442
-smemp shift j72.762 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 122253
-smemp shift j20.824 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 122973
-smemp shift j72.718 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 123239
-smemp shift j06.1828 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 124257A
-smemp shift j76.1671 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 125607
-smemp shift j06.1818 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 126583
-smemp shift j72.442 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 128311
-smemp shift j130.1674 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 130048
-smemp shift j189.1878 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 130307
-smemp shift j189.270 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 131511
-smemp shift j189.2471 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 131582
-smemp shift j187.201 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 132254
-smemp shift j19.942 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 133125
-smemp shift j72.454 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 135101A
-smemp shift j130.1675 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 135872
-smemp shift j189.272 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 137778
-smemp shift j140.96 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 13871
-smemp shift j177.343 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 1388
-smemp shift j64.152 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 13931
-smemp shift j189.2183 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 144872
-smemp shift j63.728 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 14655
-smemp shift j62.180 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 14787
-smemp shift j42.152 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 148284
-smemp shift j130.1125 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 14855
-smemp shift j32.1750 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 149750
-smemp shift j59.1647 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 1502
-smemp shift j150.733 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 150706
-smemp shift j72.456 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 152581
-smemp shift j72.146 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 152733
-smemp shift j62.177 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 15336
-smemp shift j189.2184 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 153525
-smemp shift j23.520 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 155413
-smemp shift j21.1529 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 155456
-smemp shift j21.1249 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 155712
-smemp shift j72.165 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 156846
-smemp shift j21.1530 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 161479
-smemp shift j55.930 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 162232
-smemp shift j08.769 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 164922
-smemp shift j72.169 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 168443
-smemp shift j123.315 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 170657
-smemp shift j21.1379 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 17156
-smemp shift j59.987 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 172051
-smemp shift j32.1388 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 175425
-smemp shift j62.190 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 17620
-smemp shift j32.1784 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 179079
-smemp shift j193.70 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 181234
-smemp shift j50.242 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 18143
-smemp shift j187.82 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 18445
-smemp shift j62.193 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 18742
-smemp shift j13.2079 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 189733
-smemp shift j63.381 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 190228
-smemp shift j159.703 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 190571
-smemp shift j55.977 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 193690
-smemp shift j152.510 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 195034
-smemp shift j55.1871 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 196124
-smemp shift j138.778 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 199255
-smemp shift j138.779 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 199381
-smemp shift j57.145 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 200964
-smemp shift j21.1578 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 201924
-smemp shift j193.303 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 202575
-smemp shift j55.962 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 203471
-smemp shift j181.75 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 203473
-smemp shift j185.1097 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 20367
-smemp shift j62.88 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 206635
-smemp shift j57.147 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 207077
-smemp shift j63.384 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 208313
-smemp shift j152.513 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 209393
-smemp shift j156.1777 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 210373
-smemp shift j179.529 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 211681
-smemp shift j62.97 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 215049
-smemp shift j62.98 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 216834
-smemp shift j62.101 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 217681
-smemp shift j187.92 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 21774
-smemp shift j61.702 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 220339
-smemp shift j62.106 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 221504
-smemp shift j15.519 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 221822
-smemp shift j21.1562 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 222038
-smemp shift j23.1110 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 222986
-smemp shift j41.2656 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 224619
-smemp shift j62.200 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 22657
-smemp shift j32.1749 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 234314
-smemp shift j62.182 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 23825
-smemp shift j76.1672 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 238433
-smemp shift j50.268 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 24238
-smemp shift j16.526 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 24892
-smemp shift j62.205 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 26007
-smemp shift j165.405 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 26161
-smemp shift j62.206 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 26634
-smemp shift j23.1578 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 27496
-smemp shift j50.275 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 27859
-smemp shift j50.266 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 28005
-smemp shift j187.378 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 30708
-smemp shift j63.441 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 31253
-smemp shift j140.114 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 31423
-smemp shift j81.639 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 31451
-smemp shift j61.764 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 31560
-smemp shift j85.329 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 33636
-smemp shift j63.712 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 3404
-smemp shift j62.152 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 3458
-smemp shift j187.404 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 35112
-smemp shift j194.134 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 3684
-smemp shift j63.1056 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 37008
-smemp shift j63.448 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 37124
-smemp shift j187.113 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 37213
-smemp shift j15.1500 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 37394
-smemp shift j23.1581 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 37605
-smemp shift j76.1925 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 3795
-smemp shift j04.886 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 38467
-smemp shift j34.254 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 3861
-smemp shift j23.1583 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 39094
-smemp shift j65.145 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 40537
-smemp shift j78.495 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 4203
-smemp shift j187.126 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 42807
-smemp shift j59.1648 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 4313
-smemp shift j15.563 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 43162
-smemp shift j62.156 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 4395
-smemp shift j187.118 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 44985
-smemp shift j187.116 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 45067
-smemp shift j133.647 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 48345
-smemp shift j158.105 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 5133
-smemp shift j187.388 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 53927
-smemp shift j187.165 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 56274
-smemp shift j23.1586 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 57204
-smemp shift j62.139 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 6030
-smemp shift j85.340 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 61606
-smemp shift j118.389 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 61995
-smemp shift j187.164 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 63754
-smemp shift j65.146 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 64413
-smemp shift j06.1076 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 66428
-smemp shift j63.1658 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 68988
-smemp shift j04.883 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 69960
-smemp shift j70.389 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 72440
-smemp shift j65.150 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 72490
-smemp shift j83.360 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 72687
-smemp shift j187.413 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 72760
-smemp shift j70.390 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 74390
-smemp shift j70.391 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 77818
-smemp shift j187.162 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 80367
-smemp shift j50.315 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 80606
-smemp shift j62.163 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 8407
-smemp shift j67.1020 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 84737
-smemp shift j15.941 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 8553
-smemp shift j130.2537 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 8594
-smemp shift j15.1503 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 86081
-smemp shift j166.94 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 87424
-smemp shift j72.77 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 87883
-smemp shift j55.1376 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 88133
-smemp shift j90.988 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 88654
-smemp shift j51.145 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 93396
-smemp shift j18.685 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 95088
-smemp shift j72.93 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 95526
-smemp shift j62.165 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 9625
-smemp shift j189.1673 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 96612
-smemp shift j148.163 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n CK01925
-smemp shift j97.3187 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n K00975
-smemp shift j120.338 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n K01612
-smemp shift j192.299 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10018963
-smemp shift j193.688 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10068307
-smemp shift j193.734 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10162436
-smemp shift j128.152 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10355856
-smemp shift j193.701 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10454113
-smemp shift j128.153 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10516096
-smemp shift j128.154 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10644253
-smemp shift j193.703 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10709834
-smemp shift j128.157 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC11026764
-smemp shift j193.704 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC11137075
-smemp shift j193.700 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC11244118
-smemp shift j193.732 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC11414712
-smemp shift j128.498 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC11717120
-smemp shift j128.500 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC12009504
-smemp shift j128.502 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC12258514
-smemp shift j193.712 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC1435467
-smemp shift j128.104 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC3427720
-smemp shift j128.105 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC3656476
-smemp shift j128.107 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC4914923
-smemp shift j128.108 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC5021689
-smemp shift j193.708 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC5184732
-smemp shift j193.706 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC5596656
-smemp shift j128.116 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC5773345
-smemp shift j128.117 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC5955122
-smemp shift j192.501 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC6106415
-smemp shift j193.709 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC6116048
-smemp shift j190.416 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC6225718
-smemp shift j193.717 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC6442183
-smemp shift j128.125 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC6603624
-smemp shift j193.727 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC6933899
-smemp shift j190.415 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7206837
-smemp shift j193.718 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7680114
-smemp shift j128.130 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7747078
-smemp shift j193.719 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7799349
-smemp shift j128.133 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7871531
-smemp shift j152.86 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7940546
-smemp shift j193.721 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7970740
-smemp shift j128.132 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7976303
-smemp shift j193.722 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8006161
-smemp shift j192.298 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8179536
-smemp shift j128.140 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8228742
-smemp shift j193.736 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8394589
-smemp shift j193.735 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8524425
-smemp shift j193.692 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8561221
-smemp shift j193.693 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8694723
-smemp shift j128.141 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8702606
-smemp shift j193.694 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8751420
-smemp shift j193.695 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8938364
-smemp shift j193.737 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC9098294
-smemp shift j128.143 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC9139151
-smemp shift j192.499 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC9139163
-smemp shift j128.144 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC9206432
-smemp shift j137.108 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP10337
-smemp shift j59.403 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP105341
-smemp shift j59.1640 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP114156
-smemp shift j59.1642 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP118261
-smemp shift j59.1982 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP12493
-smemp shift j137.116 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP15095
-smemp shift j131.363 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP1532
-smemp shift j14.622 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP19165
-smemp shift j61.791 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP25220
-smemp shift j61.466 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP36551
-smemp shift j149.140 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP40375
-smemp shift j149.142 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP40910
-smemp shift j63.1698 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP45839
-smemp shift j63.779 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP47201
-smemp shift j63.1699 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP48411
-smemp shift j134.232 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP4845
-smemp shift j63.1701 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP54810
-smemp shift j128.549 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP5663
-smemp shift j90.713 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP66222
-smemp shift j59.396 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP93871
-smemp shift j59.397 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP97051
-smemp shift j55.1182 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 111631
-smemp shift j124.340 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 1326B
-smemp shift j76.1490 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 157881
-smemp shift j55.1440 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 165222
-smemp shift j59.992 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 180617
-smemp shift j134.384 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 209290
-smemp shift j63.1050 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 232979
-smemp shift j222.308 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 245409
-smemp shift j149.110 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 265866
-smemp shift j131.943 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 28343
-smemp shift j209.268 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GJ628
-smemp shift j15.1926 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL105B
-smemp shift j78.491 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL109
-smemp shift j50.296 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL2066
-smemp shift j63.473 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL239
-smemp shift j15.1505 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL250B
-smemp shift j82.219 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL273
-smemp shift j118.811 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL382
-smemp shift j55.1377 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL393
-smemp shift j55.901 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL514
-smemp shift j35.852 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL625
-smemp shift j59.1273 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL686
-smemp shift j59.1283 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL694
-smemp shift j97.2588 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL745A
-smemp shift j59.1030 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL806
-smemp shift j222.304 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL83.1
-smemp shift j61.724 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL87
-smemp shift j190.1206 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL875
-smemp shift j193.921 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL896A
-smemp shift j38.271 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL908
-smemp shift j59.2216 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP104432
-smemp shift j02.945 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP109388
-smemp shift j64.154 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP11048
-smemp shift j222.273 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP115332
-smemp shift j15.943 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP115562
-smemp shift j165.57 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP15366
-smemp shift j15.517 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP1734
-smemp shift j85.326 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP21556
-smemp shift j97.2842 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP22762
-smemp shift j222.99 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP23512
-smemp shift j06.1476 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP36338
-smemp shift j15.1501 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP36834
-smemp shift j15.564 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP37217
-smemp shift j06.1489 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP46769
-smemp shift j149.148 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP47513
-smemp shift j118.812 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP51007
-smemp shift j222.76 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP5643
-smemp shift j82.247 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP57050
-smemp shift j06.1485 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP57548
-smemp shift j67.506 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP59748
-smemp shift j67.535 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP60093
-smemp shift j92.111 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP61706
-smemp shift j67.533 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP65016
-smemp shift j222.752 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP71253
-smemp shift j82.722 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP8051
-smemp shift j153.114 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP91699
-smemp shift j189.1669 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 101501
-smemp shift j13.2064 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 10476
-smemp shift j78.493 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 10697
-smemp shift j01.1093 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 10700
-smemp shift j185.1189 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 107383
-smemp shift j180.740 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 10780
-smemp shift j06.1131 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 115617
-smemp shift j72.745 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 117176
-smemp shift j01.1088 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 11964A
-smemp shift j55.902 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 119850
-smemp shift j222.343 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 120136
-smemp shift j187.198 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 126660
-smemp shift j187.196 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 130948
-smemp shift j187.193 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 131156
-smemp shift j08.880 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 1326
-smemp shift j179.71 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 136202
-smemp shift j70.465 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 143761
-smemp shift j55.1237 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 145675
-smemp shift j01.182 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 1461
-smemp shift j222.759 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 149661
-smemp shift j59.1282 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 157214
-smemp shift j61.668 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 158633
-smemp shift j23.1115 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 16160
-smemp shift j59.1280 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 161797
-smemp shift j187.472 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 164259
-smemp shift j21.1376 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 166
-smemp shift j179.143 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 16765
-smemp shift j187.489 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 168151
-smemp shift j185.804 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 16895
-smemp shift j187.478 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 173667
-smemp shift j187.482 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 173701
-smemp shift j55.1240 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 173739
-smemp shift j55.1241 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 173740
-smemp shift j173.399 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 177153
-smemp shift j188.905 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 181420
-smemp shift j08.774 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 182572
-smemp shift j174.501 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 182736
-smemp shift j01.169 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 185144
-smemp shift j55.1848 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 186408
-smemp shift j55.1849 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 186427
-smemp shift j188.560 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 187637
-smemp shift j23.524 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 188512
-smemp shift j01.1090 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 190360
-smemp shift j59.1923 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 190406
-smemp shift j76.1541 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 19373
-smemp shift j72.176 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 195564
-smemp shift j59.1033 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 199305
-smemp shift j185.1131 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 19994
-smemp shift j08.1233 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 201091
-smemp shift j08.1230 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 201092
-smemp shift j173.1211 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 206860
-smemp shift j185.1120 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 21019
-smemp shift j156.1776 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 210702
-smemp shift j59.1926 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 216899
-smemp shift j23.1103 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 217014
-smemp shift j55.1281 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 217107
-smemp shift j59.2221 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 217987
-smemp shift j08.870 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 219134
-smemp shift j130.1517 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 219623
-smemp shift j26.532 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 222368
-smemp shift j137.243 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 22484
-smemp shift j63.431 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 23249
-smemp shift j06.1045 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 26965
-smemp shift j185.783 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 30652
-smemp shift j06.1066 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 34411
-smemp shift j85.328 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 36395
-smemp shift j13.2073 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 3651
-smemp shift j06.1054 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 38858
-smemp shift j185.1109 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 39587
-smemp shift j61.705 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 4628
-smemp shift j185.1112 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 48737
-smemp shift j185.1115 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 49933
-smemp shift j185.652 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 58946
-smemp shift j173.1218 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 6210
-smemp shift j185.1106 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 69897
-smemp shift j06.1091 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 75732
-smemp shift j63.1374 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 79210
-smemp shift j13.2095 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 7924
-smemp shift j187.392 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 82885
-smemp shift j06.1085 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 86728
-smemp shift j72.72 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 88230
-smemp shift j06.1099 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 95735
-smemp shift j216.111 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GJ176
-smemp shift j185.1133 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL144
-smemp shift j185.874 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL338B
-smemp shift j50.359 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL412A
-smemp shift j55.906 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL570B
-smemp shift j172.1087 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL687
-smemp shift j20.452 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL699
-smemp shift j187.474 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL702A
-smemp shift j187.477 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL702B
-smemp shift j45.596 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL876
-smemp shift j06.1488 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP57087
-smemp shift j23.519 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP74995
-smemp shift j59.1277 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP83043
+source ~/.bash_profile; smemp shift j06.1125 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 100623
+source ~/.bash_profile; smemp shift j20.1313 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 101904
+source ~/.bash_profile; smemp shift j15.2019 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 102195
+source ~/.bash_profile; smemp shift j72.386 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 102444
+source ~/.bash_profile; smemp shift j72.98 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 102956
+source ~/.bash_profile; smemp shift j117.364 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 103459
+source ~/.bash_profile; smemp shift j05.1265 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 103890
+source ~/.bash_profile; smemp shift j32.1740 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 104437
+source ~/.bash_profile; smemp shift j21.1217 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 106088
+source ~/.bash_profile; smemp shift j20.823 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 107181
+source ~/.bash_profile; smemp shift j72.389 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 108189
+source ~/.bash_profile; smemp shift j72.738 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 108863
+source ~/.bash_profile; smemp shift j72.387 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 109159
+source ~/.bash_profile; smemp shift j93.1277 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 109749
+source ~/.bash_profile; smemp shift j161.539 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 10995
+source ~/.bash_profile; smemp shift j189.2174 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 110463
+source ~/.bash_profile; smemp shift j06.1121 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 110537
+source ~/.bash_profile; smemp shift j19.940 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 110743
+source ~/.bash_profile; smemp shift j189.2172 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 110833
+source ~/.bash_profile; smemp shift j117.361 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 111814
+source ~/.bash_profile; smemp shift j21.1218 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 112415
+source ~/.bash_profile; smemp shift j189.2175 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 112914
+source ~/.bash_profile; smemp shift j72.741 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 114659
+source ~/.bash_profile; smemp shift j06.1134 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 116442
+source ~/.bash_profile; smemp shift j72.762 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 122253
+source ~/.bash_profile; smemp shift j20.824 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 122973
+source ~/.bash_profile; smemp shift j72.718 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 123239
+source ~/.bash_profile; smemp shift j06.1828 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 124257A
+source ~/.bash_profile; smemp shift j76.1671 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 125607
+source ~/.bash_profile; smemp shift j06.1818 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 126583
+source ~/.bash_profile; smemp shift j72.442 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 128311
+source ~/.bash_profile; smemp shift j130.1674 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 130048
+source ~/.bash_profile; smemp shift j189.1878 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 130307
+source ~/.bash_profile; smemp shift j189.270 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 131511
+source ~/.bash_profile; smemp shift j189.2471 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 131582
+source ~/.bash_profile; smemp shift j187.201 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 132254
+source ~/.bash_profile; smemp shift j19.942 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 133125
+source ~/.bash_profile; smemp shift j72.454 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 135101A
+source ~/.bash_profile; smemp shift j130.1675 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 135872
+source ~/.bash_profile; smemp shift j189.272 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 137778
+source ~/.bash_profile; smemp shift j140.96 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 13871
+source ~/.bash_profile; smemp shift j177.343 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 1388
+source ~/.bash_profile; smemp shift j64.152 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 13931
+source ~/.bash_profile; smemp shift j189.2183 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 144872
+source ~/.bash_profile; smemp shift j63.728 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 14655
+source ~/.bash_profile; smemp shift j62.180 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 14787
+source ~/.bash_profile; smemp shift j42.152 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 148284
+source ~/.bash_profile; smemp shift j130.1125 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 14855
+source ~/.bash_profile; smemp shift j32.1750 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 149750
+source ~/.bash_profile; smemp shift j59.1647 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 1502
+source ~/.bash_profile; smemp shift j150.733 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 150706
+source ~/.bash_profile; smemp shift j72.456 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 152581
+source ~/.bash_profile; smemp shift j72.146 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 152733
+source ~/.bash_profile; smemp shift j62.177 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 15336
+source ~/.bash_profile; smemp shift j189.2184 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 153525
+source ~/.bash_profile; smemp shift j23.520 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 155413
+source ~/.bash_profile; smemp shift j21.1529 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 155456
+source ~/.bash_profile; smemp shift j21.1249 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 155712
+source ~/.bash_profile; smemp shift j72.165 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 156846
+source ~/.bash_profile; smemp shift j21.1530 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 161479
+source ~/.bash_profile; smemp shift j55.930 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 162232
+source ~/.bash_profile; smemp shift j08.769 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 164922
+source ~/.bash_profile; smemp shift j72.169 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 168443
+source ~/.bash_profile; smemp shift j123.315 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 170657
+source ~/.bash_profile; smemp shift j21.1379 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 17156
+source ~/.bash_profile; smemp shift j59.987 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 172051
+source ~/.bash_profile; smemp shift j32.1388 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 175425
+source ~/.bash_profile; smemp shift j62.190 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 17620
+source ~/.bash_profile; smemp shift j32.1784 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 179079
+source ~/.bash_profile; smemp shift j193.70 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 181234
+source ~/.bash_profile; smemp shift j50.242 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 18143
+source ~/.bash_profile; smemp shift j187.82 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 18445
+source ~/.bash_profile; smemp shift j62.193 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 18742
+source ~/.bash_profile; smemp shift j13.2079 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 189733
+source ~/.bash_profile; smemp shift j63.381 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 190228
+source ~/.bash_profile; smemp shift j159.703 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 190571
+source ~/.bash_profile; smemp shift j55.977 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 193690
+source ~/.bash_profile; smemp shift j152.510 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 195034
+source ~/.bash_profile; smemp shift j55.1871 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 196124
+source ~/.bash_profile; smemp shift j138.778 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 199255
+source ~/.bash_profile; smemp shift j138.779 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 199381
+source ~/.bash_profile; smemp shift j57.145 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 200964
+source ~/.bash_profile; smemp shift j21.1578 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 201924
+source ~/.bash_profile; smemp shift j193.303 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 202575
+source ~/.bash_profile; smemp shift j55.962 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 203471
+source ~/.bash_profile; smemp shift j181.75 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 203473
+source ~/.bash_profile; smemp shift j185.1097 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 20367
+source ~/.bash_profile; smemp shift j62.88 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 206635
+source ~/.bash_profile; smemp shift j57.147 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 207077
+source ~/.bash_profile; smemp shift j63.384 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 208313
+source ~/.bash_profile; smemp shift j152.513 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 209393
+source ~/.bash_profile; smemp shift j156.1777 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 210373
+source ~/.bash_profile; smemp shift j179.529 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 211681
+source ~/.bash_profile; smemp shift j62.97 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 215049
+source ~/.bash_profile; smemp shift j62.98 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 216834
+source ~/.bash_profile; smemp shift j62.101 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 217681
+source ~/.bash_profile; smemp shift j187.92 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 21774
+source ~/.bash_profile; smemp shift j61.702 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 220339
+source ~/.bash_profile; smemp shift j62.106 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 221504
+source ~/.bash_profile; smemp shift j15.519 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 221822
+source ~/.bash_profile; smemp shift j21.1562 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 222038
+source ~/.bash_profile; smemp shift j23.1110 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 222986
+source ~/.bash_profile; smemp shift j41.2656 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 224619
+source ~/.bash_profile; smemp shift j62.200 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 22657
+source ~/.bash_profile; smemp shift j32.1749 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 234314
+source ~/.bash_profile; smemp shift j62.182 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 23825
+source ~/.bash_profile; smemp shift j76.1672 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 238433
+source ~/.bash_profile; smemp shift j50.268 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 24238
+source ~/.bash_profile; smemp shift j16.526 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 24892
+source ~/.bash_profile; smemp shift j62.205 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 26007
+source ~/.bash_profile; smemp shift j165.405 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 26161
+source ~/.bash_profile; smemp shift j62.206 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 26634
+source ~/.bash_profile; smemp shift j23.1578 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 27496
+source ~/.bash_profile; smemp shift j50.275 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 27859
+source ~/.bash_profile; smemp shift j50.266 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 28005
+source ~/.bash_profile; smemp shift j187.378 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 30708
+source ~/.bash_profile; smemp shift j63.441 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 31253
+source ~/.bash_profile; smemp shift j140.114 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 31423
+source ~/.bash_profile; smemp shift j81.639 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 31451
+source ~/.bash_profile; smemp shift j61.764 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 31560
+source ~/.bash_profile; smemp shift j85.329 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 33636
+source ~/.bash_profile; smemp shift j63.712 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 3404
+source ~/.bash_profile; smemp shift j62.152 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 3458
+source ~/.bash_profile; smemp shift j187.404 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 35112
+source ~/.bash_profile; smemp shift j194.134 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 3684
+source ~/.bash_profile; smemp shift j63.1056 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 37008
+source ~/.bash_profile; smemp shift j63.448 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 37124
+source ~/.bash_profile; smemp shift j187.113 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 37213
+source ~/.bash_profile; smemp shift j15.1500 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 37394
+source ~/.bash_profile; smemp shift j23.1581 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 37605
+source ~/.bash_profile; smemp shift j76.1925 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 3795
+source ~/.bash_profile; smemp shift j04.886 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 38467
+source ~/.bash_profile; smemp shift j34.254 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 3861
+source ~/.bash_profile; smemp shift j23.1583 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 39094
+source ~/.bash_profile; smemp shift j65.145 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 40537
+source ~/.bash_profile; smemp shift j78.495 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 4203
+source ~/.bash_profile; smemp shift j187.126 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 42807
+source ~/.bash_profile; smemp shift j59.1648 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 4313
+source ~/.bash_profile; smemp shift j15.563 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 43162
+source ~/.bash_profile; smemp shift j62.156 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 4395
+source ~/.bash_profile; smemp shift j187.118 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 44985
+source ~/.bash_profile; smemp shift j187.116 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 45067
+source ~/.bash_profile; smemp shift j133.647 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 48345
+source ~/.bash_profile; smemp shift j158.105 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 5133
+source ~/.bash_profile; smemp shift j187.388 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 53927
+source ~/.bash_profile; smemp shift j187.165 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 56274
+source ~/.bash_profile; smemp shift j23.1586 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 57204
+source ~/.bash_profile; smemp shift j62.139 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 6030
+source ~/.bash_profile; smemp shift j85.340 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 61606
+source ~/.bash_profile; smemp shift j118.389 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 61995
+source ~/.bash_profile; smemp shift j187.164 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 63754
+source ~/.bash_profile; smemp shift j65.146 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 64413
+source ~/.bash_profile; smemp shift j06.1076 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 66428
+source ~/.bash_profile; smemp shift j63.1658 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 68988
+source ~/.bash_profile; smemp shift j04.883 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 69960
+source ~/.bash_profile; smemp shift j70.389 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 72440
+source ~/.bash_profile; smemp shift j65.150 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 72490
+source ~/.bash_profile; smemp shift j83.360 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 72687
+source ~/.bash_profile; smemp shift j187.413 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 72760
+source ~/.bash_profile; smemp shift j70.390 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 74390
+source ~/.bash_profile; smemp shift j70.391 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 77818
+source ~/.bash_profile; smemp shift j187.162 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 80367
+source ~/.bash_profile; smemp shift j50.315 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 80606
+source ~/.bash_profile; smemp shift j62.163 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 8407
+source ~/.bash_profile; smemp shift j67.1020 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 84737
+source ~/.bash_profile; smemp shift j15.941 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 8553
+source ~/.bash_profile; smemp shift j130.2537 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 8594
+source ~/.bash_profile; smemp shift j15.1503 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 86081
+source ~/.bash_profile; smemp shift j166.94 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 87424
+source ~/.bash_profile; smemp shift j72.77 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 87883
+source ~/.bash_profile; smemp shift j55.1376 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 88133
+source ~/.bash_profile; smemp shift j90.988 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 88654
+source ~/.bash_profile; smemp shift j51.145 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 93396
+source ~/.bash_profile; smemp shift j18.685 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 95088
+source ~/.bash_profile; smemp shift j72.93 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 95526
+source ~/.bash_profile; smemp shift j62.165 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 9625
+source ~/.bash_profile; smemp shift j189.1673 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 96612
+source ~/.bash_profile; smemp shift j148.163 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n CK01925
+source ~/.bash_profile; smemp shift j97.3187 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n K00975
+source ~/.bash_profile; smemp shift j120.338 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n K01612
+source ~/.bash_profile; smemp shift j192.299 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10018963
+source ~/.bash_profile; smemp shift j193.688 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10068307
+source ~/.bash_profile; smemp shift j193.734 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10162436
+source ~/.bash_profile; smemp shift j128.152 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10355856
+source ~/.bash_profile; smemp shift j193.701 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10454113
+source ~/.bash_profile; smemp shift j128.153 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10516096
+source ~/.bash_profile; smemp shift j128.154 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10644253
+source ~/.bash_profile; smemp shift j193.703 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC10709834
+source ~/.bash_profile; smemp shift j128.157 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC11026764
+source ~/.bash_profile; smemp shift j193.704 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC11137075
+source ~/.bash_profile; smemp shift j193.700 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC11244118
+source ~/.bash_profile; smemp shift j193.732 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC11414712
+source ~/.bash_profile; smemp shift j128.498 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC11717120
+source ~/.bash_profile; smemp shift j128.500 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC12009504
+source ~/.bash_profile; smemp shift j128.502 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC12258514
+source ~/.bash_profile; smemp shift j193.712 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC1435467
+source ~/.bash_profile; smemp shift j128.104 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC3427720
+source ~/.bash_profile; smemp shift j128.105 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC3656476
+source ~/.bash_profile; smemp shift j128.107 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC4914923
+source ~/.bash_profile; smemp shift j128.108 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC5021689
+source ~/.bash_profile; smemp shift j193.708 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC5184732
+source ~/.bash_profile; smemp shift j193.706 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC5596656
+source ~/.bash_profile; smemp shift j128.116 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC5773345
+source ~/.bash_profile; smemp shift j128.117 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC5955122
+source ~/.bash_profile; smemp shift j192.501 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC6106415
+source ~/.bash_profile; smemp shift j193.709 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC6116048
+source ~/.bash_profile; smemp shift j190.416 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC6225718
+source ~/.bash_profile; smemp shift j193.717 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC6442183
+source ~/.bash_profile; smemp shift j128.125 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC6603624
+source ~/.bash_profile; smemp shift j193.727 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC6933899
+source ~/.bash_profile; smemp shift j190.415 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7206837
+source ~/.bash_profile; smemp shift j193.718 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7680114
+source ~/.bash_profile; smemp shift j128.130 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7747078
+source ~/.bash_profile; smemp shift j193.719 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7799349
+source ~/.bash_profile; smemp shift j128.133 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7871531
+source ~/.bash_profile; smemp shift j152.86 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7940546
+source ~/.bash_profile; smemp shift j193.721 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7970740
+source ~/.bash_profile; smemp shift j128.132 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC7976303
+source ~/.bash_profile; smemp shift j193.722 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8006161
+source ~/.bash_profile; smemp shift j192.298 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8179536
+source ~/.bash_profile; smemp shift j128.140 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8228742
+source ~/.bash_profile; smemp shift j193.736 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8394589
+source ~/.bash_profile; smemp shift j193.735 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8524425
+source ~/.bash_profile; smemp shift j193.692 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8561221
+source ~/.bash_profile; smemp shift j193.693 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8694723
+source ~/.bash_profile; smemp shift j128.141 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8702606
+source ~/.bash_profile; smemp shift j193.694 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8751420
+source ~/.bash_profile; smemp shift j193.695 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC8938364
+source ~/.bash_profile; smemp shift j193.737 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC9098294
+source ~/.bash_profile; smemp shift j128.143 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC9139151
+source ~/.bash_profile; smemp shift j192.499 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC9139163
+source ~/.bash_profile; smemp shift j128.144 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n KIC9206432
+source ~/.bash_profile; smemp shift j137.108 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP10337
+source ~/.bash_profile; smemp shift j59.403 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP105341
+source ~/.bash_profile; smemp shift j59.1640 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP114156
+source ~/.bash_profile; smemp shift j59.1642 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP118261
+source ~/.bash_profile; smemp shift j59.1982 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP12493
+source ~/.bash_profile; smemp shift j137.116 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP15095
+source ~/.bash_profile; smemp shift j131.363 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP1532
+source ~/.bash_profile; smemp shift j14.622 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP19165
+source ~/.bash_profile; smemp shift j61.791 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP25220
+source ~/.bash_profile; smemp shift j61.466 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP36551
+source ~/.bash_profile; smemp shift j149.140 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP40375
+source ~/.bash_profile; smemp shift j149.142 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP40910
+source ~/.bash_profile; smemp shift j63.1698 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP45839
+source ~/.bash_profile; smemp shift j63.779 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP47201
+source ~/.bash_profile; smemp shift j63.1699 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP48411
+source ~/.bash_profile; smemp shift j134.232 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP4845
+source ~/.bash_profile; smemp shift j63.1701 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP54810
+source ~/.bash_profile; smemp shift j128.549 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP5663
+source ~/.bash_profile; smemp shift j90.713 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP66222
+source ~/.bash_profile; smemp shift j59.396 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP93871
+source ~/.bash_profile; smemp shift j59.397 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP97051
+source ~/.bash_profile; smemp shift j55.1182 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 111631
+source ~/.bash_profile; smemp shift j124.340 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 1326B
+source ~/.bash_profile; smemp shift j76.1490 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 157881
+source ~/.bash_profile; smemp shift j55.1440 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 165222
+source ~/.bash_profile; smemp shift j59.992 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 180617
+source ~/.bash_profile; smemp shift j134.384 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 209290
+source ~/.bash_profile; smemp shift j63.1050 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 232979
+source ~/.bash_profile; smemp shift j222.308 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 245409
+source ~/.bash_profile; smemp shift j149.110 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 265866
+source ~/.bash_profile; smemp shift j131.943 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 28343
+source ~/.bash_profile; smemp shift j209.268 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GJ628
+source ~/.bash_profile; smemp shift j15.1926 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL105B
+source ~/.bash_profile; smemp shift j78.491 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL109
+source ~/.bash_profile; smemp shift j50.296 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL2066
+source ~/.bash_profile; smemp shift j63.473 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL239
+source ~/.bash_profile; smemp shift j15.1505 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL250B
+source ~/.bash_profile; smemp shift j82.219 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL273
+source ~/.bash_profile; smemp shift j118.811 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL382
+source ~/.bash_profile; smemp shift j55.1377 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL393
+source ~/.bash_profile; smemp shift j55.901 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL514
+source ~/.bash_profile; smemp shift j35.852 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL625
+source ~/.bash_profile; smemp shift j59.1273 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL686
+source ~/.bash_profile; smemp shift j59.1283 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL694
+source ~/.bash_profile; smemp shift j97.2588 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL745A
+source ~/.bash_profile; smemp shift j59.1030 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL806
+source ~/.bash_profile; smemp shift j222.304 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL83.1
+source ~/.bash_profile; smemp shift j61.724 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL87
+source ~/.bash_profile; smemp shift j190.1206 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL875
+source ~/.bash_profile; smemp shift j193.921 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL896A
+source ~/.bash_profile; smemp shift j38.271 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL908
+source ~/.bash_profile; smemp shift j59.2216 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP104432
+source ~/.bash_profile; smemp shift j02.945 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP109388
+source ~/.bash_profile; smemp shift j64.154 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP11048
+source ~/.bash_profile; smemp shift j222.273 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP115332
+source ~/.bash_profile; smemp shift j15.943 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP115562
+source ~/.bash_profile; smemp shift j165.57 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP15366
+source ~/.bash_profile; smemp shift j15.517 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP1734
+source ~/.bash_profile; smemp shift j85.326 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP21556
+source ~/.bash_profile; smemp shift j97.2842 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP22762
+source ~/.bash_profile; smemp shift j222.99 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP23512
+source ~/.bash_profile; smemp shift j06.1476 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP36338
+source ~/.bash_profile; smemp shift j15.1501 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP36834
+source ~/.bash_profile; smemp shift j15.564 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP37217
+source ~/.bash_profile; smemp shift j06.1489 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP46769
+source ~/.bash_profile; smemp shift j149.148 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP47513
+source ~/.bash_profile; smemp shift j118.812 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP51007
+source ~/.bash_profile; smemp shift j222.76 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP5643
+source ~/.bash_profile; smemp shift j82.247 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP57050
+source ~/.bash_profile; smemp shift j06.1485 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP57548
+source ~/.bash_profile; smemp shift j67.506 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP59748
+source ~/.bash_profile; smemp shift j67.535 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP60093
+source ~/.bash_profile; smemp shift j92.111 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP61706
+source ~/.bash_profile; smemp shift j67.533 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP65016
+source ~/.bash_profile; smemp shift j222.752 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP71253
+source ~/.bash_profile; smemp shift j82.722 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP8051
+source ~/.bash_profile; smemp shift j153.114 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP91699
+source ~/.bash_profile; smemp shift j189.1669 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 101501
+source ~/.bash_profile; smemp shift j13.2064 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 10476
+source ~/.bash_profile; smemp shift j78.493 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 10697
+source ~/.bash_profile; smemp shift j01.1093 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 10700
+source ~/.bash_profile; smemp shift j185.1189 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 107383
+source ~/.bash_profile; smemp shift j180.740 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 10780
+source ~/.bash_profile; smemp shift j06.1131 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 115617
+source ~/.bash_profile; smemp shift j72.745 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 117176
+source ~/.bash_profile; smemp shift j01.1088 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 11964A
+source ~/.bash_profile; smemp shift j55.902 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 119850
+source ~/.bash_profile; smemp shift j222.343 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 120136
+source ~/.bash_profile; smemp shift j187.198 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 126660
+source ~/.bash_profile; smemp shift j187.196 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 130948
+source ~/.bash_profile; smemp shift j187.193 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 131156
+source ~/.bash_profile; smemp shift j08.880 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 1326
+source ~/.bash_profile; smemp shift j179.71 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 136202
+source ~/.bash_profile; smemp shift j70.465 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 143761
+source ~/.bash_profile; smemp shift j55.1237 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 145675
+source ~/.bash_profile; smemp shift j01.182 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 1461
+source ~/.bash_profile; smemp shift j222.759 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 149661
+source ~/.bash_profile; smemp shift j59.1282 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 157214
+source ~/.bash_profile; smemp shift j61.668 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 158633
+source ~/.bash_profile; smemp shift j23.1115 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 16160
+source ~/.bash_profile; smemp shift j59.1280 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 161797
+source ~/.bash_profile; smemp shift j187.472 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 164259
+source ~/.bash_profile; smemp shift j21.1376 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 166
+source ~/.bash_profile; smemp shift j179.143 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 16765
+source ~/.bash_profile; smemp shift j187.489 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 168151
+source ~/.bash_profile; smemp shift j185.804 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 16895
+source ~/.bash_profile; smemp shift j187.478 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 173667
+source ~/.bash_profile; smemp shift j187.482 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 173701
+source ~/.bash_profile; smemp shift j55.1240 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 173739
+source ~/.bash_profile; smemp shift j55.1241 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 173740
+source ~/.bash_profile; smemp shift j173.399 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 177153
+source ~/.bash_profile; smemp shift j188.905 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 181420
+source ~/.bash_profile; smemp shift j08.774 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 182572
+source ~/.bash_profile; smemp shift j174.501 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 182736
+source ~/.bash_profile; smemp shift j01.169 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 185144
+source ~/.bash_profile; smemp shift j55.1848 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 186408
+source ~/.bash_profile; smemp shift j55.1849 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 186427
+source ~/.bash_profile; smemp shift j188.560 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 187637
+source ~/.bash_profile; smemp shift j23.524 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 188512
+source ~/.bash_profile; smemp shift j01.1090 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 190360
+source ~/.bash_profile; smemp shift j59.1923 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 190406
+source ~/.bash_profile; smemp shift j76.1541 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 19373
+source ~/.bash_profile; smemp shift j72.176 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 195564
+source ~/.bash_profile; smemp shift j59.1033 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 199305
+source ~/.bash_profile; smemp shift j185.1131 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 19994
+source ~/.bash_profile; smemp shift j08.1233 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 201091
+source ~/.bash_profile; smemp shift j08.1230 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 201092
+source ~/.bash_profile; smemp shift j173.1211 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 206860
+source ~/.bash_profile; smemp shift j185.1120 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 21019
+source ~/.bash_profile; smemp shift j156.1776 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 210702
+source ~/.bash_profile; smemp shift j59.1926 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 216899
+source ~/.bash_profile; smemp shift j23.1103 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 217014
+source ~/.bash_profile; smemp shift j55.1281 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 217107
+source ~/.bash_profile; smemp shift j59.2221 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 217987
+source ~/.bash_profile; smemp shift j08.870 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 219134
+source ~/.bash_profile; smemp shift j130.1517 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 219623
+source ~/.bash_profile; smemp shift j26.532 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 222368
+source ~/.bash_profile; smemp shift j137.243 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 22484
+source ~/.bash_profile; smemp shift j63.431 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 23249
+source ~/.bash_profile; smemp shift j06.1045 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 26965
+source ~/.bash_profile; smemp shift j185.783 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 30652
+source ~/.bash_profile; smemp shift j06.1066 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 34411
+source ~/.bash_profile; smemp shift j85.328 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 36395
+source ~/.bash_profile; smemp shift j13.2073 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 3651
+source ~/.bash_profile; smemp shift j06.1054 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 38858
+source ~/.bash_profile; smemp shift j185.1109 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 39587
+source ~/.bash_profile; smemp shift j61.705 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 4628
+source ~/.bash_profile; smemp shift j185.1112 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 48737
+source ~/.bash_profile; smemp shift j185.1115 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 49933
+source ~/.bash_profile; smemp shift j185.652 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 58946
+source ~/.bash_profile; smemp shift j173.1218 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 6210
+source ~/.bash_profile; smemp shift j185.1106 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 69897
+source ~/.bash_profile; smemp shift j06.1091 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 75732
+source ~/.bash_profile; smemp shift j63.1374 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 79210
+source ~/.bash_profile; smemp shift j13.2095 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 7924
+source ~/.bash_profile; smemp shift j187.392 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 82885
+source ~/.bash_profile; smemp shift j06.1085 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 86728
+source ~/.bash_profile; smemp shift j72.72 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 88230
+source ~/.bash_profile; smemp shift j06.1099 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n 95735
+source ~/.bash_profile; smemp shift j216.111 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GJ176
+source ~/.bash_profile; smemp shift j185.1133 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL144
+source ~/.bash_profile; smemp shift j185.874 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL338B
+source ~/.bash_profile; smemp shift j50.359 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL412A
+source ~/.bash_profile; smemp shift j55.906 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL570B
+source ~/.bash_profile; smemp shift j172.1087 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL687
+source ~/.bash_profile; smemp shift j20.452 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL699
+source ~/.bash_profile; smemp shift j187.474 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL702A
+source ~/.bash_profile; smemp shift j187.477 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL702B
+source ~/.bash_profile; smemp shift j45.596 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n GL876
+source ~/.bash_profile; smemp shift j06.1488 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP57087
+source ~/.bash_profile; smemp shift j23.519 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP74995
+source ~/.bash_profile; smemp shift j59.1277 -pp -o /home/syee/specmatchemp-working/specmatchemp/results_all_orders/ -n HIP83043
