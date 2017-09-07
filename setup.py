@@ -75,12 +75,12 @@ else:
     specdir = os.path.join(SPECMATCHDIR, 'shifted_spectra')
     if not os.path.exists(specdir):
         os.mkdir(specdir)
-        # download references
-        ref_urls = ["https://www.dropbox.com/s/4aygfh3qnmorws1/nso_adj.fits#",
-                    "https://www.dropbox.com/s/sgkqhwe2kfm9yvp/j26.532_adj.fits#",
-                    "https://www.dropbox.com/s/lthwgat0e2s4gqu/j72.718_adj.fits#",
-                    "https://www.dropbox.com/s/vqqjlcnw7duuq54/j59.1926_adj.fits#"]
-        for ref in ref_urls:
-            outfile = os.path.join(specdir,ref.split('/')[-1][:-1])
-            cmd = "wget --no-check-certificate {} -O {}".format(ref,outfile)
-            os.system(cmd)
+    # download references
+    ref_urls = ["https://www.dropbox.com/s/4aygfh3qnmorws1/nso_adj.fits#",
+                "https://www.dropbox.com/s/sgkqhwe2kfm9yvp/j26.532_adj.fits#",
+                "https://www.dropbox.com/s/lthwgat0e2s4gqu/j72.718_adj.fits#",
+                "https://www.dropbox.com/s/vqqjlcnw7duuq54/j59.1926_adj.fits#"]
+    for ref in ref_urls:
+        outfile = os.path.join(specdir,ref.split('/')[-1][:-1])
+        cmd = "wget --no-check-certificate {} -O {}".format(ref,outfile)
+        os.system(cmd)
