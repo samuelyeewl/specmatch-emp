@@ -20,13 +20,15 @@ from specmatchemp import specmatch
 from specmatchemp import library
 
 
-def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
-                       num_best=5, suffix="", wavlim='all', lib_subset=None,
-                       name=None, n_lib_subset=None):
+def specmatch_spectrum(specpath, indir="./", plot_level=0, inlib=False,
+                       outdir="./", num_best=5, suffix="", wavlim='all',
+                       lib_subset=None):
     """Perform the specmatch on a given spectrum
 
     Args:
-        specpath (str): Path to target spectrum
+        specpath (str): Path to target spectrum or its CPS observation id
+            jXX.XXXX
+        indir (str): Directory to look for spectrum if obs_id was provided.
         plot_level (int, 0-2): Level of plots
             0 - No plots saved, 1 - Representative plots, 2 - All plots
         inlib (str or False): String to search within library for to exclude
@@ -38,26 +40,44 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
     Returns:
         specmatch.SpecMatch object
     """
-    if not os.path.exists(specpath):
-        raise ValueError(specpath + " does not exist!")
-
-    if wavlim == 'all':
+    # Check if specpath is a path or observation id
+    if os.path.exists(specpath):
         target = spectrum.read_hires_fits(specpath)
+        target.name = inlib if inlib is not None \
+            else os.path.basename(specpath)[:-5]
+        name = target.name
     else:
-        target = spectrum.read_hires_fits(specpath).cut(*wavlim)
+        # If it is an observation ID, search for all available spectra
+        target = []
+        bj_path = os.path.join(indir, 'b' + specpath + '.fits')
+        if os.path.exists(bj_path):
+            bj = spectrum.read_hires_fits(bj_path)
+            target.append(bj)
+        else:
+            bj = None
 
-    # Determine the name of the target
-    if inlib:
-        name = inlib
-    elif name is None:
-        name = os.path.basename(specpath)[:-5]
+        rj_path = os.path.join(indir, 'r' + specpath + '.fits')
+        if os.path.exists(rj_path):
+            rj = spectrum.read_hires_fits(rj_path)
+            target.append(rj)
+        else:
+            rj = None
 
-    if n_lib_subset is not None:
-        lib = library.read_hdf(wavlim='none')
-        lib_subset = lib.library_params.lib_index
-        lib_subset = np.random.choice(
-            lib_subset, size=n_lib_subset, replace=False
-        )
+        ij_path = os.path.join(indir, 'i' + specpath + '.fits')
+        if os.path.exists(ij_path):
+            ij = spectrum.read_hires_fits(ij_path)
+            target.append(ij)
+        else:
+            ij = None
+
+        if len(target) == 0:
+            raise ValueError("No observations corresponding to " + specpath +
+                             "could be found in " + indir)
+        else:
+            target[0].name = inlib if inlib is not None else specpath
+            name = target[0].name
+            if len(target) == 1:
+                target = target[0]
 
     lib = library.read_hdf(wavlim=wavlim, lib_index_subset=lib_subset)
     sm = specmatch.SpecMatch(target, lib)
@@ -66,12 +86,10 @@ def specmatch_spectrum(specpath, plot_level=0, inlib=False, outdir="./",
     if inlib:
         targ_idx = lib.get_index(inlib)
         targ_param, targ_spec = lib[targ_idx]
-        sm.match(ignore=targ_idx, wavlim=wavlim)
+        sm.match(ignore=targ_idx, regions='default')
     else:
         targ_param = None
-        sm.match(wavlim=wavlim)
-
-    sm.target.name = name  # attach target name
+        sm.match(regions='default')
 
     sm.lincomb(num_best)
 

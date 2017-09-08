@@ -140,7 +140,7 @@ class Match(object):
         else:
             residuals = (self.target.s - self.modified.s)
 
-        chi_square = np.sum(residuals**2)
+        chi_square = np.nansum(residuals**2)
 
         if self.opt == 'lm':
             return residuals
@@ -209,7 +209,8 @@ class Match(object):
                       'modified': 'Reference (Modified)',
                       'residuals': 'Residuals'}
 
-        self.target.plot(text=labels['target'], plt_kw={'color': 'royalblue'})
+        self.target.plot(text=labels['target'], plt_kw={'color': 'royalblue'},
+                         showmask=True)
         self.modified.plot(offset=1, plt_kw={'color': 'forestgreen'},
                            text=labels['modified'])
         self.reference.plot(offset=2, plt_kw={'color': 'firebrick'},
@@ -479,7 +480,8 @@ class MatchLincomb(Match):
                 labels['ref_{0:d}'.format(i)] = 'Reference {0:d}'.format(i)
 
         # Plot spectra
-        self.target.plot(plt_kw={'color': 'royalblue'}, text=labels['target'])
+        self.target.plot(plt_kw={'color': 'royalblue'}, text=labels['target'],
+                         showmask=True)
         self.modified.plot(offset=0.5, plt_kw={'color': 'forestgreen'},
                            text=labels['modified'])
 

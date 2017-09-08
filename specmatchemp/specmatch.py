@@ -21,6 +21,7 @@ from time import strftime
 from specmatchemp import SPECMATCHDIR
 from specmatchemp import SPECMATCH_VERSION
 from specmatchemp import SHIFT_REFERENCES
+from specmatchemp import SPECMATCH_REGIONS
 from specmatchemp.io import h5plus
 from specmatchemp import spectrum
 from specmatchemp.spectrum import Spectrum
@@ -32,7 +33,6 @@ from specmatchemp import analysis
 from specmatchemp import plots
 from specmatchemp import detrend
 
-WAVLIM_DEFAULT = (5000, 5900)
 WAVSTEP_DEFAULT = 100
 
 
@@ -74,23 +74,22 @@ class SpecMatch(object):
             Keys are elements of library.STAR_PROPS.
     """
 
-    def __init__(self, target, lib=None, wavlim=WAVLIM_DEFAULT):
-        if wavlim is None:
-            self.wavlim = lib.wavlim
-        elif lib is None:
+    def __init__(self, target, lib=None, wavlim='all'):
+        if lib is None:
             self.wavlim = wavlim
+        elif wavlim is None or wavlim == 'all':
+            self.wavlim = lib.wavlim
         else:
             self.wavlim = (max(wavlim[0], lib.wavlim[0]),
                            min(wavlim[1], lib.wavlim[1]))
-        self.regions = self.wavlim
 
         # truncate target spectrum and library
         if isinstance(target, HiresSpectrum):
             self.target = None
-            self.target_unshifted = target
-        else:
+        elif isinstance(target, Spectrum):
             self.target = target.cut(*self.wavlim)
-            self.target_unshifted = target
+        # Otherwise we have a list of unshifted spectra
+        self.target_unshifted = target
 
         if lib is None:
             self.lib = Library()
@@ -154,7 +153,7 @@ class SpecMatch(object):
         self._shifted = True
         return self.target
 
-    def match(self, wavlim=WAVLIM_DEFAULT, wavstep=WAVSTEP_DEFAULT,
+    def match(self, regions='default', wavlim='all', wavstep=WAVSTEP_DEFAULT,
               ignore=None):
         """Match the target against the library spectra.
 
@@ -194,33 +193,41 @@ class SpecMatch(object):
         self.match_results = self.lib.library_params.copy()
 
         # Get list of wavelength regions
-        if isinstance(wavlim, list) or isinstance(wavlim, np.ndarray):
-            regions = wavlim
-        elif isinstance(wavlim, tuple) or wavlim is None or wavlim == 'all':
+        if regions == 'default':
+            regions = SPECMATCH_REGIONS
+        elif regions is None:
+            # If no regions are specified, then wavlim be specified.
             if wavlim is None or wavlim == 'all':
-                # If no wavlim is provided, use the default wavlim
-                wavlim = WAVLIM_DEFAULT
+                wavlim = self.wavlim
 
+            # If no wavstep is provided, use the entire region given.
             if wavstep is None:
-                # If no wavstep is provided, use the entire region given
                 regions = [wavlim]
+            # Otherwise split the region into sections
             else:
-                # Split the region into sections
                 startwl = np.arange(wavlim[0], wavlim[1], wavstep)
                 regions = [(wl, wl + wavstep) for wl in startwl]
                 # ensure final region doesn't exceed given bound
                 regions[-1] = (regions[-1][0], wavlim[1])
 
-        regions.sort()
-        # ensure regions don't exceed either the spectrum or library bounds
-        regions[0] = (max(regions[0][0], self.wavlim[0]), regions[0][1])
-        regions[-1] = (regions[-1][0],
-                       min(regions[-1][1], self.wavlim[1]))
-
-        # save regions
-        self.regions = regions
-
+        print(self.target.wavlim())
+        self.regions = []
         for reg in regions:
+            # Remove regions that are beyond the specified wavlim
+            if reg[0] > self.wavlim[1] or reg[1] < self.wavlim[0] \
+                    or reg[0] > self.target.wavlim()[1] \
+                    or reg[1] < self.target.wavlim()[0]:
+                pass
+            else:
+                # Truncate regions so that they are within the wavlim
+                new_reg = (max(reg[0], self.wavlim[0], self.target.wavlim()[0]),
+                           min(reg[1], self.wavlim[1], self.target.wavlim()[1]))
+                if new_reg[0] < new_reg[1]:
+                    self.regions.append(new_reg)
+
+        self.regions.sort()
+
+        for reg in self.regions:
             print("Matching region {0}".format(reg))
             if len(regions) == 1:
                 cs_col = 'chi_squared'
