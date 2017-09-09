@@ -87,7 +87,9 @@ class SpecMatch(object):
         if isinstance(target, HiresSpectrum):
             self.target = None
         elif isinstance(target, Spectrum):
-            self.target = target.cut(*self.wavlim)
+            self.target = target
+            if self.wavlim is not None:
+                self.target = self.target.cut(*self.wavlim)
         # Otherwise we have a list of unshifted spectra
         self.target_unshifted = target
 
