@@ -210,7 +210,6 @@ class SpecMatch(object):
                 # ensure final region doesn't exceed given bound
                 regions[-1] = (regions[-1][0], wavlim[1])
 
-        print(self.target.wavlim())
         self.regions = []
         for reg in regions:
             # Remove regions that are beyond the specified wavlim
@@ -295,6 +294,7 @@ class SpecMatch(object):
         self.lincomb_matches = []
         self.lincomb_results = []
         self.lincomb_regions = lincomb_regions
+
         for reg in lincomb_regions:
             print("Linear combinations in region {0}".format(reg))
             if len(self.regions) == 1:

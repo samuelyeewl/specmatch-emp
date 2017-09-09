@@ -342,6 +342,9 @@ class MatchLincomb(Match):
             self.refs_broadened.append(self.refs[i].copy())
             self.refs_broadened[i] = self.broaden(vsini[i],
                                                   self.refs_broadened[i])
+            # Fill nans with continuum
+            cont = np.nanpercentile(self.refs_broadened[i].s, 95)
+            self.refs_broadened[i].s[np.isnan(self.refs_broadened[i].s)] = cont
 
         self.modified = Spectrum(self.w, np.zeros_like(self.w),
                                  name='Linear Combination {0:d}'
