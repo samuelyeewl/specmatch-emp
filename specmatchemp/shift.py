@@ -431,7 +431,7 @@ def flatten(w, s, serr=None, mask=None, w_ref=None, wavlim=None):
     c_idx = 0
     n_idx = 0
 
-    for i, wl in enumerate(w_ref):
+    for i, wl in enumerate(w_flattened):
         while w[c_idx] < wl and c_idx < idx_max and not _isclose(w[c_idx], wl):
             c_idx += 1
 

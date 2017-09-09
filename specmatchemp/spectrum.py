@@ -181,7 +181,7 @@ class Spectrum(object):
         Args:
             w (np.ndarray): New wavlength array.
         """
-        wavmap = np.searchsorted(w, self.w) - 1
+        wavmap = np.searchsorted(w, self.w)
         s_extend = np.empty_like(w, dtype=np.float)
         s_extend.fill(np.nan)
         s_extend[wavmap] = self.s
