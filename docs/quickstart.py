@@ -137,7 +137,7 @@ fig.savefig('quickstart-Mstar-shifts.png')
 
 print("Running brute-force match, G-star")
 # code-start-match-G
-sm_G.match()
+sm_G.match(wavlim=(5140,5200))
 
 # Plot chi-squared surfaces
 fig = figure(figsize=(12, 8))
@@ -189,7 +189,7 @@ fig2.savefig('quickstart-Gstar-lincomb-spectra.png')
 
 # code-start-mstar
 # Perform match
-sm_M.match()
+sm_M.match(wavlim=(5140,5200))
 
 # Plot chi-squared surfaces
 fig1 = figure(figsize=(12,8))
