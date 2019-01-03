@@ -599,7 +599,7 @@ def read_hires_fits(infile, maskfile=None):
                          header=header)
 
 
-def read_apf_fits(infile, maskfile=None):
+def read_apf_fits(infile, wavfile, maskfile=None):
     """Reads a spectrum from a fits file that was produced by HIRES.
 
     Args:
@@ -612,7 +612,7 @@ def read_apf_fits(infile, maskfile=None):
     hdu = fits.open(infile)
     s = hdu[0].data
     serr = np.sqrt(s)
-    w = hdu[2].data
+    w = fits.getdata(wavfile)
     header = hdu[0].header
     hdu.close()
 
