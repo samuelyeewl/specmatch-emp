@@ -599,6 +599,40 @@ def read_hires_fits(infile, maskfile=None):
                          header=header)
 
 
+def read_apf_fits(infile, wavfile, maskfile=None):
+    """Reads a spectrum from a fits file that was produced by HIRES.
+
+    Args:
+        infile (str): Path to input fits file
+        maskfile (optional [str]): Path to file containing telluric
+            lines mask.
+    Returns:
+        spec (HiresSpectrum): Spectrum object
+    """
+    hdu = fits.open(infile)
+    s = hdu[0].data
+    serr = np.sqrt(s)
+    w = fits.getdata(wavfile)
+    header = hdu[0].header
+    hdu.close()
+
+    # Convert zeros to nans
+    s[np.isclose(s, 0.0)] = np.nan
+
+    name = os.path.splitext(os.path.basename(infile))[0]
+
+    mask_table = None
+    if maskfile is not None:
+        mask_table = pd.read_csv(maskfile)
+        # Get HIRES chip
+        chip = os.path.basename(infile)[0:2]
+        mask_table = mask_table[mask_table.chip.str.contains(chip)]
+
+    return HiresSpectrum(w, s, serr, name=name, mask_table=mask_table,
+                         header=header)
+
+
+
 def read_hdf(infile, suffix=""):
     """Reads a spectrum from a hdf file
 
