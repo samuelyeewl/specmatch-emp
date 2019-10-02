@@ -58,10 +58,14 @@ else:
                 sys.stderr.write("read %d\n" % (readsofar,))
 
         # liburl = "https://zenodo.org/record/60225/files/library.h5"
-        liburl = "https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#"
+        # Old library
+        # liburl = "https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#"
+        # New library
+        liburl = "https://www.dropbox.com/s/rv66merlnpvjnyj/library.h5#"
         LIBPATH = os.path.join(SPECMATCHDIR+"library.h5")
         if not os.path.exists(LIBPATH):
-            os.system("wget --no-check-certificate --output-document=${HOME}/.specmatchemp/library.h5 https://www.dropbox.com/s/po0kzgjn1j9ha2v/library.h5#")
+            os.system("wget --no-check-certificate --output-document=${HOME}/.specmatchemp/library.h5 "
+                      + liburl)
 
     # Additional csv files
     csv_urls = ["https://www.dropbox.com/s/8wv38eb8dzg1ou2/hires_telluric_mask.csv#",
@@ -69,18 +73,20 @@ else:
                 "https://www.dropbox.com/s/lxz0cb57a8xvsfl/uncertainties.csv#"]
     for f in csv_urls:
         outfile = os.path.join(SPECMATCHDIR,f.split('/')[-1][:-1])
+        # if not os.path.exists(outfile):
         cmd = "wget --no-check-certificate {} -O {}".format(f,outfile)
         os.system(cmd)
 
     specdir = os.path.join(SPECMATCHDIR, 'shifted_spectra')
     if not os.path.exists(specdir):
         os.mkdir(specdir)
-        # download references
-        ref_urls = ["https://www.dropbox.com/s/4aygfh3qnmorws1/nso_adj.fits#",
-                    "https://www.dropbox.com/s/sgkqhwe2kfm9yvp/j26.532_adj.fits#",
-                    "https://www.dropbox.com/s/lthwgat0e2s4gqu/j72.718_adj.fits#",
-                    "https://www.dropbox.com/s/vqqjlcnw7duuq54/j59.1926_adj.fits#"]
-        for ref in ref_urls:
-            outfile = os.path.join(specdir,ref.split('/')[-1][:-1])
+    # download references
+    ref_urls = ["https://www.dropbox.com/s/4aygfh3qnmorws1/nso_adj.fits#",
+                "https://www.dropbox.com/s/sgkqhwe2kfm9yvp/j26.532_adj.fits#",
+                "https://www.dropbox.com/s/lthwgat0e2s4gqu/j72.718_adj.fits#",
+                "https://www.dropbox.com/s/vqqjlcnw7duuq54/j59.1926_adj.fits#"]
+    for ref in ref_urls:
+        outfile = os.path.join(specdir,ref.split('/')[-1][:-1])
+        if not os.path.exists(outfile):
             cmd = "wget --no-check-certificate {} -O {}".format(ref,outfile)
             os.system(cmd)

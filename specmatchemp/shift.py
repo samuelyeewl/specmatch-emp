@@ -229,12 +229,20 @@ def shift(targ, ref, store=None, lowfilter=20):
     # Compute sigma-clipped mean lags for each segment, if there are multiple
     # orders
     if s.shape[0] > 1:
-        clip = 2
+        # Absolute tolerance
+        a_clip = 3
+        # Relative tolerance (nin number of sds)
+        r_clip = 2
         for j in range(lag_data.shape[1]):
             lag_order = lag_data[:, j]
             lag_order = lag_order[~np.isnan(lag_order)]
-            clipped, crit_low, crit_high = sigmaclip(lag_order, low=clip,
-                                                     high=clip)
+            # Absolute clipping
+            lag_med = np.median(lag_order)
+            lag_order = np.clip(lag_order, lag_med - a_clip, lag_med + a_clip)
+
+            # Sigma clipping
+            clipped, crit_low, crit_high = sigmaclip(lag_order, low=r_clip,
+                                                     high=r_clip)
 
             mean_lag = np.nanmean(clipped)
 
@@ -423,7 +431,7 @@ def flatten(w, s, serr=None, mask=None, w_ref=None, wavlim=None):
     c_idx = 0
     n_idx = 0
 
-    for i, wl in enumerate(w_ref):
+    for i, wl in enumerate(w_flattened):
         while w[c_idx] < wl and c_idx < idx_max and not _isclose(w[c_idx], wl):
             c_idx += 1
 
@@ -658,4 +666,5 @@ def save_shift_to_fits(outpath, shifted, unshifted, shift_data, clobber=False):
     hdulist = fits.HDUList([prihdu, shifted_hdu, shift_data_hdu] +
                            unshifted_hdus)
 
+    print("Saving shifted spectrum to " + outpath)
     hdulist.writeto(outpath, overwrite=clobber)

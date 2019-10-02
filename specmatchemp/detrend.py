@@ -7,7 +7,9 @@ Class to carry out detrending of parameters
 import os
 import csv
 import matplotlib.pyplot as plt
+import numpy as np
 from specmatchemp import SPECMATCHDIR
+from collections import Iterable
 
 
 class Detrend(object):
@@ -74,6 +76,13 @@ class Detrend(object):
         if param not in self._detrendtable:
             return value
         else:
+            # Check if we were given an array
+            if isinstance(value, Iterable):
+                result = np.zeros_like(value)
+                for idx, row in enumerate(value):
+                    result[idx] = self.detrend(row, param)
+                return result
+
             # find appropriate interval
             interval = None
             for row in self._detrendtable[param]:

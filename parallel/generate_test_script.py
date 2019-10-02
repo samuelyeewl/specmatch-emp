@@ -27,11 +27,12 @@ if __name__ == '__main__':
 
     lib = library.read_hdf(args.libpath, wavlim='none')
     params = lib.library_params
-    outdir = "/home/syee/specmatchemp-working/specmatchemp/results/"
+    outdir = "/home/syee/specmatchemp-working/specmatchemp/results_ij/"
 
     with open(args.outpath, 'w') as f:
         for idx, row in params.iterrows():
             obs = row['lib_obs'][1:]
+            obs = "/home/syee/.specmatchemp/shifted_spectra/i" + obs + '_adj.fits'
             name = row['cps_name']
             s = "source ~/.bash_profile; "
             s += "smemp match " + obs + " "
