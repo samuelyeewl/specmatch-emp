@@ -43,8 +43,7 @@ def specmatch_spectrum(specpath, indir="./", plot_level=0, inlib=False,
     # Check if specpath is a path or observation id
     if os.path.exists(specpath):
         target = spectrum.read_hires_fits(specpath)
-        target.name = inlib if inlib is not None \
-            else os.path.basename(specpath)[:-5]
+        target.name = os.path.basename(specpath)[:-5]
         name = target.name
     else:
         # If it is an observation ID, search for all available spectra
