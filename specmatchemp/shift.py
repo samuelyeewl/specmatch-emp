@@ -122,6 +122,7 @@ def shift(targ, ref, store=None, lowfilter=20):
     serr_shifted = np.asarray([[]])
     mask_shifted = np.asarray([[]])
     ws = np.asarray([[]])
+    ws_original = np.asarray([[]])
 
     # create lists to store diagnostic data
     lag_data = []
@@ -278,20 +279,24 @@ def shift(targ, ref, store=None, lowfilter=20):
         pix_max = min(int(pix_shifted[-1]), len(ref.w)-start_idx)
 
         # new pixel array
-        new_pix = np.arange(pix_min, pix_max)
+        new_pix = np.arange(pix_min, pix_max+1)
         # new wavelength array
-        w_ref_c = ref.w[start_idx+pix_min:start_idx+pix_max]
+        w_ref_c = ref.w[start_idx+pix_min:start_idx+pix_max+1]
 
         # interpolate the spectrum back onto the reference spectrum
         ss_shifted = np.interp(new_pix, pix_shifted, ss)
         sserr_shifted = np.interp(new_pix, pix_shifted, sserr)
         mm_shifted = np.interp(new_pix, pix_shifted, mm)
+        # Get original wavelengths too
+        ww = ref.w[start_idx:start_idx+len(ss)]
+        w_ref_original = np.interp(new_pix, pix_shifted, ww)
 
         # append to array
         s_shifted = np.append(s_shifted, ss_shifted)
         serr_shifted = np.append(serr_shifted, sserr_shifted)
         mask_shifted = np.append(mask_shifted, mm_shifted)
         ws = np.append(ws, w_ref_c)
+        ws_original = np.append(ws_original, w_ref_original)
 
         # save diagnostic data
         fitted = fit[0] * center_pix + fit[1]
@@ -319,13 +324,22 @@ def shift(targ, ref, store=None, lowfilter=20):
     in_range = np.asarray([True if wr > w_min and wr < w_max
                            else False for wr in ref.w])
     w_ref_trunc = ref.w[in_range]
-
     w_flat, s_flat, serr_flat, mask_flat = \
         flatten(ws, s_shifted, serr_shifted, mask_shifted, w_ref=w_ref_trunc)
+    # Repeat for original wavelengths
+    w_original_min = np.nanmin(ws_original)
+    w_original_max = np.nanmax(ws_original)
+    in_range_original = np.asarray([True if wr > w_original_min and wr < w_original_max
+                                    else False for wr in ref.w])
+    w_ref_original = ref.w[in_range_original]
+    w_flat_original, *__ = flatten(ws_original, s_shifted, w_ref=w_ref_original)
+
+    attrs = targ.attrs.copy()
+    attrs['w_original'] = w_flat_original
 
     return spectrum.Spectrum(w_flat, s_flat, serr_flat, name=targ.name,
                              mask=mask_flat, header=targ.header,
-                             attrs=targ.attrs)
+                             attrs=attrs)
 
 
 def _isclose(a, b, abs_tol=1e-6):
@@ -423,7 +437,7 @@ def flatten(w, s, serr=None, mask=None, w_ref=None, wavlim=None):
     c_idx = 0
     n_idx = 0
 
-    for i, wl in enumerate(w_ref):
+    for i, wl in enumerate(w_flattened):
         while w[c_idx] < wl and c_idx < idx_max and not _isclose(w[c_idx], wl):
             c_idx += 1
 
