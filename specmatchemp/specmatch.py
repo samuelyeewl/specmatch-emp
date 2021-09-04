@@ -330,17 +330,17 @@ class SpecMatch(object):
             self.lincomb_results.append(lincomb_results)
             self.coeffs.append(coeffs)
 
+        # Read in uncertainties
+        self._read_uncertainties()        
+            
         # Average over all wavelength regions
         for p in Library.STAR_PROPS:
             self.results_nodetrend[p] = 0
             for i in range(len(lincomb_regions)):
                 self.results_nodetrend[p] += (self.lincomb_results[i][p] /
                                               len(lincomb_regions))
-                # TODO: Add uncertainties
-                self.results_nodetrend['u_'+p] = 0.0
-
-        # Read in uncertainties
-        self._read_uncertainties()
+           # Add uncertainties
+           self.results_nodetrend['u_'+p] = self._get_uncertainty(self.results_nodetrend[p], p)
 
         # Detrend parameters
         d = detrend.Detrend()
