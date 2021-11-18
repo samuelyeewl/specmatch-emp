@@ -472,7 +472,7 @@ def flatten(w, s, serr=None, mask=None, w_ref=None, wavlim=None):
     return w_flattened, s_flattened, serr_flattened, mask_flattened
 
 
-def solve_for_shifts(s, mask, s_ref, mask_ref, lowfilter=20):
+def solve_for_shifts(s, mask, s_ref, mask_ref, lowfilter=20, window=1):
     """
     Solve for the pixel shifts required to align two spectra that are on the
     same wavelength scale.
@@ -485,6 +485,7 @@ def solve_for_shifts(s, mask, s_ref, mask_ref, lowfilter=20):
         mask: Mask array for the target spectrum
         s_ref: The reference spectrum
         mask_ref: Mask array for the reference spectrum
+        window : We fit a quadratic to pixels in [-window, window] around the peak
 
     Returns:
         The pixel shift, the lag and correlation data
@@ -518,8 +519,8 @@ def solve_for_shifts(s, mask, s_ref, mask_ref, lowfilter=20):
     lag_arr = np.arange(-npix/2+1, npix/2+1, 1)
 
     # select points around the peak and fit a quadratic
-    lag_peaks = lag_arr[max_corr-1:max_corr+2]
-    xcorr_peaks = xcorr[max_corr-1:max_corr+2]
+    lag_peaks = lag_arr[max_corr-window:max_corr+window+1]
+    xcorr_peaks = xcorr[max_corr-window:max_corr+window+1]
 
     p = np.polyfit(lag_peaks, xcorr_peaks, 2)
     # peak is simply -p[1]/2p[0]
