@@ -354,8 +354,12 @@ class Spectrum(object):
         # Flatten spectra
         with catch_warnings():
             filterwarnings("ignore", message="Mean of empty slice")
-            s = np.nanmean(s_stacked, axis=0)
-            serr = np.sqrt(np.nansum(serr_stacked**2, axis=0))
+            # Weighted averages
+            weights = 1/(serr_stacked**2)
+            inv_var = np.nansum(weights, axis=0)
+            s = np.nansum(s_stacked * weights, axis=0) / inv_var
+            serr = np.sqrt(inv_var)
+            serr[~np.isfinite(serr)] = np.nan
             mask = np.any(mask_stacked, axis=0)
 
         # Create spectrum
