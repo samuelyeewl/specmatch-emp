@@ -155,7 +155,7 @@ class SpecMatch(object):
         return self.target
 
     def match(self, wavlim=WAVLIM_DEFAULT, wavstep=WAVSTEP_DEFAULT,
-              ignore=None):
+              ignore=None, allow_negvsini=False):
         """Match the target against the library spectra.
 
         Performs a pairwise match between the target spectrum and every
@@ -241,7 +241,7 @@ class SpecMatch(object):
 
                 # match
                 mt = match.Match(spec_targ, spec_ref.cut(*reg))
-                mt.best_fit()
+                mt.best_fit(allow_negvsini=allow_negvsini)
 
                 # store results
                 ref_idx = param_ref.lib_index
