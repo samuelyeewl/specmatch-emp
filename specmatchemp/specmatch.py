@@ -909,7 +909,8 @@ class SpecMatch(object):
                  self.match_results[cs_col].head(num_best), 'r.')
         plots.label_axes(param_x='feh')
 
-    def plot_best_match_spectra(self, region=0, wavlim='all', num_best=None):
+    def plot_best_match_spectra(self, region=0, wavlim='all', num_best=None,
+                                offset=1):
         """Plots the reference, modified reference and residuals for each of the
         best matches.
 
@@ -922,6 +923,7 @@ class SpecMatch(object):
                 If 'all' is given, plots the entire `region`.
             num_best (optional [int]): Number of best spectra to highlight.
                 (default: `self.num_best`)
+            offset (float): Amount to offset each spectrum vertically.
         """
         if self.match_results.empty:
             return
@@ -968,7 +970,7 @@ class SpecMatch(object):
             params.loads(self.match_results.iloc[i][fit_col])
             mt = match.Match(self.target.cut(*region), ref.cut(*region))
             mt.load_params(params)
-            mt.plot()
+            mt.plot(offset=offset)
             if i != num_best - 1:
                 plt.setp(ax.get_xticklabels(), visible=False)
             ax.set_xlabel('')

@@ -195,7 +195,7 @@ class Match(object):
         """
         return get_spline_positions(self.best_params)
 
-    def plot(self, verbose=True):
+    def plot(self, offset=1, verbose=True):
         if verbose:
             labels = {'target': 'Target: {0}'.format(self.target.name),
                     'reference': 'Reference: {0}'.format(self.reference.name),
@@ -210,9 +210,9 @@ class Match(object):
                       'residuals': 'Residuals'}
 
         self.target.plot(text=labels['target'], plt_kw={'color': 'royalblue'})
-        self.modified.plot(offset=1, plt_kw={'color': 'forestgreen'},
+        self.modified.plot(offset=1*offset, plt_kw={'color': 'forestgreen'},
                            text=labels['modified'])
-        self.reference.plot(offset=2, plt_kw={'color': 'firebrick'},
+        self.reference.plot(offset=2*offset, plt_kw={'color': 'firebrick'},
                             text=labels['reference'])
 
         plt.plot(self.target.w, self.modified.s-self.target.s,
