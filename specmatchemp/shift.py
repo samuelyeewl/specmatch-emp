@@ -15,7 +15,7 @@ from specmatchemp import spectrum
 from specmatchemp.utils import utils
 
 
-def bootstrap_shift(targ, ref_list, store=None):
+def bootstrap_shift(targ, ref_list, store=None, section_length=500):
     """Shift a target spectrum using a bootstrapping approach.
 
     First performs a cross-correlation of the target spectrum in a fixed
@@ -53,7 +53,7 @@ def bootstrap_shift(targ, ref_list, store=None):
     for i in range(len(ref_list)):
         ref = ref_list[i]
         shift_data = {}
-        shift(targ_cut, ref, store=shift_data)
+        shift(targ_cut, ref, store=shift_data, section_length=section_length)
 
         # get correlation peaks
         num_sects = shift_data['order_0/num_sections']
@@ -86,7 +86,7 @@ def bootstrap_shift(targ, ref_list, store=None):
     return shifted
 
 
-def shift(targ, ref, store=None, lowfilter=20):
+def shift(targ, ref, store=None, lowfilter=20, section_length=500):
     """Shifts the given spectrum by placing it on the same wavelength
     scale as the specified reference spectrum, then solves for shifts
     between the two spectra through cross-correlation.
@@ -127,9 +127,6 @@ def shift(targ, ref, store=None, lowfilter=20):
     lag_data = []
     center_pix_data = []
     fit_data = []
-
-    # length of each section in pixels
-    section_length = 500
 
     if store is not None:
         store['num_orders'] = s.shape[0]
