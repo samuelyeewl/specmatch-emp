@@ -433,7 +433,7 @@ class SpecMatch(object):
 
         # ------------------------ Match results ------------------------
         if 'num_best' in infile:
-            sm.num_best = infile['num_best'].value
+            sm.num_best = infile['num_best'][()]
 
         if 'coeffs' in infile:
             sm.coeffs = infile['coeffs'][:]
@@ -461,7 +461,7 @@ class SpecMatch(object):
                 res_grp = subgrp['results']
                 reg_results = {}
                 for k in res_grp:
-                    reg_results[k] = res_grp[k].value
+                    reg_results[k] = res_grp[k][()]
                 lincomb_results.append(reg_results)
 
             sm.ref_idxs = ref_idxs
@@ -472,7 +472,7 @@ class SpecMatch(object):
             res_grp = infile['results_nodetrend']
             results_nodetrend = {}
             for k in res_grp:
-                results_nodetrend[k] = res_grp[k].value
+                results_nodetrend[k] = res_grp[k][()]
 
             sm.results_nodetrend = results_nodetrend
 
@@ -480,7 +480,7 @@ class SpecMatch(object):
             res_grp = infile['results']
             results = {}
             for k in res_grp:
-                results[k] = res_grp[k].value
+                results[k] = res_grp[k][()]
 
             sm.results = results
 
