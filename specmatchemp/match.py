@@ -87,6 +87,7 @@ class Match(object):
         # Apply broadening kernel
         vsini = params['vsini'].value
 
+        #  self.ref_mod = self.broaden(vsini, self.ref_mod)
         if vsini >= 1.0:
             self.ref_mod = self.broaden(vsini, self.ref_mod)
         elif vsini < 1.0:
@@ -168,9 +169,9 @@ class Match(object):
 
         # Rotational broadening parameters
         if allow_negvsini:
-            params.add('vsini', value=1.0, min=-5.0, max=10.0)
+            params.add('vsini', value=1.5, min=-8.0, max=20.0)
         else:
-            params.add('vsini', value=1.0, min=1.0, max=10.0)
+            params.add('vsini', value=1.5, min=1.0, max=30.0)
 
         # Spline parameters
         params = add_spline_positions(params, self.knot_x)
@@ -576,7 +577,7 @@ class MatchLincomb(Match):
             grp = outfile['references'].create_group('{0:d}'.format(i))
             self.refs[i].to_hdf(grp)
 
-        outfile['ref_chisq'] = self.ref_chisq
+        outfile['ref_chisq'] = self.ref_chisq.astype(float)
         outfile['vsini'] = self.original_vsini
 
         # Save modified
