@@ -12,6 +12,8 @@ import h5py
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from astropy.io import fits
+from scipy.signal.windows import gaussian
+from scipy.ndimage import convolve1d
 
 from specmatchemp import plots
 
@@ -301,6 +303,29 @@ class Spectrum(object):
         """Get number of elements in spectrum.
         """
         return self.w.size
+
+    def broaden_specres(self, spec_res, kernel_npoints=151,
+                        convolve_mode='nearest', **convolve_kwargs):
+        """Broaden spectrum to a target spectral resolution.
+        """
+        mean_w = np.mean(self.w)
+        gaussian_fwhm = mean_w / spec_res
+        gaussian_sigma = gaussian_fwhm / 2.355
+        pixels_per_A = len(self.w) / (self.w[-1] - self.w[0])
+        gaussian_sigma_pix = gaussian_sigma * pixels_per_A
+
+        kernel = gaussian(kernel_npoints, gaussian_sigma_pix)
+
+        broadened_spec = self.copy()
+        broadened_spec.s = convolve1d(self.s, kernel,
+                                      mode=convolve_mode, **convolve_kwargs)
+
+        kernel_sq = kernel **2
+        kernel_sq /= np.sum(kernel_sq)
+        broadened_spec.serr = np.sqrt(convolve1d(self.serr**2, kernel_sq,
+                                                 mode=convolve_mode, **convolve_kwargs))
+
+        return broadened_spec
 
     @staticmethod
     def combine_spectra(spectra, w_ref, name=None, prefixes=None):
