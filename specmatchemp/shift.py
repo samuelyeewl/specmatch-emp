@@ -81,7 +81,7 @@ def bootstrap_shift(targ, ref_list, store=None, section_length=500):
 
     # Now shift to the best reference
     print("Shifting entire spectrum")
-    shifted = shift(targ, best_ref, store=store)
+    shifted = shift(targ, best_ref, store=store, section_length=section_length)
 
     return shifted
 
