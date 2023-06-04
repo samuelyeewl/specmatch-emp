@@ -377,11 +377,16 @@ class SpecMatch(object):
         # Average over all wavelength regions
         for p in Library.STAR_PROPS:
             self.results_nodetrend[p] = 0
-            for i in range(len(lincomb_regions)):
-                self.results_nodetrend[p] += (self.lincomb_results[i][p] /
-                                              len(lincomb_regions))
-                # TODO: Add uncertainties
-                self.results_nodetrend['u_'+p] = 0.0
+            reg_results = np.asarray([res[p] for res in self.lincomb_results])
+            reg_chisq = np.asarray([mt.best_chisq for mt in self.lincomb_matches])
+            self.results_nodetrend[p] = np.average(reg_results, weights=1/reg_chisq)
+            self.results_nodetrend['u_'+p] = 0.0
+
+            #  for i in range(len(lincomb_regions)):
+            #      self.results_nodetrend[p] += (self.lincomb_results[i][p] /
+            #                                    len(lincomb_regions))
+            #      # TODO: Add uncertainties
+            #      self.results_nodetrend['u_'+p] = 0.0
 
         # Read in uncertainties
         self._read_uncertainties()
@@ -426,6 +431,8 @@ class SpecMatch(object):
         # Find appropriate interval
         for row in self.u_table[param]:
             if value >= row[1] and value < row[2]:
+                if param == 'radius':
+                    return row[0] * value
                 return row[0]
         return 0.0
 
