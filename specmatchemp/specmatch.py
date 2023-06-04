@@ -32,6 +32,8 @@ from specmatchemp import analysis
 from specmatchemp import plots
 from specmatchemp import detrend
 
+from joblib import Parallel, delayed
+
 WAVLIM_DEFAULT = (5000, 5900)
 WAVSTEP_DEFAULT = 100
 
@@ -155,7 +157,7 @@ class SpecMatch(object):
         return self.target
 
     def match(self, wavlim=WAVLIM_DEFAULT, wavstep=WAVSTEP_DEFAULT,
-              ignore=None, allow_negvsini=False):
+              ignore=None, allow_negvsini=False, n_cores=1):
         """Match the target against the library spectra.
 
         Performs a pairwise match between the target spectrum and every
@@ -219,9 +221,15 @@ class SpecMatch(object):
 
         # save regions
         self.regions = regions
+        match_results_all = Parallel(n_jobs=n_cores, prefer='threads')(
+            delayed(self._run_match_for_region)(reg, self.target.cut(*reg),
+                                                self.lib.wav_cut(*reg, deepcopy=False),
+                                                ignore=ignore, allow_negvsini=allow_negvsini)
+            for reg in regions)
+        self.match_results_all = match_results_all
 
-        for reg in regions:
-            print("Matching region {0}".format(reg))
+        # Collect match results
+        for reg, match_results_reg in zip(regions, match_results_all):
             if len(regions) == 1:
                 cs_col = 'chi_squared'
                 fit_col = 'fit_params'
@@ -229,25 +237,61 @@ class SpecMatch(object):
                 cs_col = 'chi_squared_{0:.0f}'.format(reg[0])
                 fit_col = 'fit_params_{0:.0f}'.format(reg[0])
 
-            self.match_results.loc[:, cs_col] = np.nan
-            self.match_results.loc[:, fit_col] = np.nan
+            self.match_results.loc[:, cs_col] = match_results_reg['chi_squared']
+            self.match_results.loc[:, fit_col] = match_results_reg['fit_params']
 
-            spec_targ = self.target.cut(*reg)
+        #  for reg in regions:
+        #      print("Matching region {0}".format(reg))
+        #      if len(regions) == 1:
+        #          cs_col = 'chi_squared'
+        #          fit_col = 'fit_params'
+        #      else:
+        #          cs_col = 'chi_squared_{0:.0f}'.format(reg[0])
+        #          fit_col = 'fit_params_{0:.0f}'.format(reg[0])
 
-            for param_ref, spec_ref in self.lib:
-                # ignore specified index
-                if ignore is not None and param_ref.name == ignore:
-                    continue
+        #      self.match_results.loc[:, cs_col] = np.nan
+        #      self.match_results.loc[:, fit_col] = np.nan
 
-                # match
-                mt = match.Match(spec_targ, spec_ref.cut(*reg))
-                mt.best_fit(allow_negvsini=allow_negvsini)
+        #      spec_targ = self.target.cut(*reg)
 
-                # store results
-                ref_idx = param_ref.lib_index
-                self.match_results.loc[ref_idx, cs_col] = mt.best_chisq
-                self.match_results.loc[ref_idx, fit_col] = \
-                    mt.best_params.dumps()
+        #      for param_ref, spec_ref in self.lib:
+        #          # ignore specified index
+        #          if ignore is not None and param_ref.name == ignore:
+        #              continue
+
+        #          # match
+        #          mt = match.Match(spec_targ, spec_ref.cut(*reg))
+        #          mt.best_fit(allow_negvsini=allow_negvsini)
+
+        #          # store results
+        #          ref_idx = param_ref.lib_index
+        #          self.match_results.loc[ref_idx, cs_col] = mt.best_chisq
+        #          self.match_results.loc[ref_idx, fit_col] = \
+        #              mt.best_params.dumps()
+
+    def _run_match_for_region(self, reg, spec_targ, lib_reg,
+                              ignore=None, allow_negvsini=False):
+        print('Matching region {0}'.format(reg))
+        #  spec_targ = self.target.cut(*reg)
+        match_results_reg = pd.DataFrame(index=lib_reg.library_params.index,
+                                         columns=['chi_squared', 'fit_params'])
+
+        for param_ref, spec_ref in lib_reg:
+            # ignore specified index
+            if ignore is not None and param_ref.name == ignore:
+                continue
+
+            # match
+            mt = match.Match(spec_targ, spec_ref.cut(*reg))
+            mt.best_fit(allow_negvsini=allow_negvsini)
+
+            # store results
+            ref_idx = param_ref.lib_index
+            match_results_reg.loc[ref_idx, 'chi_squared'] = mt.best_chisq
+            match_results_reg.loc[ref_idx, 'fit_params'] = \
+                mt.best_params.dumps()
+
+        return match_results_reg
 
     def lincomb(self, num_best=5, regions='all'):
         """Interpolate between library spectra to get more accurate parameters.
