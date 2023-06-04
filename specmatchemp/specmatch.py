@@ -891,7 +891,7 @@ class SpecMatch(object):
                 max_corr = np.argmax(xcorr)
                 mew = plt.rcParams['lines.markeredgewidth'] * 2
                 plt.plot(
-                    lag_arr[max_corr], xcorr[max_corr],'x',color=color, 
+                    lag_arr[max_corr], xcorr[max_corr],'x',color=color,
                     mew=mew,zorder=10
                 )
 
@@ -903,7 +903,7 @@ class SpecMatch(object):
         plt.ylabel('Correlation')
 
     # ----------------------------- Match plots ----------------------------- #
-    def plot_chi_squared_surface(self, region=0, num_best=None):
+    def plot_chi_squared_surface(self, region=0, num_best=None, y_min=1.0):
         """Plot the chi-squared surface from the pairwise matching procedure.
 
         Creates a three-column plot of the best chi-squared obtained with
@@ -941,6 +941,7 @@ class SpecMatch(object):
         plt.plot(self.match_results['Teff'].head(num_best),
                  self.match_results[cs_col].head(num_best), 'r.')
         plt.ylabel(r'$\chi^2$')
+        plt.ylim(y_min)
         plt.xlabel(r'$T_{eff}$ (K)')
         plots.label_axes(param_x='Teff')
 
