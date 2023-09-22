@@ -18,7 +18,7 @@ from specmatchemp import SHIFT_REFERENCES
 from specmatchemp import library
 from specmatchemp import spectrum
 
-WAVLIM = (4990, 6410)
+WAVLIM = (3650, 7960)
 
 
 def main(append, parampath, specdir, outdir):
@@ -35,7 +35,7 @@ def main(append, parampath, specdir, outdir):
     # Read in all spectra
     spectra = np.empty((0, 3, len(wav)))
     for idx, row in library_params.iterrows():
-        lib_obs = row['lib_obs']
+        lib_obs = row.lib_obs.lstrip('r')
         spec_path = os.path.join(specdir, lib_obs+'_adj.fits')
         spec = spectrum.read_fits(spec_path).cut(*WAVLIM)
 
