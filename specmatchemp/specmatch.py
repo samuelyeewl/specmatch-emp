@@ -1157,3 +1157,69 @@ class SpecMatch(object):
 
         mt_lincomb.plot()
         plt.xlim(plotwavlim)
+
+
+class SpecMatchOrder(SpecMatch):
+    """SpecMatch class that performs matching on individual orders.
+    """
+    def __init__(self, target, lib=None):
+        self.wavlim = lib.wavlim
+
+        self.target = target
+        self.target_unshifted = target
+
+        if lib is None:
+            self.lib = Library()
+        else:
+            self.lib = lib
+
+        self._shifted = False
+        self.num_best = 5
+        self.shift_ref = None
+        self.shift_data = {}
+        self.regions = None
+        self.lincomb_regions = None
+        self.match_results = pd.DataFrame()
+        self.lincomb_matches = []
+        self.coeffs = None
+        self.lincomb_results = []
+        self.results_nodetrend = {}
+        self.results = {}
+        self.u_table = None
+
+        return
+
+    def match(self, ignore=None, allow_negvsini=False, n_cores=1):
+        """Match the target against the library spectra, on an order-by-order basis.
+        """
+        print("Matching spectrum order-by-order")
+        # Create match results table
+        self.match_results = self.lib.library_params.copy()
+
+        # Regions are just the orders
+        self.regions = []
+        w = self.target.w
+        for order in w:
+            self.regions.append([order.min()-1e-6, order.max()+1e-6])
+
+        match_results_all = Parallel(n_jobs=n_cores, prefer='threads')(
+            delayed(self._run_match_for_region)(reg, self.target[i],
+                                                self.lib.wav_cut(*reg, deepcopy=False),
+                                                ignore=ignore, allow_negvsini=allow_negvsini)
+            for i, reg in enumerate(self.regions))
+
+        self.match_results_all = match_results_all
+
+        # Collect match results
+        for reg, match_results_reg in zip(self.regions, match_results_all):
+            if len(self.regions) == 1:
+                cs_col = 'chi_squared'
+                fit_col = 'fit_params'
+            else:
+                cs_col = 'chi_squared_{0:.0f}'.format(reg[0])
+                fit_col = 'fit_params_{0:.0f}'.format(reg[0])
+
+            self.match_results.loc[:, cs_col] = match_results_reg['chi_squared']
+            self.match_results.loc[:, fit_col] = match_results_reg['fit_params']
+
+

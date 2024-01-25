@@ -57,8 +57,10 @@ class Spectrum(object):
         if mask is None:
             self.mask = np.empty_like(s).astype(bool)
             self.mask.fill(True)
-        else:
+        elif isinstance(mask, np.ndarray):
             self.mask = mask.astype(bool)
+        else:
+            self.mask = mask
 
         if name is None:
             self.name = "Spectrum {0:d}".format(Spectrum._counter)
@@ -398,6 +400,87 @@ class Spectrum(object):
                 attrs[prefixes[i] + '_' + k] = v
 
         return Spectrum(w, s, serr, mask, name=name, header=None, attrs=attrs)
+
+
+class EchelleSpectrum(Spectrum):
+    """2D Echelle Spectrum
+
+    Args:
+        w (np.ndarray): Wavelength scale
+        s (np.ndarray): Spectrum
+        serr (np.ndarray, optional): Error in spectrum
+        mask (np.ndarray, optional): Boolean array to mask out telluric lines
+        name (str, optional): Name associated with spectrum
+        header (FITS header, optional): Header from fits file
+        attrs (dict, optional): Any further attributes
+
+    Attributes:
+        w (np.ndarray): Wavelength scale
+        s (np.ndarray): Spectrum
+        serr (np.ndarray): Measurement error in spectrum
+        mask (np.ndarray): Boolean array with telluric line positions
+        name (str): Name associted with spectrum
+        header (FITS header): Header from FITS file
+        attrs (dict): A dictionary of further attributes
+    """
+    def __getitem__(self, idx):
+        """
+        Get the given order in the spectrum.
+        """
+        order_w = self.w[idx]
+        order_s = self.s[idx]
+        order_serr = self.serr[idx]
+        order_mask = self.mask[idx]
+        return Spectrum(order_w, order_s, order_serr, order_mask,
+                        name=self.name + f' Order {idx}', header=self.header,
+                        attrs=self.attrs.copy())
+
+    def cut(self, minw, maxw):
+        """Truncate the spectrum between the given limits, returning the order
+        that maximizes the length.
+
+        Returns:
+            Spectrum: Truncated spectrum object.
+        """
+        order_wavmask = [
+            ((order_w >= minw) & (order_w <= maxw))
+            for order_w in self.w
+        ]
+        order_wavcount = [m.sum() for m in order_wavmask]
+        max_order = np.argmax(order_wavcount)
+
+        order_w = self.w[max_order]
+        order_s = self.s[max_order]
+        order_serr = self.serr[max_order]
+        order_mask = self.mask[max_order]
+        wavmask = order_wavmask[max_order]
+
+        w_trunc = order_w[wavmask]
+        s_trunc = order_s[wavmask]
+        serr_trunc = None if order_serr is None else order_serr[wavmask]
+        mask_trunc = None if order_mask is None else order_mask[wavmask]
+
+        return Spectrum(w_trunc, s_trunc, serr_trunc, mask_trunc,
+                        name=self.name + f' Order {max_order}', header=self.header,
+                        attrs=self.attrs.copy())
+
+    @classmethod
+    def from_speclist(cls, spectra, name=None, header=None, attrs=None):
+        """Create EchelleSpectrum class from a list of spectra
+        """
+        w = [spec.w for spec in spectra]
+        s = [spec.s for spec in spectra]
+        serr = [spec.serr for spec in spectra]
+        mask = [spec.mask for spec in spectra]
+
+        if name is None:
+            name = spectra[0].name
+        if header is None:
+            header = spectra[0].header
+        if attrs is None:
+            attrs = spectra[0].attrs
+
+        return cls(w, s, serr, mask, name=name, header=header, attrs=attrs)
 
 
 class HiresSpectrum(Spectrum):
