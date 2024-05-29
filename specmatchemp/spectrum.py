@@ -182,10 +182,10 @@ class Spectrum(object):
             w (np.ndarray): New wavlength array.
         """
         wavmap = np.searchsorted(w, self.w)
-        s_extend = np.empty_like(w, dtype=np.float)
+        s_extend = np.empty_like(w, dtype=np.float64)
         s_extend.fill(np.nan)
         s_extend[wavmap] = self.s
-        serr_extend = np.empty_like(w, dtype=np.float)
+        serr_extend = np.empty_like(w, dtype=np.float64)
         serr_extend.fill(np.nan)
         serr_extend[wavmap] = self.serr
         mask_extend = np.empty_like(w, dtype=bool)
@@ -202,7 +202,7 @@ class Spectrum(object):
         Args:
             w (np.ndarray): New wavelength scale.
         """
-        if self.on_scale(w):
+        if (len(self.w) == len(w)) and self.on_scale(w):
             return self
 
         snew = np.interp(w, self.w, self.s, left=np.nan, right=np.nan)

@@ -797,7 +797,7 @@ def read_hdf(path=None, wavlim='all', lib_index_subset=None):
 
         library_params = pd.DataFrame.from_records(f['params'][:], index='idx')
         # decode strings
-        for (col_name, dt) in library_params.dtypes.iteritems():
+        for (col_name, dt) in library_params.dtypes.items():
             if dt == 'object':
                 library_params[col_name] = library_params[col_name]\
                     .str.decode('utf-8')
