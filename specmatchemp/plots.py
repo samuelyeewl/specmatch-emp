@@ -99,22 +99,22 @@ def label_axes(param_x=None, param_y=None, rescale=True):
         param_y (str): Parameter to plot on y-axis
         rescale (bool): Whether to rescale
     """
-    if param_x is 'Teff':
+    if param_x == 'Teff':
         reverse_x()
         plt.xlabel('Effective Temperature (K)')
         if rescale:
             plt.xticks([3000, 4000, 5000, 6000, 7000])
 
-    if param_x is 'feh':
+    if param_x == 'feh':
         plt.xlabel('[Fe/H] (dex)')
 
-    if param_x is 'radius':
+    if param_x == 'radius':
         plt.xlabel(r'$R\ (R_\odot)$')
         if rescale:
             ax = plt.gca()
             ax.set_xscale('log')
 
-    if param_y is 'radius':
+    if param_y == 'radius':
         plt.ylabel(r'Stellar Radius (Solar-radii)')
         if rescale:
             ax = plt.gca()
