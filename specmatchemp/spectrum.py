@@ -317,6 +317,7 @@ class Spectrum(object):
         gaussian_sigma_pix = gaussian_sigma * pixels_per_A
 
         kernel = gaussian(kernel_npoints, gaussian_sigma_pix)
+        kernel /= kernel.sum()
 
         broadened_spec = self.copy()
         broadened_spec.s = convolve1d(self.s, kernel,
@@ -385,7 +386,7 @@ class Spectrum(object):
             weights = 1/(serr_stacked**2)
             inv_var = np.nansum(weights, axis=0)
             s = np.nansum(s_stacked * weights, axis=0) / inv_var
-            serr = np.sqrt(inv_var)
+            serr = 1/np.sqrt(inv_var)
             serr[~np.isfinite(serr)] = np.nan
             mask = np.any(mask_stacked, axis=0)
 
