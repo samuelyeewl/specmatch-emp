@@ -86,7 +86,8 @@ def bootstrap_shift(targ, ref_list, store=None, section_length=500):
     return shifted
 
 
-def shift(targ, ref, store=None, lowfilter=20, section_length=500):
+def shift(targ, ref, store=None, lowfilter=20, section_length=500,
+          normalize=True, flatten_spec=True):
     """Shifts the given spectrum by placing it on the same wavelength
     scale as the specified reference spectrum, then solves for shifts
     between the two spectra through cross-correlation.
@@ -114,14 +115,15 @@ def shift(targ, ref, store=None, lowfilter=20, section_length=500):
 
     # normalize each order of the target spectrum by dividing by the
     # 95th percentile
-    percen_order = np.nanpercentile(s, 95, axis=1)
-    s /= percen_order.reshape(-1, 1)
+    if normalize:
+        percen_order = np.nanpercentile(s, 95, axis=1)
+        s /= percen_order.reshape(-1, 1)
 
     # create empty 2d arrays to store each order
-    s_shifted = np.asarray([[]])
-    serr_shifted = np.asarray([[]])
-    mask_shifted = np.asarray([[]])
-    ws = np.asarray([[]])
+    s_shifted = []
+    serr_shifted = []
+    mask_shifted = []
+    ws = []
 
     # create lists to store diagnostic data
     lag_data = []
@@ -155,7 +157,8 @@ def shift(targ, ref, store=None, lowfilter=20, section_length=500):
         mm = mm[cliplen:-cliplen]
 
         # clip obvious noise
-        clip = np.asarray([True if sp < 1.2 else False for sp in ss])
+        # clip = np.asarray([True if sp < 1.2 else False for sp in ss])
+        clip = ss < 1.2
         ss = ss[clip]
         sserr = sserr[clip]
         mm = mm[clip]
@@ -165,8 +168,7 @@ def shift(targ, ref, store=None, lowfilter=20, section_length=500):
         w_min = ww[0]
         w_max = ww[-1]
 
-        in_range = np.asarray([True if wr > w_min and wr < w_max else False
-            for wr in ref.w])
+        in_range = (ref.w > w_min) & (ref.w < w_max)
         start_idxs.append(np.argmax(in_range))
         w_ref_c = ref.w[in_range]
         s_ref_c = ref.s[in_range]
@@ -241,15 +243,19 @@ def shift(targ, ref, store=None, lowfilter=20, section_length=500):
                 lag_data[i, j] = curr if curr > crit_low and curr < crit_high \
                     else mean_lag
     else:
-        for j in range(lag_data.shape[1]):
-            curr = lag_data[0, j]
-            if j == 0:
-                lag_data[0, j] = lag_data[0, j + 1] if np.isnan(curr) else curr
-            elif j == (lag_data.shape[1] - 1):
-                lag_data[0, j] = lag_data[0, j - 1] if np.isnan(curr) else curr
-            else:
-                lag_data[0, j] = np.nanmean([lag_data[0, j - 1],
-                    lag_data[0, j + 1]]) if np.isnan(curr) else curr
+        # Only single order provided
+        clipped_mask = _bootstrap_sigmaclip(lag_data[0], nsigma=5,
+                                            return_mask=True)
+        lag_data[0, ~clipped_mask] = np.nan
+        # for j in range(lag_data.shape[1]):
+        #     curr = lag_data[0, j]
+        #     if j == 0:
+        #         lag_data[0, j] = lag_data[0, j + 1] if np.isnan(curr) else curr
+        #     elif j == (lag_data.shape[1] - 1):
+        #         lag_data[0, j] = lag_data[0, j - 1] if np.isnan(curr) else curr
+        #     else:
+        #         lag_data[0, j] = np.nanmean([lag_data[0, j - 1],
+        #             lag_data[0, j + 1]]) if np.isnan(curr) else curr
 
     for i in range(s.shape[0]):
         # Restore data from previous loop
@@ -264,8 +270,10 @@ def shift(targ, ref, store=None, lowfilter=20, section_length=500):
         # use robust least squares to fit a line to the shifts
         # (Cauchy loss function)
         p_guess = np.array([0, 0])
+        nan_mask = ~np.isnan(lags)
         fit_res = least_squares(_linear_fit_residuals, p_guess,
-                                args=(center_pix, lags), loss='cauchy')
+                                args=(center_pix[nan_mask], lags[nan_mask]),
+                                loss='cauchy')
         fit = fit_res.x
         pix_arr = np.arange(0, len(ss))
         pix_shifted = pix_arr - fit[1] - pix_arr*fit[0]
@@ -285,14 +293,21 @@ def shift(targ, ref, store=None, lowfilter=20, section_length=500):
         mm_shifted = np.interp(new_pix, pix_shifted, mm)
 
         # append to array
-        s_shifted = np.append(s_shifted, ss_shifted)
-        serr_shifted = np.append(serr_shifted, sserr_shifted)
-        mask_shifted = np.append(mask_shifted, mm_shifted)
-        ws = np.append(ws, w_ref_c)
+        s_shifted.append(ss_shifted)
+        serr_shifted.append(sserr_shifted)
+        mask_shifted.append(mm_shifted)
+        ws.append(w_ref_c)
 
         # save diagnostic data
         fitted = fit[0] * center_pix + fit[1]
         fit_data.append(np.array(fitted))
+
+    # Resize arrays so each order has the same length
+    min_len = min([len(s) for s in s_shifted])
+    s_shifted = np.array([s[:min_len] for s in s_shifted])
+    serr_shifted = np.array([serr[:min_len] for serr in serr_shifted])
+    mask_shifted = np.array([mask[:min_len] for mask in mask_shifted])
+    ws = np.array([w[:min_len] for w in ws])
 
     # save diagnostic data
     if store is not None:
@@ -310,19 +325,46 @@ def shift(targ, ref, store=None, lowfilter=20, section_length=500):
         store['center_pix'] = np.asarray(center_pix_data)
         store['fit'] = np.asarray(fit_data)
 
-    # flatten spectrum
-    w_min = ws[0]
-    w_max = ws[-1]
-    in_range = np.asarray([True if wr > w_min and wr < w_max
-                           else False for wr in ref.w])
-    w_ref_trunc = ref.w[in_range]
+    if flatten_spec:
+        # flatten spectrum
+        w_min = ws[0][0]
+        w_max = ws[-1][-1]
+        in_range = (ref.w > w_min) & (ref.w < w_max)
+        w_ref_trunc = ref.w[in_range]
 
-    w_flat, s_flat, serr_flat, mask_flat = \
-        flatten(ws, s_shifted, serr_shifted, mask_shifted, w_ref=w_ref_trunc)
+        w_flat, s_flat, serr_flat, mask_flat = \
+            flatten(ws, s_shifted, serr_shifted, mask_shifted, w_ref=w_ref_trunc)
 
-    return spectrum.Spectrum(w_flat, s_flat, serr_flat, name=targ.name,
-                             mask=mask_flat, header=targ.header,
-                             attrs=targ.attrs)
+        return spectrum.Spectrum(w_flat, s_flat, serr_flat, name=targ.name,
+                                mask=mask_flat, header=targ.header,
+                                attrs=targ.attrs)
+    else:
+        return spectrum.EchelleSpectrum(ws, s_shifted, serr_shifted,
+                                        mask=mask_shifted, name=targ.name,
+                                        header=targ.header, attrs=targ.attrs)
+
+
+def _bootstrap_sigmaclip(data, nsigma=3, return_mask=False):
+    """
+    Sigma-clip data using a bootstrapping approach, where each element is
+    checked against the mean and standard deviation of the rest of the data.
+    """
+    mask = np.ones(len(data), dtype=bool)
+    clipped_elements = np.zeros(len(data), dtype=bool)
+    for i in range(len(data)):
+        mask[i] = False
+        data_i = data[mask]
+        mean = np.mean(data_i)
+        std = np.std(data_i)
+        if np.abs(data[i] - mean) > nsigma*std:
+            clipped_elements[i] = True
+        mask[i] = True
+
+    if return_mask:
+        return ~clipped_elements
+
+    clipped_data = data[~clipped_elements]
+    return clipped_data
 
 
 def _isclose(a, b, abs_tol=1e-6):
@@ -406,6 +448,13 @@ def flatten(w, s, serr=None, mask=None, w_ref=None, wavlim=None):
         serr_flattened = None if serr is None else serr[0]
         mask_flattened = None if mask is None else mask[0]
         return w_flattened, s_flattened, serr_flattened, mask_flattened
+
+    w = np.reshape(w, -1)
+    s = np.reshape(s, -1)
+    if serr is not None:
+        serr = np.reshape(serr, -1)
+    if mask is not None:
+        mask = np.reshape(mask, -1)
 
     if w_ref is None:
         w_flattened = np.unique(w)
