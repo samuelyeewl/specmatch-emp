@@ -102,7 +102,10 @@ def shift(targ, ref, store=None, lowfilter=20, section_length=500,
         shifted (Spectrum): Adjusted and flattened spectrum
     """
     s = np.copy(targ.s)
-    serr = np.copy(targ.serr)
+    if targ.serr is None:
+        serr = np.zeros_like(s)
+    else:
+        serr = np.copy(targ.serr)
     w = np.copy(targ.w)
     mask = np.copy(targ.mask)
     if s.ndim == 1:
@@ -118,6 +121,8 @@ def shift(targ, ref, store=None, lowfilter=20, section_length=500,
     if normalize:
         percen_order = np.nanpercentile(s, 95, axis=1)
         s /= percen_order.reshape(-1, 1)
+        if serr is not None and serr[0] is not None:
+            serr /= percen_order.reshape(-1, 1)
 
     # create empty 2d arrays to store each order
     s_shifted = []
@@ -335,9 +340,9 @@ def shift(targ, ref, store=None, lowfilter=20, section_length=500,
         w_flat, s_flat, serr_flat, mask_flat = \
             flatten(ws, s_shifted, serr_shifted, mask_shifted, w_ref=w_ref_trunc)
 
-        return spectrum.Spectrum(w_flat, s_flat, serr_flat, name=targ.name,
+        return spectrum.Spectrum(w_flat, s_flat, serr_flat,
                                 mask=mask_flat, header=targ.header,
-                                attrs=targ.attrs)
+                                )
     else:
         return spectrum.EchelleSpectrum(ws, s_shifted, serr_shifted,
                                         mask=mask_shifted, name=targ.name,
