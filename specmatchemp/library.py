@@ -555,7 +555,6 @@ class Library(object):
 
         return src_string
 
-
     def get_spectrum(self, indices):
         """Returns the spectrum at the given index.
 
@@ -571,6 +570,7 @@ class Library(object):
         for idx in indices:
             s = self.library_spectra[idx, 0]
             serr = self.library_spectra[idx, 1]
+            mask = self.library_spectra[idx, 2]
             w = self.wav
             name = self.library_params.loc[idx, 'cps_name']
             attrs = {}
@@ -578,7 +578,8 @@ class Library(object):
                 attrs[p] = self.library_params.loc[idx, p]
             attrs['obs'] = self.library_params.loc[idx, 'lib_obs']
 
-            spectra.append(Spectrum(w, s, serr, name=name, attrs=attrs))
+            spectra.append(Spectrum(w, s, serr, mask=mask,
+                                    name=name, attrs=attrs))
 
         if len(spectra) == 1:
             return spectra[0]
