@@ -649,7 +649,7 @@ class Library(object):
             g = self.library_params.groupby('source')
 
             for source in g.groups:
-                cut = self.library_params.ix[g.groups[source]]
+                cut = self.library_params.loc[g.groups[source]]
                 plt.plot(cut[paramx], cut[paramy], marker,
                          label=source_labels[source])
         else:

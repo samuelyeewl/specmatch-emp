@@ -275,9 +275,9 @@ class Match(object):
 
         # Read best-fit parameters
         best_params = lmfit.Parameters()
-        best_params.loads(infile['best_params'].value)
+        best_params.loads(infile['best_params'][()])
         spl = infile['spline'][:]
-        best_chisq = infile['best_chisq'].value
+        best_chisq = infile['best_chisq'][()]
 
         mt = cls(target, reference)
         mt.load_params(best_params)
@@ -550,7 +550,7 @@ class MatchLincomb(Match):
         target = spectrum.read_hdf(infile['target'])
 
         # Read reference
-        num_refs = infile['num_refs'].value
+        num_refs = infile['num_refs'][()]
         ref_specs = []
         for i in range(num_refs):
             spec = spectrum.read_hdf(infile['references/{0:d}'.format(i)])
@@ -566,9 +566,9 @@ class MatchLincomb(Match):
 
         # Read best-fit parameters
         best_params = lmfit.Parameters()
-        best_params.loads(infile['best_params'].value)
+        best_params.loads(infile['best_params'][()])
         spl = infile['spline'][:]
-        best_chisq = infile['best_chisq'].value
+        best_chisq = infile['best_chisq'][()]
 
         mt = cls(target, ref_specs, vsini)
         mt.load_params(best_params)
@@ -613,7 +613,7 @@ def get_spline_positions(params):
     Returns:
         knotx (np.ndarray)
     """
-    num_knots = params['num_knots'].value
+    num_knots = int(params['num_knots'].value)
 
     knotx = []
     for i in range(num_knots):
@@ -650,7 +650,7 @@ def get_vsini(params):
     Returns:
         vsini (np.ndarray)
     """
-    num_refs = params['num_refs'].value
+    num_refs = int(params['num_refs'].value)
 
     vsini = []
     for i in range(num_refs):
@@ -687,7 +687,7 @@ def get_lincomb_coeffs(params):
     Returns:
         coeffs (np.ndarray)
     """
-    num_refs = params['num_refs'].value
+    num_refs = int(params['num_refs'].value)
 
     coeffs = []
     for i in range(num_refs):
