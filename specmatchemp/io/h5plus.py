@@ -16,7 +16,7 @@ def read_dict(f, recursive=True):
     d = {}
     def _add_to_dict(k):
         if isinstance(f[k], h5py.Dataset):
-            d[k] = f[k].value
+            d[k] = f[k][()]
 
     if recursive:
         f.visit(_add_to_dict)
